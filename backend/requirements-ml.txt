@@ -1,0 +1,6 @@
+# ML-heavy runtime dependencies.
+# The PyTorch CPU wheel avoids CUDA packages in Docker images.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1+cpu
+sentence-transformers==3.0.1
+numpy==1.26.4
