@@ -22,10 +22,15 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@postgres:5432/cvfit
       - REDIS_URL=redis://redis:6379/0
+      - STORAGE_BACKEND=local
       - STORAGE_ROOT=/data
+      - CV_MAX_UPLOAD_MB=5
+      - FRONTEND_TEMPLATES_DIR=../frontend/templates
+      - FRONTEND_STATIC_DIR=../frontend/static
     volumes:
       - ./data:/data
-      - ./app:/app/app
+      - ./backend/app:/app/backend/app
+      - ./frontend:/app/frontend
     ports:
       - "8000:8000"
     depends_on:
@@ -39,10 +44,15 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@postgres:5432/cvfit
       - REDIS_URL=redis://redis:6379/0
+      - STORAGE_BACKEND=local
       - STORAGE_ROOT=/data
+      - CV_MAX_UPLOAD_MB=5
+      - FRONTEND_TEMPLATES_DIR=../frontend/templates
+      - FRONTEND_STATIC_DIR=../frontend/static
     volumes:
       - ./data:/data
-      - ./app:/app/app
+      - ./backend/app:/app/backend/app
+      - ./frontend:/app/frontend
     depends_on:
       - postgres
       - redis

@@ -1,15 +1,89 @@
-# CVFit
+# AI CV Fit App
 
-AI system that evaluates CV against Job Description.
+FastAPI-based CV-to-job-description fit scoring MVP. The app uploads a CV, accepts pasted JD text, runs an async Celery job, stores results in PostgreSQL, and returns JSON plus a downloadable DOCX report.
+
+## Folder Structure
+
+```text
+backend/
+  app/                  FastAPI app, API routes, DB, services, workers
+  tests/                pytest tests
+  requirements.txt      backend Python dependencies
+  requirements-ml.txt   ML runtime dependencies with CPU-only Torch
+  requirements-dev.txt  local test/development dependencies
+frontend/
+  templates/            Jinja templates
+  static/               vanilla JS/static assets
+scripts/                smoke tests and operational scripts
+docs/                   deployment and baseline docs
+docker/                 API and worker Dockerfiles
+docker-compose.yml      local API/worker/Postgres/Redis stack
+```
 
 ## Architecture
 
-FastAPI + Celery + Redis + Postgres + pgvector
+FastAPI + Celery + Redis + PostgreSQL.
 
-## Run
+## Local Docker Run
 
-docker compose up --build
+```bash
+docker compose up --build -d
+```
 
-## Open
+Open:
 
+```text
 http://localhost:8000
+```
+
+Stop:
+```bash
+docker compose down
+```
+
+## Local Backend-Only Run
+
+Start PostgreSQL and Redis separately, then:
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+In another shell:
+
+```bash
+cd backend
+celery -A app.workers.celery_app:celery_app worker --loglevel=INFO -Q cvfit
+```
+
+## Tests
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+There is intentionally no root requirements.txt; install from backend/requirements.txt for runtime or backend/requirements-dev.txt for local development and tests.
+
+## Smoke Test
+
+With the Docker stack running:
+
+```bash
+python scripts/smoke_test_local.py
+```
+
+The smoke test uploads a temporary DOCX CV, creates a score job, waits for worker completion, validates result JSON, checks report metadata, and downloads a non-empty DOCX report.
+
+## Phase 0 Status
+
+Phase 0 passed a real local Docker E2E smoke test. See docs/phase0_baseline.md and docs/render_deployment.md for details.
+
+
+
+
+
+

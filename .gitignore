@@ -6,6 +6,20 @@ __pycache__/
 .env
 data/uploads/*
 data/reports/*
+data/uploads/
+data/reports/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.db
+*.sqlite
+*.sqlite3
+
+.cache/
+model_cache/
+models/
+hf_cache/
 
 .venv/
 venv/
