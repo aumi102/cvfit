@@ -89,6 +89,7 @@ Key docs:
 - [Phase 1 team plan](docs/phase1_team_plan.md)
 - [Render deployment guide](docs/render_deployment.md)
 - [Render manual setup checklist](docs/render_manual_setup_checklist.md)
+- [Phase 1 Render execution runbook](docs/phase1_render_execution.md)
 - [S3 smoke test guide](docs/s3_smoke_test.md)
 
 
