@@ -2,7 +2,7 @@
 
 This guide prepares the app for an MVP/demo deployment on Render. It does not deploy anything and does not include secrets.
 
-For the step-by-step service setup handoff, use the [Render manual setup checklist](render_manual_setup_checklist.md).
+For the step-by-step service setup handoff, use the [Render manual setup checklist](render_manual_setup_checklist.md). For the real Phase 1 deployment trial runbook, use [Phase 1 Render execution](phase1_render_execution.md).
 
 ## MVP Architecture
 
