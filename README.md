@@ -80,7 +80,15 @@ The smoke test uploads a temporary DOCX CV, creates a score job, waits for worke
 
 ## Phase 0 Status
 
-Phase 0 passed a real local Docker E2E smoke test. See docs/phase0_baseline.md and docs/render_deployment.md for details.
+Phase 0 is closed as the current baseline. Verified items include the backend/frontend split, FastAPI API, Celery worker, Redis, PostgreSQL/pgvector, local/S3 storage abstraction, local Docker E2E smoke test, S3-backed Docker smoke test, result JSON, DOCX report download, safe report metadata, CPU-only Torch dependency path, and repository hygiene for generated files.
+
+Key docs:
+
+- [Phase 0 baseline](docs/phase0_baseline.md)
+- [Roadmap](docs/roadmap.md)
+- [Phase 1 team plan](docs/phase1_team_plan.md)
+- [Render deployment guide](docs/render_deployment.md)
+- [S3 smoke test guide](docs/s3_smoke_test.md)
 
 
 
