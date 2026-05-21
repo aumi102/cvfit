@@ -1,5 +1,57 @@
 # Phase 0 Baseline
 
+## Phase 0 Final Baseline
+
+Phase 0 is closed as the current technical baseline for Phase 1 work. The app has been verified end-to-end with both local filesystem storage and real S3-backed storage through Docker Compose.
+
+The verified baseline includes:
+
+- Repository split into `backend/` and `frontend/`.
+- FastAPI API with Jinja/vanilla JavaScript frontend.
+- Celery worker connected to Redis.
+- PostgreSQL/pgvector through Docker Compose.
+- Local and S3-compatible storage abstraction.
+- CV upload validation for PDF/DOCX files.
+- Async score job creation and worker processing.
+- Result JSON retrieval.
+- DOCX report generation and download.
+- Report metadata that does not expose `local_path`.
+- CPU-only Torch dependency path for Docker builds.
+- No tracked generated uploads, reports, `__pycache__`, or `.pyc` files.
+
+### Local Docker E2E Proof
+
+The local Docker E2E smoke test passed with `STORAGE_BACKEND=local`:
+
+```text
+health ok
+uploaded cv_file_id=<uuid>
+created job_id=<uuid>
+job status=succeeded progress=100
+fit_score=75.9
+report metadata ok: {'format': 'docx', 'download_url': '/v1/jobs/<job_id>/report/download'}
+downloaded report bytes=37265
+smoke test passed
+```
+
+### S3-Backed Smoke Test Proof
+
+The S3-backed Docker smoke test passed with `STORAGE_BACKEND=s3`. The API and worker both received S3 configuration, the app uploaded the CV through S3 storage, the worker read the CV through the storage abstraction, the worker wrote the DOCX report through S3 storage, and the API downloaded the report bytes through the same storage path.
+
+Successful S3 smoke output included:
+
+```text
+health ok
+uploaded cv_file_id=<uuid>
+created job_id=<uuid>
+job status=succeeded progress=100
+fit_score=75.9
+report metadata ok: {'format': 'docx', 'download_url': '/v1/jobs/<job_id>/report/download'}
+downloaded report bytes=37265
+smoke test passed
+s3 smoke test passed
+```
+
 ## Phase 0 Scope
 
 Phase 0 establishes a deployable MVP baseline for the AI CV Fit App without adding new product features. The app keeps its current upload, scoring, result, and DOCX report flow while the repository is prepared for Phase 1 development.
@@ -51,24 +103,37 @@ smoke test passed
 - Worker failure handling.
 - Render deployment documentation.
 - Local Docker smoke test script.
+- S3 Docker Compose override and smoke test documentation.
+- Real S3-backed Docker smoke test proof.
+- Dependency split with CPU-only Torch for Docker builds.
 - Repository hygiene for generated uploads/reports/cache files.
 
 ## Not Included Yet
 
 - Production auth.
-- Real S3 bucket smoke test.
 - Database migrations.
-- Docker image optimization.
 - Production monitoring.
 - Advanced frontend.
 - LLM-based feedback.
+- Automatic S3 object cleanup/lifecycle enforcement.
+- Render production deployment.
 
 ## Phase 1 Recommended Workstreams
 
-- Project structure and developer workflow.
-- Render/S3 deployment validation.
+- Render deployment validation.
 - UI/UX improvement.
-- Scoring quality improvement.
 - Auth/access token.
-- Docker image size optimization.
+- Alembic migration baseline.
+- Backend quality and test coverage expansion.
+- S3 cleanup checklist and privacy handling.
+- Scoring quality improvement.
 - Test coverage expansion.
+
+## Remaining Risks
+
+- No production authentication yet; access is UUID-based only.
+- No database migrations yet; tables are created by app startup code.
+- S3 smoke objects require manual cleanup or provider lifecycle policy.
+- Docker images remain large even after removing CUDA-heavy dependencies.
+- No production monitoring, alerting, or backup verification yet.
+- Scoring remains deterministic but basic; explainability and evidence grounding need Phase 3 work.
