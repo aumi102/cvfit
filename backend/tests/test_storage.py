@@ -149,18 +149,138 @@ def test_local_storage_can_save_and_read_small_file(tmp_path):
 
 def test_report_metadata_does_not_expose_local_path():
     from app.api.routes.jobs import job_report
+    from app.api.routes import jobs as jobs_route
 
     job_id = str(uuid.uuid4())
-    fake_job = SimpleNamespace(report_docx_path="./data/reports/test.docx")
+    token = "correct-token"
+    fake_job = SimpleNamespace(
+        report_docx_path="./data/reports/test.docx",
+        access_token_hash=jobs_route._hash_access_token(token),
+    )
     fake_db = SimpleNamespace(get=lambda model, key: fake_job)
 
-    response = job_report(job_id, db=fake_db)
+    response = job_report(job_id, access_token=token, db=fake_db)
 
     assert response == {
         "format": "docx",
-        "download_url": f"/v1/jobs/{job_id}/report/download",
+        "download_url": f"/v1/jobs/{job_id}/report/download?access_token={token}",
     }
     assert "local_path" not in response
+
+
+def test_create_score_returns_job_id_and_access_token(monkeypatch):
+    from app.api.routes import jobs as jobs_route
+    from app.schemas.requests import ScoreCreateRequest
+
+    cv_id = uuid.uuid4()
+    cv = SimpleNamespace(id=cv_id)
+    saved_rows = []
+    enqueued_jobs = []
+
+    class FakeDb:
+        def get(self, model, key):
+            if model.__name__ == "CVFile":
+                return cv
+            return None
+
+        def add(self, row):
+            saved_rows.append(row)
+
+        def flush(self):
+            return None
+
+        def commit(self):
+            return None
+
+    fake_task_module = SimpleNamespace(
+        run_job=SimpleNamespace(delay=lambda job_id: enqueued_jobs.append(job_id))
+    )
+    monkeypatch.setitem(sys.modules, "app.workers.tasks", fake_task_module)
+
+    payload = ScoreCreateRequest(cv_file_id=str(cv_id), jd_text="x" * 30)
+    response = jobs_route.create_score_job(payload, db=FakeDb())
+
+    jobs = [row for row in saved_rows if row.__class__.__name__ == "AnalysisJob"]
+    assert response.job_id
+    assert response.access_token
+    assert jobs[0].access_token_hash
+    assert jobs[0].access_token_hash != response.access_token
+    assert jobs[0].access_token_hash == jobs_route._hash_access_token(response.access_token)
+    assert enqueued_jobs == [response.job_id]
+
+
+def test_result_endpoint_rejects_missing_token():
+    from app.api.routes import jobs as jobs_route
+
+    job_id = str(uuid.uuid4())
+    fake_job = SimpleNamespace(
+        status="succeeded",
+        result_json={"scores": {"fit_score": 90}},
+        access_token_hash=jobs_route._hash_access_token("correct-token"),
+    )
+    fake_db = SimpleNamespace(get=lambda model, key: fake_job)
+
+    with pytest.raises(HTTPException) as exc:
+        jobs_route.job_result(job_id, db=fake_db)
+
+    assert exc.value.status_code == 403
+
+
+def test_result_endpoint_rejects_wrong_token():
+    from app.api.routes import jobs as jobs_route
+
+    job_id = str(uuid.uuid4())
+    fake_job = SimpleNamespace(
+        status="succeeded",
+        result_json={"scores": {"fit_score": 90}},
+        access_token_hash=jobs_route._hash_access_token("correct-token"),
+    )
+    fake_db = SimpleNamespace(get=lambda model, key: fake_job)
+
+    with pytest.raises(HTTPException) as exc:
+        jobs_route.job_result(job_id, access_token="wrong-token", db=fake_db)
+
+    assert exc.value.status_code == 403
+
+
+def test_result_endpoint_accepts_correct_token():
+    from app.api.routes import jobs as jobs_route
+
+    token = "correct-token"
+    job_id = str(uuid.uuid4())
+    result_json = {"scores": {"fit_score": 90}}
+    fake_job = SimpleNamespace(
+        status="succeeded",
+        result_json=result_json,
+        access_token_hash=jobs_route._hash_access_token(token),
+    )
+    fake_db = SimpleNamespace(get=lambda model, key: fake_job)
+
+    response = jobs_route.job_result(job_id, access_token=token, db=fake_db)
+
+    assert response.job_id == job_id
+    assert response.result == result_json
+
+
+@pytest.mark.parametrize("endpoint", ["job_report", "download_docx"])
+@pytest.mark.parametrize("token", [None, "wrong-token"])
+def test_report_endpoints_reject_missing_or_wrong_token(monkeypatch, endpoint, token):
+    from app.api.routes import jobs as jobs_route
+
+    job_id = str(uuid.uuid4())
+    fake_job = SimpleNamespace(
+        status="succeeded",
+        report_docx_path="reports/test.docx",
+        access_token_hash=jobs_route._hash_access_token("correct-token"),
+    )
+    fake_db = SimpleNamespace(get=lambda model, key: fake_job)
+    fake_storage = SimpleNamespace(read_bytes=lambda location: b"docx-bytes")
+    monkeypatch.setattr(jobs_route, "get_storage", lambda: fake_storage)
+
+    with pytest.raises(HTTPException) as exc:
+        getattr(jobs_route, endpoint)(job_id, access_token=token, db=fake_db)
+
+    assert exc.value.status_code == 403
 
 
 def test_upload_endpoint_response_shape_remains_compatible(monkeypatch):
@@ -245,12 +365,17 @@ def test_report_download_response_shape_remains_compatible(monkeypatch):
     from app.api.routes import jobs as jobs_route
 
     job_id = str(uuid.uuid4())
-    fake_job = SimpleNamespace(status="succeeded", report_docx_path="reports/test.docx")
+    token = "correct-token"
+    fake_job = SimpleNamespace(
+        status="succeeded",
+        report_docx_path="reports/test.docx",
+        access_token_hash=jobs_route._hash_access_token(token),
+    )
     fake_db = SimpleNamespace(get=lambda model, key: fake_job)
     fake_storage = SimpleNamespace(read_bytes=lambda location: b"docx-bytes")
     monkeypatch.setattr(jobs_route, "get_storage", lambda: fake_storage)
 
-    response = jobs_route.download_docx(job_id, db=fake_db)
+    response = jobs_route.download_docx(job_id, access_token=token, db=fake_db)
 
     assert response.media_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     assert response.body == b"docx-bytes"
@@ -262,7 +387,12 @@ def test_report_download_returns_404_when_object_missing(monkeypatch):
     from app.services.storage import StorageNotFoundError
 
     job_id = str(uuid.uuid4())
-    fake_job = SimpleNamespace(status="succeeded", report_docx_path="reports/missing.docx")
+    token = "correct-token"
+    fake_job = SimpleNamespace(
+        status="succeeded",
+        report_docx_path="reports/missing.docx",
+        access_token_hash=jobs_route._hash_access_token(token),
+    )
     fake_db = SimpleNamespace(get=lambda model, key: fake_job)
     fake_storage = SimpleNamespace(
         read_bytes=lambda location: (_ for _ in ()).throw(StorageNotFoundError("missing"))
@@ -270,7 +400,7 @@ def test_report_download_returns_404_when_object_missing(monkeypatch):
     monkeypatch.setattr(jobs_route, "get_storage", lambda: fake_storage)
 
     with pytest.raises(HTTPException) as exc:
-        jobs_route.download_docx(job_id, db=fake_db)
+        jobs_route.download_docx(job_id, access_token=token, db=fake_db)
 
     assert exc.value.status_code == 404
     assert exc.value.detail == "report file not found"

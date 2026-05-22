@@ -6,6 +6,7 @@ class UploadResponse(BaseModel):
 
 class JobCreateResponse(BaseModel):
     job_id: str
+    access_token: str
 
 class JobStatusResponse(BaseModel):
     job_id: str

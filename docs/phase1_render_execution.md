@@ -175,6 +175,38 @@ Expected success signs:
 
 `scripts/smoke_test_s3.py` already supports `API_BASE_URL`, so no separate Render smoke script is needed.
 
+## Render MVP Smoke Test Passed
+
+Date: May 22, 2026
+
+API URL domain: `cvfit.onrender.com`
+
+Smoke command:
+
+```bash
+API_BASE_URL=https://cvfit.onrender.com python scripts/smoke_test_s3.py
+```
+
+Success summary:
+
+- `/health` returned ok.
+- CV upload succeeded.
+- Score job was created.
+- Job moved from queued to running to succeeded.
+- Result JSON was returned with `fit_score`.
+- Report metadata returned `download_url` and did not expose `local_path`.
+- DOCX report downloaded successfully.
+- Smoke script ended with `smoke test passed` and `s3 smoke test passed`.
+
+Remaining risks at Phase 1A closeout:
+
+- No full auth yet.
+- UUID-only access existed before the Phase 1B access-token patch.
+- No DB migrations yet.
+- S3 lifecycle cleanup still needed.
+- Docker image still large.
+- First model load can be slow.
+
 ## Troubleshooting
 
 ### API Build Failure
@@ -238,7 +270,8 @@ Expected success signs:
 ## Current Limitations
 
 - No full auth yet.
-- UUID-based access remains.
+- MVP access-token protection is not full account auth.
+- Job status polling remains public by UUID for the current UI flow.
 - No DB migrations yet.
 - S3 lifecycle cleanup still needed.
 - Docker image remains large.
