@@ -176,7 +176,7 @@ Expected response:
 ## Known Limitations
 
 - Current app still has no full auth.
-- CV, result, and report access is UUID-based only.
+- Job status polling remains UUID-based; result, report metadata, and report download use MVP access-token protection.
 - Render environment variables must be set for both the API and worker services.
 - S3 integration must be smoke-tested with a real private bucket before demo use.
 - S3 lifecycle cleanup is still needed for uploaded CVs and generated reports.

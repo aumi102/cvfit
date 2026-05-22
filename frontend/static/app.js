@@ -16,6 +16,7 @@ const btnShowRaw = document.getElementById("btnShowRaw");
 const rawJsonEl = document.getElementById("rawJson");
 
 let lastResult = null;
+let currentAccessToken = null;
 
 function setStatus(text) {
     statusText.textContent = text;
@@ -53,7 +54,7 @@ async function createJob(cv_file_id, jd_text) {
         const t = await res.text();
         throw new Error("Create job failed: " + t);
     }
-    return res.json(); // {job_id}
+    return res.json(); // {job_id, access_token}
 }
 
 async function getJob(job_id) {
@@ -62,13 +63,13 @@ async function getJob(job_id) {
     return res.json();
 }
 
-async function getResult(job_id) {
-    const res = await fetch(`/v1/jobs/${job_id}/result`);
+async function getResult(job_id, accessToken) {
+    const res = await fetch(`/v1/jobs/${job_id}/result?access_token=${encodeURIComponent(accessToken)}`);
     if (!res.ok) throw new Error("Result not ready");
     return res.json(); // {job_id, result}
 }
 
-function renderResult(result) {
+function renderResult(result, accessToken) {
     lastResult = result;
     resultCard.classList.remove("d-none");
 
@@ -94,7 +95,7 @@ function renderResult(result) {
     rawJsonEl.textContent = JSON.stringify(result, null, 2);
 
     btnDownloadDocx.classList.remove("d-none");
-    btnDownloadDocx.href = `/v1/jobs/${result.job_id}/report/download`;
+    btnDownloadDocx.href = `/v1/jobs/${result.job_id}/report/download?access_token=${encodeURIComponent(accessToken)}`;
 }
 
 btnShowRaw.addEventListener("click", () => {
@@ -117,6 +118,7 @@ form.addEventListener("submit", async (e) => {
         const up = await uploadCV(file);
         setStatus("Creating job...");
         const job = await createJob(up.cv_file_id, jdText);
+        currentAccessToken = job.access_token;
 
         setStatus("Running job...");
         for (let i = 0; i < 90; i++) {
@@ -128,8 +130,8 @@ form.addEventListener("submit", async (e) => {
         }
 
         setStatus("Fetching result...");
-        const out = await getResult(job.job_id);
-        renderResult(out.result);
+        const out = await getResult(job.job_id, currentAccessToken);
+        renderResult(out.result, currentAccessToken);
         setStatus("Done.");
     } catch (err) {
         console.error(err);

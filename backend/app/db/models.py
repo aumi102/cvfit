@@ -53,6 +53,7 @@ class AnalysisJob(Base):
 
     result_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     report_docx_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    access_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

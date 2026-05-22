@@ -8,6 +8,7 @@ import time
 import uuid
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from docx import Document
@@ -33,6 +34,26 @@ def request_bytes(method: str, path: str) -> bytes:
     req = Request(f"{API_BASE_URL}{path}", method=method)
     with urlopen(req, timeout=60) as response:
         return response.read()
+
+
+def expect_http_status(method: str, path: str, expected_status: int) -> None:
+    req = Request(f"{API_BASE_URL}{path}", method=method)
+    try:
+        with urlopen(req, timeout=30) as response:
+            status = response.status
+    except HTTPError as exc:
+        status = exc.code
+        exc.read()
+    if status != expected_status:
+        raise RuntimeError(f"expected HTTP {expected_status} for {path}, got {status}")
+
+
+def redact_report_metadata(report: dict) -> dict:
+    redacted = dict(report)
+    download_url = redacted.get("download_url")
+    if isinstance(download_url, str) and "access_token=" in download_url:
+        redacted["download_url"] = download_url.split("access_token=", 1)[0] + "access_token=<hidden>"
+    return redacted
 
 
 def post_multipart_file(path: str, field_name: str, file_path: Path, content_type: str) -> dict:
@@ -130,8 +151,11 @@ def main() -> int:
             },
         )
         job_id = job.get("job_id")
+        access_token = job.get("access_token")
         if not job_id:
             raise RuntimeError(f"create-score response missing job_id: {job}")
+        if not access_token:
+            raise RuntimeError(f"create-score response missing access_token: {job}")
         print(f"created job_id={job_id}")
 
         deadline = time.time() + TIMEOUT_SECONDS
@@ -147,18 +171,23 @@ def main() -> int:
         else:
             raise RuntimeError(f"job timed out after {TIMEOUT_SECONDS}s: {status}")
 
-        result = request_json("GET", f"/v1/jobs/{job_id}/result")
+        expect_http_status("GET", f"/v1/jobs/{job_id}/result", 403)
+        expect_http_status("GET", f"/v1/jobs/{job_id}/result?access_token=wrong-token", 403)
+        print("access token protection ok")
+
+        token_query = urlencode({"access_token": access_token})
+        result = request_json("GET", f"/v1/jobs/{job_id}/result?{token_query}")
         scores = result.get("result", {}).get("scores", {})
         if "fit_score" not in scores:
             raise RuntimeError(f"result missing scores.fit_score: {result}")
         print(f"fit_score={scores['fit_score']}")
 
-        report = request_json("GET", f"/v1/jobs/{job_id}/report")
+        report = request_json("GET", f"/v1/jobs/{job_id}/report?{token_query}")
         if "local_path" in report:
-            raise RuntimeError(f"report metadata exposed local_path: {report}")
+            raise RuntimeError(f"report metadata exposed local_path: {redact_report_metadata(report)}")
         if report.get("format") != "docx" or not report.get("download_url"):
-            raise RuntimeError(f"unexpected report metadata: {report}")
-        print(f"report metadata ok: {report}")
+            raise RuntimeError(f"unexpected report metadata: {redact_report_metadata(report)}")
+        print(f"report metadata ok: {redact_report_metadata(report)}")
 
         report_bytes = request_bytes("GET", report["download_url"])
         if len(report_bytes) < 1000:

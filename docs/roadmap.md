@@ -4,6 +4,8 @@ This roadmap starts from the Phase 0 final baseline and keeps deployment, produc
 
 ## Phase 1: MVP Deploy And Team Foundation
 
+Phase 1A completed: the Render MVP deployment smoke test passed against the deployed API, worker, Redis/Postgres, and S3-backed storage. This confirms demo deployment viability only; it is not production readiness.
+
 ### Goals
 
 - Deploy the current MVP safely to Render.
