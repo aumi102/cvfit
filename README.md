@@ -68,6 +68,17 @@ python -m pytest
 
 There is intentionally no root requirements.txt; install from backend/requirements.txt for runtime or backend/requirements-dev.txt for local development and tests.
 
+## Database Migrations
+
+Migration workflow and Render adoption notes are in [Database migrations](docs/database_migrations.md). For a disposable/local PostgreSQL validation run:
+
+```bash
+cd backend
+alembic upgrade head
+cd ..
+python scripts/check_db_schema.py
+```
+
 ## Smoke Test
 
 With the Docker stack running:
@@ -92,6 +103,7 @@ Key docs:
 - [Render deployment guide](docs/render_deployment.md)
 - [Render manual setup checklist](docs/render_manual_setup_checklist.md)
 - [Phase 1 Render execution runbook](docs/phase1_render_execution.md)
+- [Database migrations](docs/database_migrations.md)
 - [S3 smoke test guide](docs/s3_smoke_test.md)
 
 

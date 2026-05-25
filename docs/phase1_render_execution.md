@@ -117,7 +117,7 @@ Set these on both the API service and worker service.
 - Create a Render PostgreSQL database or compatible Postgres service that supports the `vector` extension.
 - Copy the internal database URL into `DATABASE_URL`.
 - Set the same `DATABASE_URL` on the API and worker.
-- The current app creates tables at startup; database migrations are not implemented yet.
+- Alembic baseline migrations now exist, but the app still keeps startup table creation for MVP compatibility.
 
 ## Render Redis / Key Value
 
@@ -202,7 +202,7 @@ Remaining risks at Phase 1A closeout:
 
 - No full auth yet.
 - UUID-only access existed before the Phase 1B access-token patch.
-- No DB migrations yet.
+- Alembic baseline exists, but the migration workflow is not production-proven yet.
 - S3 lifecycle cleanup still needed.
 - Docker image still large.
 - First model load can be slow.
@@ -300,7 +300,7 @@ Phase 1B adds MVP access-token protection for result, report metadata, and repor
 - No full auth yet.
 - MVP access-token protection is not full account auth.
 - Job status polling remains public by UUID for the current UI flow.
-- No DB migrations yet.
+- Alembic baseline exists, but startup `create_all()` compatibility remains for the MVP.
 - S3 lifecycle cleanup still needed.
 - Docker image remains large.
 - The deployment is for MVP/demo validation, not production exposure.

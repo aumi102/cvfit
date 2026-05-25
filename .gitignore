@@ -10,11 +10,15 @@ data/uploads/
 data/reports/
 
 .pytest_cache/
+pytest-cache-files-local/
+backend/pytest-cache-files-local/
+**/pytest-cache-files-local/
 .mypy_cache/
 .ruff_cache/
 *.db
 *.sqlite
 *.sqlite3
+*.dir.tar.gz
 
 .cache/
 model_cache/

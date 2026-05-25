@@ -182,7 +182,7 @@ Expected response:
 - S3 lifecycle cleanup is still needed for uploaded CVs and generated reports.
 - Render free tier is suitable only for demo/testing, not production.
 - The first scoring run may be slower if the embedding model has to download at runtime.
-- Database migrations are not yet implemented; the app currently creates tables at startup.
+- Alembic baseline migrations exist, but the app still keeps startup table creation for MVP compatibility.
 
 ## Manual Smoke Test Checklist
 
