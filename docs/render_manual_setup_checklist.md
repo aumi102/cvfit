@@ -189,7 +189,7 @@ Expected success criteria:
 - Current app still has no full auth.
 - Job status polling remains UUID-based; result, report metadata, and report download use MVP access-token protection.
 - S3 lifecycle cleanup is still needed.
-- Database migrations are not yet implemented.
+- Alembic baseline migrations exist, but startup table creation remains for MVP compatibility.
 - First scoring run may be slower if the embedding model has to download at runtime.
 
 ## Troubleshooting
