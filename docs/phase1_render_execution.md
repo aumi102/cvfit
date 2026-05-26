@@ -153,28 +153,46 @@ Do not commit the real env file.
 
 ## Post-Deploy Smoke Test
 
-After the API and worker are deployed and healthy, run from your local machine:
+After the API and worker are deployed and healthy, start with the read-only MVP
+smoke check from your local machine:
 
 ```bash
-API_BASE_URL=https://<render-api-url> python scripts/smoke_test_s3.py
+API_BASE_URL=https://<render-api-url> python scripts/smoke_test_mvp.py
 ```
 
 PowerShell equivalent:
 
 ```powershell
-$env:API_BASE_URL="https://<render-api-url>"; python scripts/smoke_test_s3.py
+$env:API_BASE_URL="https://<render-api-url>"; python scripts/smoke_test_mvp.py
+```
+
+Run the full synthetic upload-to-report flow only with explicit opt-in:
+
+```bash
+API_BASE_URL=https://<render-api-url> SMOKE_ALLOW_MUTATING=1 python scripts/smoke_test_mvp.py --mutating
+```
+
+PowerShell equivalent:
+
+```powershell
+$env:API_BASE_URL="https://<render-api-url>"
+$env:SMOKE_ALLOW_MUTATING="1"
+python scripts/smoke_test_mvp.py --mutating
+Remove-Item Env:SMOKE_ALLOW_MUTATING
 ```
 
 Expected success signs:
 
-- `/health` returns `{"status":"ok"}`.
-- CV upload returns `cv_file_id`.
-- Score job reaches `succeeded`.
-- Result JSON includes `scores.fit_score`.
-- Report metadata does not expose `local_path`.
-- DOCX report download returns non-empty bytes.
+- Read-only mode returns `health ok`.
+- Mutating mode uploads only a tiny synthetic DOCX CV.
+- Mutating mode creates one score job and reaches `succeeded`.
+- Mutating mode result JSON includes `scores.fit_score`.
+- Mutating mode report metadata does not expose `local_path`.
+- Mutating mode DOCX report download returns non-empty bytes.
 
-`scripts/smoke_test_s3.py` already supports `API_BASE_URL`, so no separate Render smoke script is needed.
+Do not set `DATABASE_URL` for smoke tests. Do not use real CVs or private
+personal data. Mutating smoke leaves one synthetic job/report because the API
+does not currently expose a cleanup endpoint.
 
 ## Render MVP Smoke Test Passed
 
