@@ -162,6 +162,23 @@ python scripts/smoke_test_local.py
 
 The smoke test uploads a temporary DOCX CV, creates a score job, waits for worker completion, validates result JSON, checks report metadata, and downloads a non-empty DOCX report.
 
+For the deployed MVP, use the production-safe smoke script. The default mode is
+read-only and calls only `/health`:
+
+```bash
+API_BASE_URL=https://your-render-api.onrender.com python scripts/smoke_test_mvp.py
+```
+
+Run the deployed end-to-end flow only with explicit opt-in and synthetic data:
+
+```bash
+API_BASE_URL=https://your-render-api.onrender.com SMOKE_ALLOW_MUTATING=1 python scripts/smoke_test_mvp.py --mutating
+```
+
+Do not set `DATABASE_URL` for deployed smoke tests, and do not use real CVs or
+private personal data. Mutating smoke creates one tiny synthetic upload, score
+job, and DOCX report; the current API has no cleanup endpoint.
+
 ## Phase 0 Status
 
 Phase 0 is closed as the current baseline. Verified items include the backend/frontend split, FastAPI API, Celery worker, Redis, PostgreSQL/pgvector, local/S3 storage abstraction, local Docker E2E smoke test, S3-backed Docker smoke test, result JSON, DOCX report download, safe report metadata, CPU-only Torch dependency path, and repository hygiene for generated files.
