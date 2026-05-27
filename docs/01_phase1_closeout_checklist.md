@@ -51,4 +51,13 @@ Phase 1 chỉ nên close khi đạt tối thiểu:
 - Verified result/report/download endpoints require `access_token`; missing or wrong tokens are rejected, correct tokens are accepted.
 - Added tests for documented request aliases, queued create-score response status, result internal-path scrubbing, report metadata internal-path hiding, and sanitized worker error messages.
 - Added root pytest config so `python -m pytest backend/tests -q` works from the repository root without manual `PYTHONPATH` or temp-dir setup.
-- Remaining blocker: full deployment smoke still needs to be run against Render with real storage/worker credentials.
+- Render deployment smoke was later completed; see evidence note below.
+
+## Evidence note - Render backend smoke 2026-05-27
+
+- Render backend smoke passed against the deployed backend.
+- `/health` returned OK.
+- CV upload completed successfully using a temporary dummy DOCX.
+- Create-score returned `job_id` and `access_token`.
+- Missing and wrong access tokens were rejected for result, report metadata, and report download.
+- Correct access token allowed result, report metadata, and report download.
