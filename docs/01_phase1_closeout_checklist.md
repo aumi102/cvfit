@@ -43,3 +43,12 @@ Phase 1 chỉ nên close khi đạt tối thiểu:
 | S3 cleanup chưa set được | Viết runbook + tạo issue Phase 1.5; không block demo nếu storage smoke OK |
 | Login chưa có | Không ép làm trước deadline; dùng access_token guest mode |
 | Worker lỗi | Ưu tiên sửa trước mọi feature khác vì analysis flow phụ thuộc worker |
+
+## Evidence note - backend access-token audit 2026-05-27
+
+- Checked implemented Phase 1 backend endpoints: `POST /v1/cv/upload`, `POST /v1/jobs/create-score`, `GET /v1/jobs/{job_id}`, `GET /v1/jobs/{job_id}/result`, `GET /v1/jobs/{job_id}/report`, and `GET /v1/jobs/{job_id}/report/download`.
+- Added small compatibility support for the documented `cv_id` and `job_description` create-score request fields while preserving existing `cv_file_id` and `jd_text`.
+- Verified result/report/download endpoints require `access_token`; missing or wrong tokens are rejected, correct tokens are accepted.
+- Added tests for documented request aliases, queued create-score response status, result internal-path scrubbing, report metadata internal-path hiding, and sanitized worker error messages.
+- Added root pytest config so `python -m pytest backend/tests -q` works from the repository root without manual `PYTHONPATH` or temp-dir setup.
+- Remaining blocker: full deployment smoke still needs to be run against Render with real storage/worker credentials.

@@ -21,6 +21,7 @@ def upload_cv(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
     try:
         path, digest, mime = save_upload(file)
+        size_bytes = file.file.tell()
     except UploadValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -33,4 +34,11 @@ def upload_cv(file: UploadFile = File(...), db: Session = Depends(get_db)):
     )
     db.add(row)
     db.commit()
-    return UploadResponse(cv_file_id=str(row.id))
+    cv_id = str(row.id)
+    return UploadResponse(
+        cv_file_id=cv_id,
+        cv_id=cv_id,
+        filename=file.filename,
+        content_type=mime,
+        size_bytes=size_bytes,
+    )
