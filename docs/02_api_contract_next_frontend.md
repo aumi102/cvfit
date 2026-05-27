@@ -205,3 +205,14 @@ Frontend handling:
 - Download report hoạt động.
 - Không có `console.log(access_token)`.
 - Error state rõ cho upload fail/job fail/download fail.
+
+## Backend audit update - 2026-05-27
+
+The implemented Phase 1 route paths match this document. The backend now accepts both create-score request shapes: documented `cv_id`/`job_description` and existing `cv_file_id`/`jd_text`.
+
+Compatibility fields preserved for the existing Jinja/fallback UI and smoke scripts:
+- Upload returns both `cv_id` and `cv_file_id`, plus filename/content metadata.
+- Create-score returns `job_id`, `access_token`, and `status`.
+- Job status returns both `error` and `error_message`.
+- Result returns the existing nested `result` object and documented top-level convenience fields where they can be derived.
+- Report preview returns `job_id`, `report_status`, `sections`, `format`, and `download_url`.

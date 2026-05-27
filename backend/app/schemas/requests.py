@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 from typing import Literal, List, Optional
 
 class ScoreOptions(BaseModel):
@@ -8,6 +8,8 @@ class ScoreOptions(BaseModel):
     output_formats: List[Literal["json","docx"]] = ["json","docx"]
 
 class ScoreCreateRequest(BaseModel):
-    cv_file_id: str
-    jd_text: str = Field(min_length=30)
+    model_config = ConfigDict(populate_by_name=True)
+
+    cv_file_id: str = Field(validation_alias=AliasChoices("cv_file_id", "cv_id"))
+    jd_text: str = Field(min_length=30, validation_alias=AliasChoices("jd_text", "job_description"))
     options: ScoreOptions = ScoreOptions()
