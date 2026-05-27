@@ -1,0 +1,45 @@
+# Phase 1 Closeout Checklist — AI CV Fit
+
+Deadline nội bộ: Thứ Bảy, 30/05/2026  
+Nguyên tắc: không chốt bằng cảm tính; mỗi mục cần có evidence.
+
+| Nhóm việc | Task | Owner | Status | Evidence cần có | Blocker | Must-have before close? | Can move Phase 2? |
+|---|---|---:|---|---|---|---|---|
+| Deploy | Render backend chạy ổn | Phúc | TODO | `/health` OK, logs không crash | Env / build / start command | Yes | No |
+| Deploy | Worker chạy ổn | Phúc/Đạt | TODO | queue job chạy từ queued → running → succeeded/failed rõ | Redis/Celery/env | Yes | No |
+| Storage | S3 upload/download smoke | Phúc | TODO | upload CV thành công, report download được | AWS credentials, bucket, region | Yes | No |
+| Security MVP | Access token bảo vệ result/report | Phúc/Đạt | TODO | không token → 401/403; token đúng → 200; token sai → 401/403 | API chưa enforce | Yes | No |
+| API Contract | Contract cho Next frontend | Phúc | TODO | `docs/api-contract-next.md` merge vào repo | Endpoint chưa thống nhất | Yes | No |
+| Frontend | Next landing page | Quân | TODO | mở được page deploy/local | Design/API mismatch | Yes | No, nếu Jinja fallback |
+| Frontend | Analyze page: upload CV + paste JD | Quân | TODO | gửi request thật tới backend | CORS/API contract | Yes | No, nếu Jinja fallback |
+| Frontend | Loading/result/download flow | Quân + Phúc | TODO | job polling + result + download OK | access_token handling | Yes | No, nếu Jinja fallback |
+| Migration | Alembic baseline validation | Đạt/Phúc | TODO | disposable DB chạy `alembic upgrade head` OK | migration drift | Yes | No |
+| Cleanup | S3 lifecycle cleanup | Phúc/Đạt | TODO | lifecycle policy JSON hoặc console screenshot | quyền AWS | Should | Yes, nếu có runbook |
+| Docs | Runbook smoke test | Phúc | TODO | `docs/runbook-phase1.md` có lệnh chạy | thiếu endpoint/env | Yes | No |
+| Product | Phase 2 Product Spec | Phúc | TODO | `docs/phase2-product-spec.md` | chưa thống nhất scope | Should | No |
+| Demo | Demo script 3–5 phút | Phúc | TODO | script + fallback notes | Next chưa ổn | Yes | No |
+
+## Definition of Done Phase 1
+
+Phase 1 chỉ nên close khi đạt tối thiểu:
+
+- Người dùng upload được CV/PDF hoặc DOCX hợp lệ.
+- Người dùng paste JD.
+- Backend tạo job async thành công.
+- FE hoặc Jinja fallback hiển thị được trạng thái loading.
+- Result trả về score/feedback tối thiểu.
+- Report download được.
+- Result/report bị chặn nếu thiếu hoặc sai access_token.
+- Không log raw CV, không log access_token.
+- Có lệnh smoke test repeatable.
+- Có quyết định rõ: Next frontend dùng demo chính hay Jinja fallback.
+
+## Quy tắc xử lý nếu có blocker
+
+| Blocker | Quyết định |
+|---|---|
+| Next frontend chưa gọi được API thật | Giữ Jinja làm fallback demo; Quân tiếp tục Phase 2 polish |
+| Alembic chưa chắc chắn | Không chạy trực tiếp lên production DB; validate trên disposable DB trước |
+| S3 cleanup chưa set được | Viết runbook + tạo issue Phase 1.5; không block demo nếu storage smoke OK |
+| Login chưa có | Không ép làm trước deadline; dùng access_token guest mode |
+| Worker lỗi | Ưu tiên sửa trước mọi feature khác vì analysis flow phụ thuộc worker |
