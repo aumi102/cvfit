@@ -67,14 +67,6 @@ cd backend && pip install -r requirements.txt
 cd backend && celery -A app.workers.celery_app:celery_app worker --loglevel=INFO -Q cvfit
 ```
 
-The API and worker do not run migrations at startup. Before starting or
-restarting services against a new/changed database, apply the reviewed Alembic
-migrations from a trusted operator environment. For an empty Render database,
-that means running `cd backend && alembic upgrade head` with the intended
-Render `DATABASE_URL` set in that operator shell. For an existing Render
-database, take a backup and run the schema/adoption checks described in
-[database_migrations.md](database_migrations.md) before upgrading or stamping.
-
 ## Pre-Deploy Checklist
 
 Before creating Render services:
@@ -86,8 +78,7 @@ Before creating Render services:
 5. Create a private object-storage bucket and prefix for the MVP.
 6. Run the S3-backed smoke test in [s3_smoke_test.md](s3_smoke_test.md).
 7. Set the required environment variables on both Render services.
-8. Confirm the Render database is initialized or safely adopted to Alembic head before starting API/worker runtime.
-9. Confirm uploaded CVs and reports are not committed to git.
+8. Confirm uploaded CVs and reports are not committed to git.
 
 ## Local Docker Smoke Test
 
@@ -95,11 +86,6 @@ Start the full local stack:
 
 ```bash
 docker compose down -v
-docker compose up --build -d postgres redis
-cd backend
-DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@localhost:5432/cvfit \
-alembic upgrade head
-cd ..
 docker compose up --build -d
 ```
 
@@ -167,41 +153,11 @@ docker compose -f docker-compose.yml -f docker-compose.s3.yml down
 
 See [s3_smoke_test.md](s3_smoke_test.md) for required environment variables, provider notes, and expected output.
 
-After the app is manually deployed on Render, start with the read-only MVP smoke
-check from your local machine:
+After the app is manually deployed on Render, run the same production-like smoke flow from your local machine:
 
 ```bash
-API_BASE_URL=https://<render-api-url> python scripts/smoke_test_mvp.py
+API_BASE_URL=https://<render-api-url> python scripts/smoke_test_s3.py
 ```
-
-Expected read-only success output includes:
-
-```text
-health ok
-read-only smoke completed
-mutating smoke is skipped by default
-```
-
-Run the full deployed upload-to-report smoke only when you intentionally want
-to create one synthetic job/report in the deployed app:
-
-```bash
-API_BASE_URL=https://<render-api-url> SMOKE_ALLOW_MUTATING=1 python scripts/smoke_test_mvp.py --mutating
-```
-
-PowerShell equivalent:
-
-```powershell
-$env:API_BASE_URL="https://<render-api-url>"
-$env:SMOKE_ALLOW_MUTATING="1"
-python scripts/smoke_test_mvp.py --mutating
-Remove-Item Env:SMOKE_ALLOW_MUTATING
-```
-
-Do not set `DATABASE_URL` for smoke testing. Do not use real CVs or private
-personal data. The mutating smoke script creates a tiny synthetic DOCX upload,
-score job, result, and report. The current API has no cleanup endpoint, so the
-synthetic smoke job/report remains in app storage and database records.
 
 ## Health Check
 
@@ -217,41 +173,6 @@ Expected response:
 {"status":"ok"}
 ```
 
-## Production-Safe MVP Smoke Test
-
-Use `scripts/smoke_test_mvp.py` for deployed MVP checks.
-
-Read-only mode:
-
-- Requires `API_BASE_URL`.
-- Calls only `GET /health`.
-- Prints the mutating flow that would be tested.
-- Does not require or read `DATABASE_URL`.
-
-Mutating mode:
-
-- Requires `API_BASE_URL`.
-- Requires `SMOKE_ALLOW_MUTATING=1`.
-- Requires `--mutating`.
-- Uses only tiny synthetic CV/JD content.
-- Uploads one DOCX, creates one score job, polls to a terminal state, fetches
-  result JSON, and downloads the DOCX report.
-- Uses bounded polling; override with `SMOKE_TIMEOUT_SECONDS=<seconds>`.
-- Does not print access tokens.
-- Leaves one synthetic job/report because there is no cleanup endpoint.
-
-Troubleshooting:
-
-- Wrong `API_BASE_URL`: confirm it includes `https://` and has no path suffix.
-- Render cold start: rerun read-only smoke after the service wakes up.
-- Worker not running: mutating smoke may remain queued or time out; inspect the
-  worker service and shared `REDIS_URL` configuration.
-- Storage/S3 error: mutating smoke may fail during upload or report download;
-  confirm API and worker share bucket, prefix, region, endpoint, and credentials.
-- Job timeout: increase `SMOKE_TIMEOUT_SECONDS` only after checking worker logs.
-- Report download failure: confirm the job reached `succeeded` and API/worker
-  share the same database and storage configuration.
-
 ## Known Limitations
 
 - Current app still has no full auth.
@@ -261,7 +182,7 @@ Troubleshooting:
 - S3 lifecycle cleanup is still needed for uploaded CVs and generated reports.
 - Render free tier is suitable only for demo/testing, not production.
 - The first scoring run may be slower if the embedding model has to download at runtime.
-- API and worker startup verify schema state but do not silently create or patch database schema. Missing or outdated schema must be fixed through Alembic.
+- Database migrations are not yet implemented; the app currently creates tables at startup.
 
 ## Manual Smoke Test Checklist
 

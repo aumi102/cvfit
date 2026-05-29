@@ -26,15 +26,7 @@ FastAPI + Celery + Redis + PostgreSQL.
 
 ## Local Docker Run
 
-For a fresh local Docker database, start Postgres and Redis first, run Alembic,
-then start the API and worker:
-
-```powershell
-docker compose up --build -d postgres redis
-cd backend
-$env:DATABASE_URL="postgresql+psycopg2://cvfit:cvfit@localhost:5432/cvfit"
-alembic upgrade head
-cd ..
+```bash
 docker compose up --build -d
 ```
 
@@ -44,24 +36,6 @@ Open:
 http://localhost:8000
 ```
 
-## Frontend Demo
-
-The MVP frontend is served by the FastAPI backend from `frontend/templates` and
-`frontend/static`; there is no separate Node/React/Next app or separate
-frontend deployment. On Render, the demo URL is the backend Web Service root,
-for example:
-
-```text
-https://cvfit.onrender.com/
-```
-
-The page uses same-origin API calls for the real MVP flow: upload a CV through
-`/v1/cv/upload`, create a score job through `/v1/jobs/create-score`, poll job
-status, fetch the token-protected result/report metadata, and expose a DOCX
-report download link. Use only synthetic CV/JD data for demos. The access token
-is MVP per-job protection, not full account auth; the current app has no cleanup
-endpoint, so mutating demos create records and a report.
-
 Stop:
 ```bash
 docker compose down
@@ -69,13 +43,11 @@ docker compose down
 
 ## Local Backend-Only Run
 
-Start PostgreSQL and Redis separately, make sure `DATABASE_URL` points to that
-local database, then:
+Start PostgreSQL and Redis separately, then:
 
 ```bash
 cd backend
 pip install -r requirements-dev.txt
-alembic upgrade head
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
@@ -96,80 +68,6 @@ python -m pytest
 
 There is intentionally no root requirements.txt; install from backend/requirements.txt for runtime or backend/requirements-dev.txt for local development and tests.
 
-## CI Checks
-
-GitHub Actions runs backend hygiene checks plus disposable PostgreSQL migration
-validation on pull requests and pushes to `main`. The backend job uses only
-safe local/test environment values:
-
-```env
-DATABASE_URL=sqlite+pysqlite:///:memory:
-REDIS_URL=redis://localhost:6379/0
-```
-
-CI does not use Render `DATABASE_URL`, S3 credentials, API tokens, or any
-production secret. Database migrations and existing production-like database
-adoption remain operator-controlled; CI never upgrades or stamps Render
-PostgreSQL.
-
-The backend job checks:
-
-```bash
-python scripts/ci_guard.py
-python -m compileall backend/app
-cd backend && python -m pytest --basetemp pytest-cache-files-local -p no:cacheprovider
-cd backend && alembic heads
-cd backend && alembic history
-docker compose config
-```
-
-The PostgreSQL migration job starts a disposable `pgvector/pgvector:pg16`
-service with local CI-only credentials, runs `alembic upgrade head`, verifies
-the current revision is `20260522_0001`, and runs `python scripts/check_db_schema.py`
-against that disposable database. It does not use Render secrets, call Render
-APIs, deploy, or run adoption/stamp helpers.
-
-On Windows Anaconda Prompt, run the same local checks with:
-
-```bat
-set "DATABASE_URL=sqlite+pysqlite:///:memory:"
-set "REDIS_URL=redis://localhost:6379/0"
-set "PYTHONPYCACHEPREFIX=backend/pytest-cache-files-local/pycache-prefix"
-python scripts/ci_guard.py
-python -m compileall backend/app
-cd backend
-python -m pytest --basetemp pytest-cache-files-local -p no:cacheprovider
-alembic heads
-alembic history
-cd ..
-docker compose config
-set "PYTHONPYCACHEPREFIX="
-```
-
-After a deploy, verify the public API without touching the database directly:
-
-```bat
-set "API_BASE_URL=https://your-render-api.onrender.com"
-curl "%API_BASE_URL%/health"
-```
-
-## Database Migrations
-
-Migration workflow and Render adoption notes are in [Database migrations](docs/database_migrations.md). For a disposable/local PostgreSQL validation run:
-
-```bash
-cd backend
-DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@localhost:5432/cvfit alembic upgrade head
-cd ..
-python scripts/check_db_schema.py
-```
-
-API and worker startup do not silently create or patch database tables. If the
-schema is missing or behind Alembic head, startup fails with an error that tells
-you to run `alembic upgrade head` against the intended local/disposable
-database. Do not run migrations blindly against an existing production database
-without a backup and schema/adoption checks.
-
 ## Smoke Test
 
 With the Docker stack running:
@@ -179,23 +77,6 @@ python scripts/smoke_test_local.py
 ```
 
 The smoke test uploads a temporary DOCX CV, creates a score job, waits for worker completion, validates result JSON, checks report metadata, and downloads a non-empty DOCX report.
-
-For the deployed MVP, use the production-safe smoke script. The default mode is
-read-only and calls only `/health`:
-
-```bash
-API_BASE_URL=https://your-render-api.onrender.com python scripts/smoke_test_mvp.py
-```
-
-Run the deployed end-to-end flow only with explicit opt-in and synthetic data:
-
-```bash
-API_BASE_URL=https://your-render-api.onrender.com SMOKE_ALLOW_MUTATING=1 python scripts/smoke_test_mvp.py --mutating
-```
-
-Do not set `DATABASE_URL` for deployed smoke tests, and do not use real CVs or
-private personal data. Mutating smoke creates one tiny synthetic upload, score
-job, and DOCX report; the current API has no cleanup endpoint.
 
 ## Phase 0 Status
 
@@ -211,7 +92,6 @@ Key docs:
 - [Render deployment guide](docs/render_deployment.md)
 - [Render manual setup checklist](docs/render_manual_setup_checklist.md)
 - [Phase 1 Render execution runbook](docs/phase1_render_execution.md)
-- [Database migrations](docs/database_migrations.md)
 - [S3 smoke test guide](docs/s3_smoke_test.md)
 
 

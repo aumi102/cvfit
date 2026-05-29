@@ -117,8 +117,7 @@ Set these on both the API service and worker service.
 - Create a Render PostgreSQL database or compatible Postgres service that supports the `vector` extension.
 - Copy the internal database URL into `DATABASE_URL`.
 - Set the same `DATABASE_URL` on the API and worker.
-- API and worker startup verify that the database schema is at Alembic head; they do not create tables or patch columns.
-- For an empty database, run the reviewed Alembic migration. For an existing database, take a backup and use the schema/adoption workflow before upgrading or stamping.
+- The current app creates tables at startup; database migrations are not implemented yet.
 
 ## Render Redis / Key Value
 
@@ -153,46 +152,28 @@ Do not commit the real env file.
 
 ## Post-Deploy Smoke Test
 
-After the API and worker are deployed and healthy, start with the read-only MVP
-smoke check from your local machine:
+After the API and worker are deployed and healthy, run from your local machine:
 
 ```bash
-API_BASE_URL=https://<render-api-url> python scripts/smoke_test_mvp.py
+API_BASE_URL=https://<render-api-url> python scripts/smoke_test_s3.py
 ```
 
 PowerShell equivalent:
 
 ```powershell
-$env:API_BASE_URL="https://<render-api-url>"; python scripts/smoke_test_mvp.py
-```
-
-Run the full synthetic upload-to-report flow only with explicit opt-in:
-
-```bash
-API_BASE_URL=https://<render-api-url> SMOKE_ALLOW_MUTATING=1 python scripts/smoke_test_mvp.py --mutating
-```
-
-PowerShell equivalent:
-
-```powershell
-$env:API_BASE_URL="https://<render-api-url>"
-$env:SMOKE_ALLOW_MUTATING="1"
-python scripts/smoke_test_mvp.py --mutating
-Remove-Item Env:SMOKE_ALLOW_MUTATING
+$env:API_BASE_URL="https://<render-api-url>"; python scripts/smoke_test_s3.py
 ```
 
 Expected success signs:
 
-- Read-only mode returns `health ok`.
-- Mutating mode uploads only a tiny synthetic DOCX CV.
-- Mutating mode creates one score job and reaches `succeeded`.
-- Mutating mode result JSON includes `scores.fit_score`.
-- Mutating mode report metadata does not expose `local_path`.
-- Mutating mode DOCX report download returns non-empty bytes.
+- `/health` returns `{"status":"ok"}`.
+- CV upload returns `cv_file_id`.
+- Score job reaches `succeeded`.
+- Result JSON includes `scores.fit_score`.
+- Report metadata does not expose `local_path`.
+- DOCX report download returns non-empty bytes.
 
-Do not set `DATABASE_URL` for smoke tests. Do not use real CVs or private
-personal data. Mutating smoke leaves one synthetic job/report because the API
-does not currently expose a cleanup endpoint.
+`scripts/smoke_test_s3.py` already supports `API_BASE_URL`, so no separate Render smoke script is needed.
 
 ## Render MVP Smoke Test Passed
 
@@ -221,7 +202,7 @@ Remaining risks at Phase 1A closeout:
 
 - No full auth yet.
 - UUID-only access existed before the Phase 1B access-token patch.
-- Alembic baseline exists; existing production-like databases need backup and schema/adoption checks before migration changes.
+- No DB migrations yet.
 - S3 lifecycle cleanup still needed.
 - Docker image still large.
 - First model load can be slow.
@@ -276,7 +257,6 @@ Phase 1B adds MVP access-token protection for result, report metadata, and repor
 - Confirm API and worker use the same internal Render Postgres URL.
 - Confirm the database is available before restarting the API.
 - Confirm the selected Postgres service supports the `vector` extension.
-- If logs mention missing schema or Alembic head, run the documented migration/adoption workflow instead of relying on app startup side effects.
 
 ### S3 AccessDenied
 
@@ -320,7 +300,7 @@ Phase 1B adds MVP access-token protection for result, report metadata, and repor
 - No full auth yet.
 - MVP access-token protection is not full account auth.
 - Job status polling remains public by UUID for the current UI flow.
-- API and worker startup require the database schema to be initialized and tracked by Alembic.
+- No DB migrations yet.
 - S3 lifecycle cleanup still needed.
 - Docker image remains large.
 - The deployment is for MVP/demo validation, not production exposure.
