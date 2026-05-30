@@ -18,7 +18,7 @@ def upgrade() -> None:
         sa.Column("access_token_expires_at", sa.DateTime(), nullable=True)
     )
 
-    # Tạo các performance indexes
+    # Chỉ tạo index MỚI chưa có trong file trước
     op.create_index(
         "ix_analysis_jobs_cv_file_id",
         "analysis_jobs",
@@ -30,22 +30,6 @@ def upgrade() -> None:
         ["jd_id"]
     )
     op.create_index(
-        "ix_analysis_jobs_status",
-        "analysis_jobs",
-        ["status"]
-    )
-    op.create_index(
-        "ix_analysis_jobs_created_at",
-        "analysis_jobs",
-        ["created_at"]
-    )
-
-    op.create_index(
-        "ix_text_embeddings_owner",
-        "text_embeddings",
-        ["owner_type", "owner_id"]
-    )
-    op.create_index(
         "ix_text_embeddings_created_at",
         "text_embeddings",
         ["created_at"]
@@ -53,14 +37,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Xóa indexes
     op.drop_index("ix_analysis_jobs_cv_file_id", table_name="analysis_jobs")
     op.drop_index("ix_analysis_jobs_jd_id", table_name="analysis_jobs")
-    op.drop_index("ix_analysis_jobs_status", table_name="analysis_jobs")
-    op.drop_index("ix_analysis_jobs_created_at", table_name="analysis_jobs")
-
-    op.drop_index("ix_text_embeddings_owner", table_name="text_embeddings")
     op.drop_index("ix_text_embeddings_created_at", table_name="text_embeddings")
-
-    # Xóa cột
     op.drop_column("analysis_jobs", "access_token_expires_at")
