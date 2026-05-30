@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 
 try:
     from pgvector.sqlalchemy import Vector
@@ -25,7 +25,7 @@ class CVFile(Base):
     mime_type: Mapped[str] = mapped_column(String(120))
     storage_path: Mapped[str] = mapped_column(String(500))
     sha256: Mapped[str] = mapped_column(String(64))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     jobs = relationship("AnalysisJob", back_populates="cv_file")
 
@@ -35,7 +35,7 @@ class JDDoc(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     jd_text: Mapped[str] = mapped_column(Text)
     role: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     jobs = relationship("AnalysisJob", back_populates="jd_doc")
 
@@ -54,9 +54,10 @@ class AnalysisJob(Base):
     result_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     report_docx_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     access_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    access_token_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     cv_file = relationship("CVFile", back_populates="jobs")
     jd_doc = relationship("JDDoc", back_populates="jobs")
@@ -72,4 +73,4 @@ class TextEmbedding(Base):
     embedding: Mapped[list] = mapped_column(Vector(384))
     meta_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)

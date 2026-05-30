@@ -234,7 +234,7 @@ def test_runtime_schema_check_reports_wrong_alembic_version(monkeypatch):
         init_db.check_runtime_schema()
 
     assert "Database schema is not at Alembic head" in str(exc.value)
-    assert "Expected 20260522_0001, found wrong_revision" in str(exc.value)
+    assert "Expected 20260530_0001, found wrong_revision" in str(exc.value)
 
 
 def test_access_token_hash_is_not_silently_added_at_runtime(monkeypatch):

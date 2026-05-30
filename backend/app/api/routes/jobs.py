@@ -2,6 +2,7 @@ import uuid
 import hashlib
 import hmac
 import secrets
+from datetime import datetime, timedelta, UTC
 from typing import Any
 from urllib.parse import quote
 
@@ -26,11 +27,16 @@ def _hash_access_token(access_token: str) -> str:
     return hashlib.sha256(access_token.encode("utf-8")).hexdigest()
 
 
-def _verify_access_token_or_403(job: AnalysisJob, access_token: str | None) -> None:
+def _verify_access_token_or_403(job, access_token: str | None) -> None:
     if not access_token or not job.access_token_hash:
         raise HTTPException(status_code=403, detail="invalid access token")
     if not hmac.compare_digest(_hash_access_token(access_token), job.access_token_hash):
         raise HTTPException(status_code=403, detail="invalid access token")
+    if (
+        getattr(job, "access_token_expires_at", None)
+        and datetime.now(UTC) > job.access_token_expires_at
+    ):
+        raise HTTPException(status_code=403, detail="access token expired")
 
 
 INTERNAL_RESPONSE_KEYS = {
@@ -89,6 +95,7 @@ def create_score_job(payload: ScoreCreateRequest, db: Session = Depends(get_db))
     db.flush()
 
     access_token = _new_access_token()
+    access_token_expires_at = datetime.now(UTC) + timedelta(hours=24)
     job = AnalysisJob(
         id=uuid.uuid4(),
         cv_file_id=cv.id,
@@ -96,6 +103,7 @@ def create_score_job(payload: ScoreCreateRequest, db: Session = Depends(get_db))
         status="queued",
         progress=0,
         access_token_hash=_hash_access_token(access_token),
+        access_token_expires_at=access_token_expires_at,
     )
     db.add(job)
     db.commit()
