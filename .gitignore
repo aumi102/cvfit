@@ -10,6 +10,8 @@ data/uploads/
 data/reports/
 
 .pytest_cache/
+pytest-tmp/
+backend/pytest-tmp/
 pytest-cache-files-local/
 backend/pytest-cache-files-local/
 **/pytest-cache-files-local/
@@ -35,3 +37,5 @@ node_modules/
 
 .idea/
 .vscode/
+
+ai_cv_fit_phase1_phase2_pack/

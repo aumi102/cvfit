@@ -26,9 +26,7 @@ def _update_job(job_id, **fields):
 
 
 def _safe_error_message(exc: Exception) -> str:
-    message = str(exc).strip() or exc.__class__.__name__
-    message = message.replace("\n", " ")[:500]
-    return f"Analysis failed: {message}"
+    return f"Analysis failed: {exc.__class__.__name__}"
 
 
 @celery_app.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 2})
