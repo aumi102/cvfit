@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -55,6 +56,14 @@ export default function Header() {
       </div>
 
       <div className={styles.right}>
+        <nav className={styles.navLinks} aria-label="Dashboard navigation">
+          <Link href="/dashboard" className={styles.navLink}>
+            Dashboard
+          </Link>
+          <Link href="/history" className={styles.navLink}>
+            History
+          </Link>
+        </nav>
         <LanguageSwitcher />
         <div className={styles.userInfo}>
           <div className={styles.avatar}>{userInitial}</div>

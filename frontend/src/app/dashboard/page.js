@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import Header from '@/components/dashboard/Header';
 import UploadCV from '@/components/dashboard/UploadCV';
 import JobDescription from '@/components/dashboard/JobDescription';
@@ -9,9 +8,8 @@ import AnalysisProgress from '@/components/dashboard/AnalysisProgress';
 import ResultCard from '@/components/dashboard/ResultCard';
 import { useUploadCV } from '@/hooks/useUploadCV';
 import { useJobPolling } from '@/hooks/useJobPolling';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { createScoreJob, getJobResult } from '@/services/jobApi';
-import { me } from '@/services/authApi';
-import { clearAuthSession, getStoredAuthToken, storeSafeUser } from '@/services/authStorage';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   STRICTNESS_OPTIONS,
@@ -22,37 +20,8 @@ import {
 import styles from '@/styles/Dashboard.module.css';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { t } = useLanguage();
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
-
-  /* Auth check */
-  useEffect(() => {
-    let active = true;
-    const token = getStoredAuthToken();
-    if (!token) {
-      clearAuthSession();
-      router.push('/login');
-      return;
-    }
-
-    (async () => {
-      try {
-        const user = await me();
-        if (!active) return;
-        storeSafeUser(user);
-        setIsAuthChecking(false);
-      } catch {
-        if (!active) return;
-        clearAuthSession();
-        router.push('/login');
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, [router]);
+  const { isAuthChecking } = useRequireAuth();
 
   /* ──── State ──── */
   const [jdText, setJdText] = useState('');

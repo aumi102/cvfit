@@ -24,6 +24,15 @@ export async function getJobStatus(jobId) {
 }
 
 /**
+ * Get the authenticated user's job history.
+ * @returns {Promise<{items: Array}>}
+ */
+export async function getJobHistory() {
+  const response = await apiClient.get('/v1/jobs/history');
+  return response.data;
+}
+
+/**
  * Get the analysis result for a completed job.
  * @param {string} jobId
  * @param {string} accessToken
