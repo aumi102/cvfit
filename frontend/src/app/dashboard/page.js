@@ -10,6 +10,8 @@ import ResultCard from '@/components/dashboard/ResultCard';
 import { useUploadCV } from '@/hooks/useUploadCV';
 import { useJobPolling } from '@/hooks/useJobPolling';
 import { createScoreJob, getJobResult } from '@/services/jobApi';
+import { me } from '@/services/authApi';
+import { clearAuthSession, getStoredAuthToken, storeSafeUser } from '@/services/authStorage';
 import { useLanguage } from '@/context/LanguageContext';
 import {
   STRICTNESS_OPTIONS,
@@ -22,13 +24,34 @@ import styles from '@/styles/Dashboard.module.css';
 export default function DashboardPage() {
   const router = useRouter();
   const { t } = useLanguage();
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   /* Auth check */
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
+    let active = true;
+    const token = getStoredAuthToken();
     if (!token) {
+      clearAuthSession();
       router.push('/login');
+      return;
     }
+
+    (async () => {
+      try {
+        const user = await me();
+        if (!active) return;
+        storeSafeUser(user);
+        setIsAuthChecking(false);
+      } catch {
+        if (!active) return;
+        clearAuthSession();
+        router.push('/login');
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   /* ──── State ──── */
@@ -177,6 +200,16 @@ export default function DashboardPage() {
           : workflowStep === WORKFLOW_STEPS.RESULT
             ? 100
             : 0;
+
+  if (isAuthChecking) {
+    return (
+      <div className={styles.page}>
+        <main className={styles.main}>
+          <h1 className={styles.pageTitle}>{t('login.btn.signingIn')}</h1>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

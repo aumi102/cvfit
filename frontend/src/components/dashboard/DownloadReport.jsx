@@ -28,8 +28,7 @@ export default function DownloadReport({ jobId, accessToken }) {
       window.URL.revokeObjectURL(url);
       setIsSuccess(true);
       setTimeout(() => setIsSuccess(false), 3000);
-    } catch (err) {
-      console.error('Download failed:', err);
+    } catch {
       alert(t('download.error'));
     } finally {
       setIsDownloading(false);

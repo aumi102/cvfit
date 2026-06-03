@@ -4,13 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { login } from '@/services/authApi';
+import { register } from '@/services/authApi';
 import { storeAuthSession } from '@/services/authStorage';
 import styles from '@/styles/LoginForm.module.css';
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const router = useRouter();
   const { t } = useLanguage();
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,21 +22,25 @@ export default function LoginForm() {
     setError('');
 
     if (!email.trim() || !password.trim()) {
-      setError(t('login.error.empty'));
+      setError(t('register.error.empty'));
+      return;
+    }
+    if (password.length < 8) {
+      setError(t('register.error.password'));
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const authResponse = await login({
+      const authResponse = await register({
         email: email.trim(),
         password,
+        full_name: fullName.trim() || null,
       });
       storeAuthSession(authResponse);
       router.push('/dashboard');
     } catch (err) {
-      setError(t('login.error.invalid'));
+      setError(t('register.error.invalid'));
     } finally {
       setIsLoading(false);
     }
@@ -57,11 +62,11 @@ export default function LoginForm() {
           </div>
           <span className={styles.logoText}>{t('landing.logo')}</span>
         </div>
-        <p className={styles.subtitle}>{t('login.subtitle')}</p>
+        <p className={styles.subtitle}>{t('register.subtitle')}</p>
 
-        <form className={styles.form} onSubmit={handleSubmit} id="login-form">
+        <form className={styles.form} onSubmit={handleSubmit} id="register-form">
           {error && (
-            <div className={styles.errorMessage} role="alert" id="login-error">
+            <div className={styles.errorMessage} role="alert" id="register-error">
               <svg className={styles.errorIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="15" y1="9" x2="9" y2="15" />
@@ -72,12 +77,29 @@ export default function LoginForm() {
           )}
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel} htmlFor="login-email">
+            <label className={styles.inputLabel} htmlFor="register-full-name">
+              {t('register.fullName')}
+            </label>
+            <div className={styles.inputWrapper}>
+              <input
+                id="register-full-name"
+                className={styles.input}
+                type="text"
+                placeholder="Nguyen Van A"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                autoComplete="name"
+              />
+            </div>
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.inputLabel} htmlFor="register-email">
               {t('login.email')}
             </label>
             <div className={styles.inputWrapper}>
               <input
-                id="login-email"
+                id="register-email"
                 className={styles.input}
                 type="email"
                 placeholder="you@company.com"
@@ -86,32 +108,24 @@ export default function LoginForm() {
                 autoComplete="email"
                 required
               />
-              <svg className={styles.inputIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,13 2,6" />
-              </svg>
             </div>
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.inputLabel} htmlFor="login-password">
+            <label className={styles.inputLabel} htmlFor="register-password">
               {t('login.password')}
             </label>
             <div className={styles.inputWrapper}>
               <input
-                id="login-password"
+                id="register-password"
                 className={styles.input}
                 type="password"
-                placeholder="••••••••"
+                placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
               />
-              <svg className={styles.inputIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
             </div>
           </div>
 
@@ -119,23 +133,19 @@ export default function LoginForm() {
             type="submit"
             className={styles.submitButton}
             disabled={isLoading}
-            id="login-submit"
+            id="register-submit"
           >
             <span className={styles.buttonContent}>
               {isLoading && <span className={styles.spinner} />}
-              {isLoading ? t('login.btn.signingIn') : t('login.btn.signIn')}
+              {isLoading ? t('register.btn.creating') : t('register.btn.create')}
             </span>
           </button>
         </form>
 
-        <div className={styles.divider}>
-          <span className={styles.dividerText}>{t('login.divider')}</span>
-        </div>
-
         <p className={styles.footer}>
-          {t('login.footer.text')}{' '}
-          <Link href="/register" className={styles.footerLink}>
-            {t('login.footer.link')}
+          {t('register.footer.text')}{' '}
+          <Link href="/login" className={styles.footerLink}>
+            {t('register.footer.link')}
           </Link>
         </p>
       </div>

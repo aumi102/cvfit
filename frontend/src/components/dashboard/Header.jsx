@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { logout } from '@/services/authApi';
+import { clearAuthSession, getStoredAuthToken, getStoredUser } from '@/services/authStorage';
 import styles from '@/styles/Header.module.css';
 
 export default function Header() {
@@ -13,23 +15,27 @@ export default function Header() {
   const [userInitial, setUserInitial] = useState('U');
 
   useEffect(() => {
-    try {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        const name = parsed.name || parsed.email || 'User';
-        setUserName(name);
-        setUserInitial(name.charAt(0).toUpperCase());
-      }
-    } catch {
-      setUserName('User');
-      setUserInitial('U');
+    const user = getStoredUser();
+    if (user) {
+      const name = user.full_name || user.email || 'User';
+      setUserName(name);
+      setUserInitial(name.charAt(0).toUpperCase());
+      return;
     }
+    setUserName('User');
+    setUserInitial('U');
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    const token = getStoredAuthToken();
+    if (token) {
+      try {
+        await logout();
+      } catch {
+        // Local session cleanup should still happen if the server is unavailable.
+      }
+    }
+    clearAuthSession();
     router.push('/login');
   };
 
