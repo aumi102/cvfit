@@ -146,6 +146,40 @@ def redact_report_metadata(report: dict) -> dict:
     return redacted
 
 
+def validate_result_payload(result: dict, require_result_v2: bool = False) -> float:
+    nested = result.get("result", {}) if isinstance(result.get("result"), dict) else {}
+    scores = nested.get("scores", {}) if isinstance(nested.get("scores"), dict) else {}
+    if "fit_score" not in scores:
+        raise SmokeError(f"result missing result.scores.fit_score: {result}")
+
+    schema_version = nested.get("schema_version")
+    if schema_version != "2.0":
+        if require_result_v2:
+            raise SmokeError(f"result missing schema_version=2.0: {result}")
+        print("result v2 fields not present; legacy result compatibility ok")
+        return scores["fit_score"]
+
+    overall = nested.get("overall", {}) if isinstance(nested.get("overall"), dict) else {}
+    required_v2_fields = [
+        ("result.fit_score", nested, "fit_score"),
+        ("result.overall.fit_score", overall, "fit_score"),
+        ("result.score_breakdown", nested, "score_breakdown"),
+        ("result.matched_skills", nested, "matched_skills"),
+        ("result.missing_skills", nested, "missing_skills"),
+        ("result.evidence", nested, "evidence"),
+        ("result.improvement_actions", nested, "improvement_actions"),
+        ("result.limitations", nested, "limitations"),
+    ]
+    missing = [name for name, owner, key in required_v2_fields if key not in owner or owner.get(key) is None]
+    if missing:
+        raise SmokeError(f"result v2 missing required fields: {', '.join(missing)}")
+    if nested.get("fit_score") != scores["fit_score"] or overall.get("fit_score") != scores["fit_score"]:
+        raise SmokeError("result v2 score aliases are inconsistent")
+
+    print("result v2 fields ok")
+    return scores["fit_score"]
+
+
 def print_read_only_plan() -> None:
     print("read-only smoke completed")
     print("mutating smoke is skipped by default")
@@ -228,10 +262,11 @@ def run_mutating(base_url: str, timeout_seconds: int) -> int:
 
         token_query = urlencode({"access_token": access_token})
         result = request_json(base_url, "GET", f"/v1/jobs/{job_id}/result?{token_query}")
-        scores = result.get("result", {}).get("scores", {})
-        if "fit_score" not in scores:
-            raise SmokeError(f"result missing scores.fit_score: {result}")
-        print(f"fit_score={scores['fit_score']}")
+        fit_score = validate_result_payload(
+            result,
+            require_result_v2=env_flag_enabled("REQUIRE_RESULT_V2"),
+        )
+        print(f"fit_score={fit_score}")
 
         report = request_json(base_url, "GET", f"/v1/jobs/{job_id}/report?{token_query}")
         if "local_path" in report:

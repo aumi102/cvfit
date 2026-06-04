@@ -71,6 +71,47 @@ def test_read_only_mode_does_not_read_database_url(monkeypatch, capsys):
     assert "DATABASE_URL" not in capsys.readouterr().out
 
 
+def test_validate_result_payload_accepts_legacy_by_default(capsys):
+    fit_score = smoke_test_mvp.validate_result_payload(
+        {"job_id": "job-1", "result": {"scores": {"fit_score": 88}}},
+    )
+
+    assert fit_score == 88
+    assert "legacy result compatibility ok" in capsys.readouterr().out
+
+
+def test_validate_result_payload_requires_v2_when_enabled():
+    try:
+        smoke_test_mvp.validate_result_payload(
+            {"job_id": "job-1", "result": {"scores": {"fit_score": 88}}},
+            require_result_v2=True,
+        )
+    except smoke_test_mvp.SmokeError as exc:
+        assert "schema_version=2.0" in str(exc)
+    else:
+        raise AssertionError("expected strict v2 validation to fail")
+
+
+def test_validate_result_payload_accepts_v2():
+    result = {
+        "job_id": "job-1",
+        "result": {
+            "schema_version": "2.0",
+            "fit_score": 88,
+            "scores": {"fit_score": 88},
+            "overall": {"fit_score": 88},
+            "score_breakdown": [],
+            "matched_skills": [],
+            "missing_skills": [],
+            "evidence": [],
+            "improvement_actions": [],
+            "limitations": [],
+        },
+    }
+
+    assert smoke_test_mvp.validate_result_payload(result, require_result_v2=True) == 88
+
+
 def test_mutating_mode_polls_until_success(monkeypatch, tmp_path):
     created_docx = tmp_path / "synthetic.docx"
     created_docx.write_bytes(b"fake-docx")
@@ -107,6 +148,7 @@ def test_mutating_mode_polls_until_success(monkeypatch, tmp_path):
 
     monkeypatch.setenv("API_BASE_URL", "https://cvfit.example.test")
     monkeypatch.setenv("SMOKE_ALLOW_MUTATING", "1")
+    monkeypatch.delenv("REQUIRE_RESULT_V2", raising=False)
     monkeypatch.setattr(smoke_test_mvp, "create_synthetic_docx_cv", lambda: created_docx)
     monkeypatch.setattr(smoke_test_mvp, "request_json", fake_request_json)
     monkeypatch.setattr(smoke_test_mvp, "post_multipart_file", fake_post_multipart_file)
