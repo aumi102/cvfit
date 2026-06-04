@@ -88,26 +88,40 @@ def _scrub_internal_fields(value: Any) -> Any:
     return value
 
 
-def _result_contract_fields(result: dict) -> dict:
+def _extract_fit_score(result: dict) -> float | None:
+    if not isinstance(result, dict):
+        return None
     scores = result.get("scores", {})
+    if isinstance(scores, dict) and scores.get("fit_score") is not None:
+        return scores.get("fit_score")
+    if result.get("fit_score") is not None:
+        return result.get("fit_score")
+    overall = result.get("overall", {})
+    if isinstance(overall, dict):
+        return overall.get("fit_score")
+    return None
+
+
+def _result_contract_fields(result: dict) -> dict:
     skills = result.get("skills", {})
     skill_gap = result.get("skill_gap", {})
     matched = skills.get("matched_must_groups", []) + skills.get("matched_nice_groups", [])
     missing = skill_gap.get("missing_must_have", []) + skill_gap.get("missing_nice_to_have", [])
+    overall = result.get("overall", {}) if isinstance(result.get("overall"), dict) else {}
 
     return {
-        "overall_fit_score": scores.get("fit_score"),
-        "summary": "Analysis complete.",
+        "overall_fit_score": _extract_fit_score(result),
+        "summary": overall.get("summary") or "Analysis complete.",
         "strengths": matched,
         "missing_skills": missing,
-        "recommendations": result.get("cv_improvements", []) + skill_gap.get("learn_suggestions", []),
+        "recommendations": result.get("improvement_actions")
+        or result.get("cv_improvements", []) + skill_gap.get("learn_suggestions", []),
         "evidence": result.get("evidence", []),
     }
 
 
 def _history_item(job: AnalysisJob) -> JobHistoryItemResponse:
     result_json = job.result_json or {}
-    scores = result_json.get("scores", {}) if isinstance(result_json, dict) else {}
     jd_doc = getattr(job, "jd_doc", None)
     return JobHistoryItemResponse(
         job_id=str(job.id),
@@ -115,7 +129,7 @@ def _history_item(job: AnalysisJob) -> JobHistoryItemResponse:
         progress=job.progress,
         created_at=job.created_at,
         updated_at=job.updated_at,
-        overall_fit_score=scores.get("fit_score"),
+        overall_fit_score=_extract_fit_score(result_json),
         has_report=bool(job.report_docx_path),
         target_role=getattr(jd_doc, "role", None),
     )

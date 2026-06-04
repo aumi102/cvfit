@@ -8,6 +8,7 @@ from app.db.models import AnalysisJob, CVFile, JDDoc
 from app.db.init_db import init_db
 from app.services.parsing.cv_parser import parse_cv_to_text
 from app.services.parsing.jd_parser import parse_jd
+from app.services.scoring.result_v2 import build_result_v2
 from app.services.scoring.scorer import score
 from app.services.storage import get_storage, save_report_file
 from app.services.reporting.report_docx import build_docx_report
@@ -60,6 +61,12 @@ def run_job(self, job_id: str):
             "jd": jd_struct,
             **scored
         }
+        result_full = build_result_v2(
+            result_full,
+            cv_parsed=cv_parsed,
+            jd_struct=jd_struct,
+            job_id=job_id,
+        )
 
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
             out_docx = tmp.name
