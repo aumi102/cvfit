@@ -6,6 +6,10 @@ import UploadCV from '@/components/dashboard/UploadCV';
 import JobDescription from '@/components/dashboard/JobDescription';
 import AnalysisProgress from '@/components/dashboard/AnalysisProgress';
 import ResultCard from '@/components/dashboard/ResultCard';
+import ResultCardV2 from '@/components/dashboard/ResultCardV2';
+import EmptyState from '@/components/dashboard/EmptyState';
+import ErrorState from '@/components/dashboard/ErrorState';
+import { isResultV2 } from '@/utils/resultHelpers';
 import { useUploadCV } from '@/hooks/useUploadCV';
 import { useJobPolling } from '@/hooks/useJobPolling';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -320,12 +324,21 @@ export default function DashboardPage() {
           </div>
         ) : (
           /* Results */
-          <ResultCard
-            result={result}
-            jobId={jobId}
-            accessToken={accessToken}
-            onNewAnalysis={handleNewAnalysis}
-          />
+          isResultV2(result) ? (
+            <ResultCardV2
+              result={result}
+              jobId={jobId}
+              accessToken={accessToken}
+              onNewAnalysis={handleNewAnalysis}
+            />
+          ) : (
+            <ResultCard
+              result={result}
+              jobId={jobId}
+              accessToken={accessToken}
+              onNewAnalysis={handleNewAnalysis}
+            />
+          )
         )}
       </main>
     </div>
