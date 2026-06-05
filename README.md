@@ -201,6 +201,46 @@ Do not set `DATABASE_URL` for deployed smoke tests, and do not use real CVs or
 private personal data. Mutating smoke creates one tiny synthetic upload, score
 job, and DOCX report; the current API has no cleanup endpoint.
 
+## Phase 3 Result v2 Closeout
+
+Phase 3 upgrades the app from a basic CV/JD scorer into an evidence-based CV fit
+analyzer. Completed Phase 3 surfaces include Result JSON v2, score breakdown,
+matched skills, missing skills, CV/JD evidence snippets, conditional
+improvement actions, a Result Dashboard v2, DOCX report v2, an evaluation case
+set, and guardrails v1.5.
+
+Key closeout commands:
+
+```bash
+python -m pytest
+python scripts/evaluate_scoring_cases.py
+```
+
+For deployed strict smoke, use only synthetic data:
+
+```bash
+API_BASE_URL=https://cvfit.onrender.com SMOKE_ALLOW_MUTATING=1 REQUIRE_RESULT_V2=1 python scripts/smoke_test_mvp.py --mutating
+```
+
+Windows `cmd.exe` equivalent:
+
+```bat
+cmd.exe /c "set API_BASE_URL=https://cvfit.onrender.com&& set SMOKE_ALLOW_MUTATING=1&& set REQUIRE_RESULT_V2=1&& python scripts\smoke_test_mvp.py --mutating"
+```
+
+Closeout references:
+
+- [Result JSON v2 contract](docs/result_schema_v2.md)
+- [Guardrails v1.5](docs/guardrails_v1_5.md)
+- [Phase 3 closeout audit](docs/phase3_closeout_audit.md)
+- [Phase 3 demo checklist](docs/phase3_demo_checklist.md)
+- [Evaluation dataset](evaluation/README.md)
+
+Known Phase 3.5 notes are intentionally small: keep strict smoke repeatable,
+keep lint/build CI-safe, and use the demo checklist to show why evidence,
+guardrails, and DOCX output make the product more trustworthy than a simple
+keyword checker.
+
 ## Phase 0 Status
 
 Phase 0 is closed as the current baseline. Verified items include the backend/frontend split, FastAPI API, Celery worker, Redis, PostgreSQL/pgvector, local/S3 storage abstraction, local Docker E2E smoke test, S3-backed Docker smoke test, result JSON, DOCX report download, safe report metadata, CPU-only Torch dependency path, and repository hygiene for generated files.
