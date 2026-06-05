@@ -26,9 +26,17 @@ Each case has three files:
 ## Running the Evaluation
 
 ```powershell
-cd D:\SU26\1_EXE201\Project\Clone\cvfit
 python scripts/evaluate_scoring_cases.py
 ```
+
+The `case_XX_*` naming is intentional. The evaluation loader discovers
+`case_XX_cv.txt`, `case_XX_jd.txt`, and `case_XX_expected.md` by pattern, so do
+not rename them to generic `cv_text.txt`, `jd_text.txt`, or
+`expected_behavior.md` unless the script is updated at the same time.
+
+The first run may need to download or populate the local SentenceTransformers
+model cache. After the model is cached, repeated runs should work without
+another network fetch in the same environment.
 
 ## Adding New Cases
 
