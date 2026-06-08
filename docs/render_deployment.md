@@ -68,12 +68,45 @@ cd backend && celery -A app.workers.celery_app:celery_app worker --loglevel=INFO
 ```
 
 The API and worker do not run migrations at startup. Before starting or
-restarting services against a new/changed database, apply the reviewed Alembic
-migrations from a trusted operator environment. For an empty Render database,
-that means running `cd backend && alembic upgrade head` with the intended
-Render `DATABASE_URL` set in that operator shell. For an existing Render
+restarting services against a database after a PR with new Alembic migrations,
+apply the reviewed migrations from a trusted operator environment. For Render,
+prefer `scripts/run_alembic.py` through the deployed Python interpreter instead
+of relying on an `alembic` executable on `PATH`. For an existing Render
 database, take a backup and run the schema/adoption checks described in
 [database_migrations.md](database_migrations.md) before upgrading or stamping.
+
+## Render Database Migration Commands
+
+Run these from the Render Shell for the API service after deployment has built
+the new code and before starting or restarting API/worker against the new
+schema. Render service shells already have the service environment variables,
+including `DATABASE_URL`.
+
+```bash
+cd /opt/render/project/src
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py current
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py heads
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py upgrade head
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py current
+/opt/render/project/src/.venv/bin/python scripts/check_db_schema.py
+```
+
+If you must run the same migration from local Windows, use the Render External
+Database URL, not the Render Internal Database URL:
+
+```bat
+set "DATABASE_URL=<external-render-postgres-url>"
+python scripts\run_alembic.py current
+python scripts\run_alembic.py heads
+python scripts\run_alembic.py upgrade head
+python scripts\run_alembic.py current
+python scripts\check_db_schema.py
+set "DATABASE_URL="
+```
+
+Do not use a Render Internal Database URL from local; it is only reachable from
+Render's private network. Do not paste `DATABASE_URL` into logs, docs, PRs,
+screenshots, or chat. Rotate the database password if the URL was exposed.
 
 ## Pre-Deploy Checklist
 
@@ -96,10 +129,8 @@ Start the full local stack:
 ```bash
 docker compose down -v
 docker compose up --build -d postgres redis
-cd backend
 DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@localhost:5432/cvfit \
-alembic upgrade head
-cd ..
+python scripts/run_alembic.py upgrade head
 docker compose up --build -d
 ```
 
