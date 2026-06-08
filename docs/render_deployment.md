@@ -234,6 +234,45 @@ personal data. The mutating smoke script creates a tiny synthetic DOCX upload,
 score job, result, and report. The current API has no cleanup endpoint, so the
 synthetic smoke job/report remains in app storage and database records.
 
+## Phase 4 Production Smoke Test
+
+Use `scripts/smoke_test_phase4.py` after the API and worker are deployed. If a
+PR includes migrations, run the documented Render migration commands first.
+Do not set `REQUIRE_RESULT_V2=1` for this smoke; Phase 4 expects Result JSON
+v3.
+
+Read-only mode checks deployed health only and explains the mutating flow:
+
+```bat
+cmd.exe /c "set API_BASE_URL=https://cvfit.onrender.com&& python scripts\smoke_test_phase4.py"
+```
+
+Mutating mode runs the full Phase 4 deployed flow:
+
+```bat
+cmd.exe /c "set API_BASE_URL=https://cvfit.onrender.com&& set SMOKE_ALLOW_MUTATING=1&& python scripts\smoke_test_phase4.py --mutating"
+```
+
+The mutating Phase 4 smoke:
+
+- Uploads an initial synthetic DOCX CV.
+- Creates an initial analysis job and waits for completion.
+- Verifies Result JSON v3 fields.
+- Downloads the DOCX report and verifies v3 report sections when DOCX text can
+  be parsed.
+- Reanalyzes the initial job with a revised synthetic CV.
+- Waits for the child job, fetches child Result JSON v3, and calls the
+  comparison endpoint.
+- Verifies comparison response shape and checks for sensitive internal fields.
+
+Tokens and token-bearing URLs are redacted from script output. Do not paste
+access tokens, `DATABASE_URL`, storage paths, or screenshots containing secrets
+into docs, tickets, PRs, or chat.
+
+The mutating smoke creates real test jobs, uploaded CV objects, and generated
+report objects in the deployed environment. The current API has no cleanup
+endpoint, so use synthetic content only.
+
 ## Health Check
 
 Use:
