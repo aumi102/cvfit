@@ -177,6 +177,7 @@ const dictionary = {
     'phase4.improvement.safeSuggestion': 'Suggestion',
     'phase4.improvement.status.pending': 'Pending',
     'phase4.improvement.status.done': 'Done',
+    'phase4.improvement.status.open': 'Open',
     'phase4.improvement.expandDetails': 'Show details',
     'phase4.improvement.collapseDetails': 'Hide details',
     'phase4.improvement.type.skill_gap': 'Skill Gap',
@@ -185,11 +186,14 @@ const dictionary = {
 
     // Phase 4 — Safe Rewrite Suggestions
     'phase4.safeRewrite.title': 'Safe Rewrite Suggestions',
-    'phase4.safeRewrite.subtitle': 'Suggested improvements for your CV bullets',
+    'phase4.safeRewrite.subtitle': 'Improve your CV without fabricating experience',
     'phase4.safeRewrite.warning': '⚠️ Only include skills and experience that are actually true.',
     'phase4.safeRewrite.warningDetail': 'Do not invent skills, projects, metrics, or responsibilities. These suggestions are starting points — only use them if they reflect your real experience.',
     'phase4.safeRewrite.currentEvidence': 'Current Evidence',
     'phase4.safeRewrite.suggestedRewrite': 'Suggested Rewrite',
+    'phase4.safeRewrite.templateLabel': 'Template to adapt',
+    'phase4.safeRewrite.confirmBefore': 'Confirm before using',
+    'phase4.safeRewrite.doNotFabricate': 'Do not invent skills, projects, metrics, or responsibilities.',
     'phase4.safeRewrite.guardrail': 'Safety Note',
     'phase4.safeRewrite.empty': 'No rewrite suggestions available.',
 
@@ -205,6 +209,9 @@ const dictionary = {
     'phase4.interviewPrep.type.technical': 'Technical',
     'phase4.interviewPrep.type.situational': 'Situational',
     'phase4.interviewPrep.type.general': 'General',
+    'phase4.interviewPrep.type.project_deep_dive': 'Project Deep Dive',
+    'phase4.interviewPrep.type.gap_probe': 'Gap Probe',
+    'phase4.interviewPrep.type.system_design': 'System Design',
     'phase4.interviewPrep.empty': 'No interview prep questions available yet.',
     'phase4.interviewPrep.questions': 'questions',
 
@@ -215,6 +222,7 @@ const dictionary = {
     'phase4.roadmap.topics': 'Topics to Cover',
     'phase4.roadmap.miniProject': 'Mini Project Idea',
     'phase4.roadmap.cvEvidence': 'What to Add to CV After Learning',
+    'phase4.roadmap.doNotClaim': 'Do not claim this skill until you have completed this learning.',
     'phase4.roadmap.empty': 'No learning roadmap available yet.',
 
     // Phase 4 — Re-analysis Upload
@@ -434,6 +442,7 @@ const dictionary = {
     'phase4.improvement.safeSuggestion': 'Gợi ý',
     'phase4.improvement.status.pending': 'Chờ xử lý',
     'phase4.improvement.status.done': 'Hoàn thành',
+    'phase4.improvement.status.open': 'Đang mở',
     'phase4.improvement.expandDetails': 'Xem chi tiết',
     'phase4.improvement.collapseDetails': 'Ẩn chi tiết',
     'phase4.improvement.type.skill_gap': 'Thiếu kỹ năng',
@@ -442,13 +451,16 @@ const dictionary = {
 
     // Phase 4 — Safe Rewrite
     'phase4.safeRewrite.title': 'Gợi ý viết lại an toàn',
-    'phase4.safeRewrite.subtitle': 'Cải thiện nội dung CV của bạn',
+    'phase4.safeRewrite.subtitle': 'Cải thiện nội dung CV mà không bịa đặt kinh nghiệm',
     'phase4.safeRewrite.warning': '⚠️ Chỉ thêm kỹ năng và kinh nghiệm thực tế của bạn.',
     'phase4.safeRewrite.warningDetail': 'Không bịa đặt kỹ năng, dự án, số liệu hay trách nhiệm. Các gợi ý chỉ là điểm khởi đầu — chỉ sử dụng nếu phản ánh kinh nghiệm thực.',
     'phase4.safeRewrite.currentEvidence': 'Bằng chứng hiện tại',
     'phase4.safeRewrite.suggestedRewrite': 'Gợi ý viết lại',
+    'phase4.safeRewrite.templateLabel': 'Mẫu cần điều chỉnh',
+    'phase4.safeRewrite.confirmBefore': 'Cần xác nhận trước khi dùng',
+    'phase4.safeRewrite.doNotFabricate': 'Không bịa đặt kỹ năng, dự án, số liệu hoặc trách nhiệm.',
     'phase4.safeRewrite.guardrail': 'Lưu ý an toàn',
-    'phase4.safeRewrite.empty': 'Không có gợi ý viết lại.',
+    'phase4.safeRewrite.empty': 'Chưa có gợi ý viết lại phù hợp.',
 
     // Phase 4 — Interview Prep
     'phase4.interviewPrep.title': 'Chuẩn bị phỏng vấn',
@@ -462,6 +474,9 @@ const dictionary = {
     'phase4.interviewPrep.type.technical': 'Kỹ thuật',
     'phase4.interviewPrep.type.situational': 'Tình huống',
     'phase4.interviewPrep.type.general': 'Chung',
+    'phase4.interviewPrep.type.project_deep_dive': 'Phân tích dự án',
+    'phase4.interviewPrep.type.gap_probe': 'Kiểm tra khoảng trống',
+    'phase4.interviewPrep.type.system_design': 'Thiết kế hệ thống',
     'phase4.interviewPrep.empty': 'Chưa có câu hỏi phỏng vấn.',
     'phase4.interviewPrep.questions': 'câu hỏi',
 
@@ -472,6 +487,7 @@ const dictionary = {
     'phase4.roadmap.topics': 'Chủ đề cần nắm',
     'phase4.roadmap.miniProject': 'Ý tưởng dự án nhỏ',
     'phase4.roadmap.cvEvidence': 'Thêm vào CV sau khi học',
+    'phase4.roadmap.doNotClaim': 'Chưa được khai báo kỹ năng này cho đến khi hoàn thành học tập.',
     'phase4.roadmap.empty': 'Chưa có lộ trình học tập.',
 
     // Phase 4 — Re-analysis
