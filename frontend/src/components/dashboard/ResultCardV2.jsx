@@ -47,15 +47,35 @@ export default function ResultCardV2({ result, jobId, accessToken, onNewAnalysis
   const interviewPrep = data.interview_prep ?? null;
   const learningRoadmap = data.learning_roadmap ?? null;
 
+  // Normalize v3 plain arrays — backend returns these as flat arrays;
+  // keep wrapper-object fallback for forward compatibility.
+  const interviewQuestions = Array.isArray(interviewPrep)
+    ? interviewPrep
+    : Array.isArray(interviewPrep?.questions)
+    ? interviewPrep.questions
+    : [];
+  const roadmapItems = Array.isArray(learningRoadmap)
+    ? learningRoadmap
+    : Array.isArray(learningRoadmap?.items)
+    ? learningRoadmap.items
+    : [];
+  const safeRewriteSuggestions = Array.isArray(data.safe_rewrite_suggestions)
+    ? data.safe_rewrite_suggestions
+    : Array.isArray(data.safe_rewrite_suggestions?.suggestions)
+    ? data.safe_rewrite_suggestions.suggestions
+    : [];
+
   const hasBreakdown = scoreBreakdown.length > 0;
   const hasMatched = matchedSkills.length > 0;
   const hasEvidence = evidence.length > 0;
   const hasMissing = missingSkills.length > 0;
   const hasImprovement = improvementActions.length > 0;
   const hasLimitations = limitations.length > 0;
-  const hasInterviewPrep = interviewPrep?.questions?.length > 0;
-  const hasLearningRoadmap = learningRoadmap?.items?.length > 0;
-  const hasRewriteActions = improvementActions.some((a) => a.type === 'cv_rewrite');
+  const hasInterviewPrep = interviewQuestions.length > 0;
+  const hasLearningRoadmap = roadmapItems.length > 0;
+  const hasSafeRewrite =
+    safeRewriteSuggestions.length > 0 ||
+    improvementActions.some((a) => a.type === 'cv_rewrite');
 
   /* ── Fit level style mapping ── */
   const fitLevelClass = {
@@ -308,7 +328,7 @@ export default function ResultCardV2({ result, jobId, accessToken, onNewAnalysis
       {/* ═══════════════════════════════════════════════
           6b. Safe Rewrite Suggestions (Phase 4)
           ═══════════════════════════════════════════════ */}
-      {hasRewriteActions && (
+      {hasSafeRewrite && (
         <section className={styles.sectionCard} id="v2-safe-rewrite">
           <div className={styles.sectionHeader}>
             <div className={`${styles.sectionIconBox} ${styles.iconWarning}`}>
@@ -323,7 +343,7 @@ export default function ResultCardV2({ result, jobId, accessToken, onNewAnalysis
             </div>
           </div>
 
-          <SafeRewrite actions={improvementActions} evidence={evidence} />
+          <SafeRewrite suggestions={safeRewriteSuggestions} actions={improvementActions} evidence={evidence} />
         </section>
       )}
 
@@ -344,7 +364,7 @@ export default function ResultCardV2({ result, jobId, accessToken, onNewAnalysis
             </div>
           </div>
 
-          <InterviewPrep interviewPrep={interviewPrep} />
+          <InterviewPrep questions={interviewQuestions} />
         </section>
       )}
 
@@ -367,7 +387,7 @@ export default function ResultCardV2({ result, jobId, accessToken, onNewAnalysis
             </div>
           </div>
 
-          <LearningRoadmap learningRoadmap={learningRoadmap} />
+          <LearningRoadmap items={roadmapItems} />
         </section>
       )}
 

@@ -5,6 +5,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import { getResultData } from '@/utils/resultHelpers';
 import styles from '@/styles/ComparisonDashboard.module.css';
 
+// TODO: Route comparison through backend /comparison endpoint (evidence-gated
+// logic, server-side keyword-stuffing detection) instead of client-side diffing.
+
 /**
  * ComparisonDashboard — Phase 4 Before/After Analysis
  *
