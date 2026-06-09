@@ -1,0 +1,21 @@
+Name: Pham Thi D
+Email: phamthid@email.com
+Phone: 0904-567-890
+
+Summary
+Backend developer with Python and Django experience.
+
+Experience
+
+Project: Student Management System
+- Built a Django web application for managing student records
+- Used SQLite database
+
+Project: Healthcare Data API
+- Built a FastAPI REST API for healthcare data management
+- Migrated from SQLite to PostgreSQL with proper schema design and migration scripts
+- Deployed the API with Docker Compose including the FastAPI service and PostgreSQL database
+- Added automated tests using pytest for critical endpoints
+
+Skills
+Python, Django, FastAPI, PostgreSQL, Docker, Git, pytest

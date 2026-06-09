@@ -1,0 +1,23 @@
+Name: Ha Van O
+Email: havano@email.com
+Phone: 0914-567-890
+
+Summary
+Backend developer with FastAPI, PostgreSQL, Docker experience.
+
+Experience
+
+Project: E-Commerce Backend
+- Built FastAPI API with PostgreSQL
+- Deployed with Docker
+
+Project: Cloud-Native Payment Gateway
+- Built a FastAPI payment gateway service handling 1000+ transactions per day
+- Designed PostgreSQL schema with proper transactions and rollback handling for payment records
+- Integrated Redis for rate limiting and payment session caching
+- Deployed to AWS EKS (Kubernetes) with auto-scaling, health checks, and rolling deployments
+- Implemented JWT and API key authentication with role-based access control
+- Wrote comprehensive pytest tests achieving 85% code coverage
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS, Git, pytest

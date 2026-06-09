@@ -1,0 +1,19 @@
+Name: Vu Thi H
+Email: vuthih@email.com
+Phone: 0908-901-234
+
+Summary
+Data engineer with Python, SQL, and cloud experience.
+
+Experience
+
+Project: ETL Pipeline
+- Built Python ETL pipeline processing 50GB data daily
+- Stored results in PostgreSQL and created automated reports
+
+Project: Personal Blog
+- Wrote blog posts about technology
+- Improved writing skills
+
+Skills
+Python, SQL, PostgreSQL, AWS, Docker, Git, FastAPI, Redis, Kubernetes, TensorFlow, PyTorch

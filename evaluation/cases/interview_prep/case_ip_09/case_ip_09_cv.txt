@@ -1,0 +1,16 @@
+Name: Vu Thi I
+Email: vuthii@email.com
+Phone: 0909-012-345
+
+Summary
+Backend engineer with FastAPI and PostgreSQL experience.
+
+Experience
+
+Project: Analytics API
+- Built FastAPI analytics API with PostgreSQL for data processing
+- Designed database schema with proper indexes and query optimization
+- Deployed with Docker on a cloud server
+
+Skills
+Python, FastAPI, PostgreSQL, Docker, Git

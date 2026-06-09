@@ -1,0 +1,15 @@
+Name: Ly Thi K
+Email: lyThiK@email.com
+Phone: 0911-234-567
+
+Summary
+Backend engineer.
+
+Experience
+
+Project: Something
+- Did backend work
+- Used some tech
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS

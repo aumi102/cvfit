@@ -1,0 +1,12 @@
+Backend Developer
+
+Requirements:
+- Python programming experience
+- FastAPI or Flask or Django
+- PostgreSQL database
+- Docker deployment
+
+Responsibilities:
+- Build backend services
+- Database management
+- Write clean code with tests

@@ -1,0 +1,14 @@
+Name: Ly Thi L
+Email: lyThiL@email.com
+Phone: 0911-234-567
+
+Summary
+Junior developer learning backend development.
+
+Experience
+
+Project: Learning Project
+- Built a small Python script
+
+Skills
+Python

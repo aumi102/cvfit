@@ -1,0 +1,22 @@
+Name: Do Van M
+Email: dovanm@email.com
+Phone: 0912-345-678
+
+Summary
+Backend developer with Python and Flask.
+
+Experience
+
+Project: REST API
+- Built a Flask API
+- Used SQLite database
+
+Project: Task Management Platform
+- Built a FastAPI REST API for a task management platform
+- Migrated from SQLite to PostgreSQL with proper schema design, indexes, and foreign keys
+- Integrated Redis for caching task lists and user sessions, reducing database load by 50%
+- Containerized the entire application with Docker Compose including FastAPI service, PostgreSQL, and Redis
+- Implemented API rate limiting and JWT authentication
+
+Skills
+Python, Flask, FastAPI, PostgreSQL, Redis, Docker, Git

@@ -1,0 +1,15 @@
+Name: Tran Thi B
+Email: tranthib@email.com
+Phone: 0902-345-678
+
+Summary
+Backend engineer with 2 years of Python experience.
+
+Experience
+
+Project: Internal Dashboard
+- Used Python scripts to automate data processing
+- Stored data in a database
+
+Skills
+Python, Flask, SQLite, Git

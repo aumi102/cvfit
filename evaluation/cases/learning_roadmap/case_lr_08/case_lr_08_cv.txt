@@ -1,0 +1,14 @@
+Name: Ngo Van H
+Email: ngovanh@email.com
+Phone: 0908-901-234
+
+Summary
+Backend engineer with FastAPI, PostgreSQL.
+
+Experience
+
+Project: Data API
+- Built FastAPI API with PostgreSQL
+
+Skills
+Python, FastAPI, PostgreSQL, Git

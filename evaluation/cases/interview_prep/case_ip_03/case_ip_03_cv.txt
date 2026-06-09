@@ -1,0 +1,15 @@
+Name: Tran Thi C
+Email: tranthic@email.com
+Phone: 0903-456-789
+
+Summary
+Backend developer with FastAPI and Python experience.
+
+Experience
+
+Project: Internal API
+- Built a FastAPI API
+- Connected to a database
+
+Skills
+Python, FastAPI, Git

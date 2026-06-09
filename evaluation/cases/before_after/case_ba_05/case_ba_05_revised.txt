@@ -1,0 +1,22 @@
+Name: Hoang Van E
+Email: hoangvane@email.com
+Phone: 0905-678-901
+
+Summary
+Mid-level backend developer.
+
+Experience
+
+Project: Microservices API
+- Built a FastAPI API for order processing
+- Used PostgreSQL and Redis
+- Deployed with Docker
+
+Project: Real-time Analytics Pipeline
+- Built a FastAPI service for real-time order processing with PostgreSQL and Redis
+- Implemented background task processing with Celery and Redis queue
+- Optimized PostgreSQL queries reducing API response time by 30%
+- Containerized all services with Docker and wrote comprehensive pytest tests
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Celery, Git, pytest

@@ -1,0 +1,15 @@
+Name: Thai Van K
+Email: thaivank@email.com
+Phone: 0910-123-456
+
+Summary
+Backend developer with Python, FastAPI, PostgreSQL, Docker experience.
+
+Experience
+
+Project: Internal API
+- Built a FastAPI API
+- Used PostgreSQL
+
+Skills
+Python, FastAPI, PostgreSQL, Docker
