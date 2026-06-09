@@ -1,0 +1,15 @@
+Name: Bui Van B
+Email: buivanb@email.com
+Phone: 0902-345-678
+
+Summary
+Frontend developer with React and JavaScript experience.
+
+Experience
+
+Project: Company Website
+- Built React web application for company landing page
+- Used JavaScript and CSS for frontend styling
+
+Skills
+JavaScript, React, HTML, CSS, Git

@@ -1,0 +1,13 @@
+Backend Engineer
+
+Requirements:
+- Python development
+- FastAPI framework
+- PostgreSQL
+- Docker and Docker Compose
+- Redis is a plus
+
+Responsibilities:
+- Build backend services
+- Work with databases
+- Deploy with Docker

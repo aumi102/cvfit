@@ -1,0 +1,16 @@
+Name: Dao Thi E
+Email: daothie@email.com
+Phone: 0905-678-901
+
+Summary
+Junior developer learning Python and FastAPI.
+
+Experience
+
+Project: Todo API
+- Built a FastAPI todo API as a learning project
+- Used an in-memory database (no PostgreSQL)
+- Deployed locally (no Docker)
+
+Skills
+Python, FastAPI, Git

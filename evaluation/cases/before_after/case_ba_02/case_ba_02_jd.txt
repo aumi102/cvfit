@@ -1,0 +1,15 @@
+Senior Backend Engineer
+
+Requirements:
+- 3+ years of Python development
+- Strong experience with FastAPI or Django
+- PostgreSQL database design and optimization
+- Redis for caching and async tasks
+- Docker and Kubernetes deployment
+- AWS or GCP experience
+- API security and authentication
+
+Responsibilities:
+- Design and build scalable backend services
+- Lead technical architecture decisions
+- Mentor junior developers

@@ -1,0 +1,14 @@
+Name: Bui Van G
+Email: buivang@email.com
+Phone: 0907-890-123
+
+Summary
+Junior developer.
+
+Experience
+
+Project: Simple API
+- Built a Python API
+
+Skills
+Python

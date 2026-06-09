@@ -1,0 +1,22 @@
+Name: Truong Van P
+Email: truongvanp@email.com
+Phone: 0915-678-901
+
+Summary
+Backend engineer with FastAPI, PostgreSQL, Redis, Docker.
+
+Experience
+
+Project: Analytics API
+- Built FastAPI API for analytics
+- Used PostgreSQL and Redis
+- Deployed with Docker
+
+Project: Real Estate Listing API
+- Built FastAPI API for real estate listings with PostgreSQL full-text search
+- Integrated Redis for caching popular search results
+- Containerized with Docker and deployed with Nginx reverse proxy
+- Wrote pytest tests for all API endpoints
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git, Nginx, pytest

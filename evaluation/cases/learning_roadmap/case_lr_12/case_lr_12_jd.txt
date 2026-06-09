@@ -1,0 +1,14 @@
+Backend Engineer
+
+Requirements:
+- Python with FastAPI
+- PostgreSQL database
+
+Nice to Have:
+- Redis caching
+- Docker deployment
+- AWS cloud
+
+Responsibilities:
+- Build backend APIs
+- Database work

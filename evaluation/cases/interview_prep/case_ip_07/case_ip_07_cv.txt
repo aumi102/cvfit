@@ -1,0 +1,19 @@
+Name: Pham Thi G
+Email: phamthig@email.com
+Phone: 0907-890-123
+
+Summary
+Senior backend engineer with extensive production experience.
+
+Experience
+
+Project: Payment Gateway (Production)
+- Built FastAPI payment gateway handling 10,000+ transactions per day
+- Designed PostgreSQL schema for payment records with proper ACID transactions and row-level locking
+- Integrated Redis for payment session caching and rate limiting with 99.9% uptime
+- Deployed to AWS EKS (Kubernetes) with auto-scaling, blue-green deployments, and comprehensive monitoring
+- Implemented JWT and API key authentication with OAuth2, RBAC, and fine-grained permissions
+- Wrote 500+ pytest tests with 92% code coverage and integrated with CI/CD pipeline
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS, Git, pytest, OAuth2

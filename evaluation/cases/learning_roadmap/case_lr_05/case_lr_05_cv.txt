@@ -1,0 +1,16 @@
+Name: Dao Thi E
+Email: daothie@email.com
+Phone: 0905-678-901
+
+Summary
+Backend developer.
+
+Experience
+
+Project: Internal System
+- Built backend APIs
+- Used databases
+- Deployed with containers
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS

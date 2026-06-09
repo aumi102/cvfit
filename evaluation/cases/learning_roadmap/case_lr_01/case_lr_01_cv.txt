@@ -1,0 +1,15 @@
+Name: Nguyen Van A
+Email: nguyenvana@email.com
+Phone: 0901-234-567
+
+Summary
+Backend developer with Python and Flask experience.
+
+Experience
+
+Project: Blog API
+- Built a Flask blog API
+- Used SQLite database
+
+Skills
+Python, Flask, SQLite, Git

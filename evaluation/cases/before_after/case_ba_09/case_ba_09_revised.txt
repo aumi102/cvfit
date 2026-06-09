@@ -1,0 +1,15 @@
+Name: Ngo Van I
+Email: ngovani@email.com
+Phone: 0909-012-345
+
+Summary
+Backend developer with FastAPI, PostgreSQL, Redis, Docker, Kubernetes, and AWS experience. Expert in all required technologies.
+
+Experience
+
+Project: Auth Service
+- Built FastAPI authentication service with JWT
+- Stored user data in PostgreSQL with proper indexing
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS, Git, Terraform, Prometheus, Grafana, ElasticSearch, MongoDB, RabbitMQ, GraphQL, gRPC, WebSockets, Rust, Go, Machine Learning, AI, Blockchain

@@ -1,0 +1,15 @@
+Name: Hoang Van H
+Email: hoangvanh@email.com
+Phone: 0908-901-234
+
+Summary
+Junior Python developer.
+
+Experience
+
+Project: Learning Projects
+- Built small Python scripts
+- Experimented with Flask
+
+Skills
+Python, Flask, Git

@@ -1,0 +1,15 @@
+Name: Chu Thi L
+Email: chuThiL@email.com
+Phone: 0912-345-678
+
+Summary
+Backend developer.
+
+Experience
+
+Project: API
+- Built FastAPI API
+- Used PostgreSQL
+
+Skills
+Python, FastAPI, PostgreSQL

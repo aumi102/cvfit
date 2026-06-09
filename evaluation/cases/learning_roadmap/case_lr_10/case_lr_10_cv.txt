@@ -1,0 +1,14 @@
+Name: Ha Van J
+Email: havanj@email.com
+Phone: 0910-123-456
+
+Summary
+Junior developer.
+
+Experience
+
+Project: Learning Project
+- Built a small Python script
+
+Skills
+Python

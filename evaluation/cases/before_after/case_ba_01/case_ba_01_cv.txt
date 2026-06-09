@@ -1,0 +1,16 @@
+Name: Nguyen Van A
+Email: nguyenvana@email.com
+Phone: 0901-234-567
+
+Summary
+Junior backend developer with 1 year of experience in Python.
+
+Experience
+
+Project: Simple Blog API
+- Built a simple API using Python
+- Worked with databases
+- Used some backend tools
+
+Skills
+Python, FastAPI, PostgreSQL, Docker, Git

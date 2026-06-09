@@ -1,0 +1,14 @@
+Name: Chu Thi N
+Email: chuthin@email.com
+Phone: 0913-456-789
+
+Summary
+Backend engineer with experience in Python.
+
+Experience
+
+Project: Data Processing Script
+- Processed data with Python scripts
+
+Skills
+Python

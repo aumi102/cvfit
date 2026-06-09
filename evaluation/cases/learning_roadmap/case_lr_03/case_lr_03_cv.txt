@@ -1,0 +1,14 @@
+Name: Tran Thi C
+Email: tranthic@email.com
+Phone: 0903-456-789
+
+Summary
+Junior backend developer.
+
+Experience
+
+Project: Simple API
+- Built a Python API
+
+Skills
+Python

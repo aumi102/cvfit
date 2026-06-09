@@ -1,0 +1,17 @@
+Name: Nguyen Van A
+Email: nguyenvana@email.com
+Phone: 0901-234-567
+
+Summary
+Backend engineer with 2 years of experience building APIs and data services.
+
+Experience
+
+Project: E-Commerce Product API
+- Built a FastAPI REST API for product catalog with 500+ endpoints
+- Implemented CRUD operations using PostgreSQL with query optimization and proper indexing
+- Integrated Redis for caching product data, reducing response time by 40%
+- Deployed with Docker and wrote pytest tests for all endpoints
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git, pytest
