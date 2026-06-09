@@ -4,19 +4,26 @@ import { useState, useMemo } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import styles from '@/styles/InterviewPrep.module.css';
 
-const TYPE_ORDER = ['technical', 'behavioral', 'situational', 'general'];
+const TYPE_ORDER = ['technical', 'project_deep_dive', 'behavioral', 'gap_probe', 'system_design', 'situational', 'general'];
 
 /**
  * InterviewPrep — Phase 4 Interview Prep Pack
  *
- * Accordion sections grouped by question type.
- * Data shape: result.interview_prep.questions[]
+ * Accepts a plain array of question objects via the `questions` prop.
+ * Backward-compatible: also accepts `{ interviewPrep }` where
+ * interviewPrep is either a plain array or `{ questions: [...] }`.
  */
-export default function InterviewPrep({ interviewPrep }) {
+export default function InterviewPrep({ questions: questionsProp, interviewPrep }) {
   const { t } = useLanguage();
   const [expandedQuestions, setExpandedQuestions] = useState(new Set());
 
-  const questions = interviewPrep?.questions ?? [];
+  // Normalize: prefer direct `questions` prop; fall back to interviewPrep shapes.
+  const questions = useMemo(() => {
+    if (Array.isArray(questionsProp) && questionsProp.length > 0) return questionsProp;
+    if (Array.isArray(interviewPrep)) return interviewPrep;
+    if (Array.isArray(interviewPrep?.questions)) return interviewPrep.questions;
+    return [];
+  }, [questionsProp, interviewPrep]);
 
   const grouped = useMemo(() => {
     const groups = new Map();
@@ -25,12 +32,10 @@ export default function InterviewPrep({ interviewPrep }) {
       if (!groups.has(type)) groups.set(type, []);
       groups.get(type).push(q);
     }
-    // Sort by defined order
     const sorted = new Map();
     for (const type of TYPE_ORDER) {
       if (groups.has(type)) sorted.set(type, groups.get(type));
     }
-    // Add any remaining types
     for (const [type, items] of groups) {
       if (!sorted.has(type)) sorted.set(type, items);
     }
@@ -58,6 +63,9 @@ export default function InterviewPrep({ interviewPrep }) {
     const map = {
       behavioral: styles.typeIconBehavioral,
       technical: styles.typeIconTechnical,
+      project_deep_dive: styles.typeIconTechnical,
+      gap_probe: styles.typeIconSituational,
+      system_design: styles.typeIconTechnical,
       situational: styles.typeIconSituational,
       general: styles.typeIconGeneral,
     };
@@ -68,6 +76,9 @@ export default function InterviewPrep({ interviewPrep }) {
     const map = {
       behavioral: styles.typeBehavioral,
       technical: styles.typeTechnical,
+      project_deep_dive: styles.typeTechnical,
+      gap_probe: styles.typeSituational,
+      system_design: styles.typeTechnical,
       situational: styles.typeSituational,
       general: styles.typeGeneral,
     };
@@ -107,6 +118,7 @@ export default function InterviewPrep({ interviewPrep }) {
                   role="button"
                   tabIndex={0}
                   aria-expanded={isOpen}
+                  onKeyDown={(e) => e.key === 'Enter' && toggleQuestion(qId)}
                 >
                   <span className={styles.questionNumber}>{globalIndex}</span>
                   <span className={styles.questionText}>{q.question}</span>
@@ -139,14 +151,16 @@ export default function InterviewPrep({ interviewPrep }) {
                       </div>
                     )}
 
-                    {q.suggested_answer_outline && (
+                    {Array.isArray(q.suggested_answer_outline) && q.suggested_answer_outline.length > 0 && (
                       <div className={styles.detailBlock}>
                         <span className={styles.detailLabel}>
                           {t('phase4.interviewPrep.suggestedOutline')}
                         </span>
-                        <div className={styles.outlineBlock}>
-                          {q.suggested_answer_outline}
-                        </div>
+                        <ul className={styles.outlineBlock}>
+                          {q.suggested_answer_outline.map((point, pIdx) => (
+                            <li key={pIdx} className={styles.outlineItem}>{point}</li>
+                          ))}
+                        </ul>
                       </div>
                     )}
 
@@ -161,13 +175,13 @@ export default function InterviewPrep({ interviewPrep }) {
                       </div>
                     )}
 
-                    {q.related_cv_evidence && (
+                    {Array.isArray(q.related_cv_evidence) && q.related_cv_evidence.length > 0 && (
                       <div className={styles.detailBlock}>
                         <span className={styles.detailLabel}>
                           {t('phase4.interviewPrep.relatedCv')}
                         </span>
                         <div className={styles.relatedBlock}>
-                          {q.related_cv_evidence}
+                          {q.related_cv_evidence.join(', ')}
                         </div>
                       </div>
                     )}

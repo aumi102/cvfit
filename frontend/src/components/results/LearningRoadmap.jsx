@@ -6,13 +6,21 @@ import styles from '@/styles/LearningRoadmap.module.css';
 /**
  * LearningRoadmap — Phase 4 Learning Path
  *
- * Vertical timeline cards with topic chips and mini project ideas.
- * Data shape: result.learning_roadmap.items[]
+ * Accepts a plain array via the `items` prop.
+ * Backward-compatible: also accepts `{ learningRoadmap }` where
+ * learningRoadmap is either a plain array or `{ items: [...] }`.
  */
-export default function LearningRoadmap({ learningRoadmap }) {
+export default function LearningRoadmap({ items: itemsProp, learningRoadmap }) {
   const { t } = useLanguage();
 
-  const items = learningRoadmap?.items ?? [];
+  // Normalize: prefer direct `items` prop; fall back to learningRoadmap shapes.
+  const items = Array.isArray(itemsProp) && itemsProp.length > 0
+    ? itemsProp
+    : Array.isArray(learningRoadmap)
+    ? learningRoadmap
+    : Array.isArray(learningRoadmap?.items)
+    ? learningRoadmap.items
+    : [];
 
   if (items.length === 0) {
     return (
@@ -56,6 +64,9 @@ export default function LearningRoadmap({ learningRoadmap }) {
               <span className={`${styles.priorityBadge} ${priorityBadgeClass(item.priority)}`}>
                 {(item.priority ?? 'low').toUpperCase()}
               </span>
+              {item.estimated_effort && (
+                <span className={styles.effortBadge}>{item.estimated_effort}</span>
+              )}
             </div>
 
             {item.why && (
@@ -99,8 +110,8 @@ export default function LearningRoadmap({ learningRoadmap }) {
               </div>
             )}
 
-            {/* CV evidence to add */}
-            {item.cv_evidence_to_add && (
+            {/* CV evidence to add after learning — v3 field name */}
+            {(item.cv_evidence_to_add_after_learning || item.cv_evidence_to_add) && (
               <div className={styles.detailBlock}>
                 <span className={styles.detailLabel}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -112,8 +123,18 @@ export default function LearningRoadmap({ learningRoadmap }) {
                   {t('phase4.roadmap.cvEvidence')}
                 </span>
                 <div className={styles.cvEvidenceBox}>
-                  {item.cv_evidence_to_add}
+                  {item.cv_evidence_to_add_after_learning || item.cv_evidence_to_add}
                 </div>
+              </div>
+            )}
+
+            {/* Do-not-claim guardrail */}
+            {item.do_not_claim_until_completed === true && (
+              <div className={styles.guardrailNotice}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                {t('phase4.roadmap.doNotClaim')}
               </div>
             )}
           </div>
