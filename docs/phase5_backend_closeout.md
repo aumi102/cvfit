@@ -101,10 +101,38 @@ Run migrations on Render using `scripts/run_alembic.py` as documented in
 
 ## Smoke Evidence
 
-> To be filled in after the first deployed smoke run.
+> Deployed smoke run is blocked pending Render redeployment to Phase 5 main.
+> This section will be updated after a successful deployed run.
+
+### Smoke Attempt — 2026-06-10 (BLOCKED: Phase 5 not deployed on Render)
+
+- **Target:** https://cvfit.onrender.com
+- **Script:** `scripts/smoke_phase5_backend.py`
+- **Local main commit at time of run:** `c6f9428`
+- **PHASE5_SMOKE_JOB_ID:** not provided
+- **Outcome:** Smoke aborted — Phase 5 backend routes not deployed on Render.
+
+**Findings:**
+
+- `GET /health` → 200 `{"status":"ok"}` — backend is reachable.
+- Auth register + login → PASS — Phase 1 auth routes are deployed.
+- `GET /v1/profile/items` → 404 — Phase 5 route not found.
+- `GET /v1/applications` → 404 — Phase 5 route not found.
+- OpenAPI spec on Render shows 15 routes (Phase 4 only); no Phase 5 routes present.
+
+**Root cause:** Render has not been redeployed since Phase 5 PRs (#47–#50) were
+merged into `main`. The deployed instance is running a Phase 4-only build.
+
+**Smoke script bug fixed:** `→` (U+2192) characters in output messages caused
+`UnicodeEncodeError` on Windows CP1252 console. Fixed by replacing all occurrences
+with `->` (commit `c6f9428`). No behavior change.
+
+**Required action:** Redeploy Render to `main` (`c6f9428` or later) and run
+Alembic migrations (`20260610_0001` through `20260610_0003`) before re-running
+smoke. See Operational Commands section.
 
 ```text
-(placeholder — update after deployed run)
+(placeholder — update after successful deployed smoke run)
 
 API base URL: https://cvfit.onrender.com
 phase5 backend smoke passed
