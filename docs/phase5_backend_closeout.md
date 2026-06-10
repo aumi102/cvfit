@@ -67,6 +67,20 @@ All seven Phase 5 backend pillars are implemented:
 
 ---
 
+## Merged PRs
+
+All Phase 5 backend work was delivered through these pull requests merged into `main`:
+
+| PR | Title | Scope |
+|---|---|---|
+| [#46](https://github.com/somene112/cvfit/pull/46) | docs(phase5): Phase 5 PR1 — contracts and guardrails only | Contracts, guardrails, team plan |
+| [#47](https://github.com/somene112/cvfit/pull/47) | feat(phase5): Application Workspace and Career Profile APIs | Pillars 1 + 5: application CRUD, career profile CRUD, readiness summary |
+| [#48](https://github.com/somene112/cvfit/pull/48) | feat(phase5): Application Package and Cover Letter APIs | Pillars 2 + 3: package generation, cover letter generation/patch |
+| [#49](https://github.com/somene112/cvfit/pull/49) | feat(phase5): Interview Practice APIs | Pillar 4: interview questions, answer submit, rubric scoring |
+| [#50](https://github.com/somene112/cvfit/pull/50) | docs(phase5): Backend Integration Smoke + Backend Closeout Draft | Pillar 7: smoke script, API summary, this closeout doc |
+
+---
+
 ## Database Migrations
 
 Three Alembic migrations applied in sequence:
