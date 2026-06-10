@@ -10,6 +10,8 @@ from app.api.routes.cv import router as cv_router
 from app.api.routes.jobs import router as jobs_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.ui import router as ui_router
+from app.api.routes.applications import router as applications_router
+from app.api.routes.profile import router as profile_router
 
 log = configure_logging()
 validate_runtime_config()
@@ -24,3 +26,5 @@ app.include_router(cv_router)
 app.include_router(jobs_router)
 app.include_router(auth_router)
 app.include_router(ui_router)
+app.include_router(applications_router)
+app.include_router(profile_router)
