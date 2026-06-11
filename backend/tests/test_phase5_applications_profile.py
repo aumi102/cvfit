@@ -352,6 +352,28 @@ class TestApplicationCRUD:
         assert db.get(Application, app.id) is None
         assert db.get(InterviewAnswer, answer.id) is None
 
+    def test_delete_application_with_artifact_returns_204(self):
+        user = make_user()
+        db = FakeDb()
+        app = make_application(user.id)
+        db.add(app)
+        artifact = ApplicationArtifact(
+            id=uuid.uuid4(),
+            user_id=user.id,
+            application_id=app.id,
+            artifact_type="application_package",
+            payload_json={"disclaimer": "draft only"},
+            created_at=datetime.utcnow(),
+        )
+        db.add(artifact)
+        client = build_app_client(db, user)
+
+        resp = client.delete(f"/v1/applications/{app.id}")
+
+        assert resp.status_code == 204
+        assert db.get(Application, app.id) is None
+        assert db.get(ApplicationArtifact, artifact.id) is None
+
     def test_create_application_missing_required_fields_returns_422(self):
         user = make_user()
         db = FakeDb()
