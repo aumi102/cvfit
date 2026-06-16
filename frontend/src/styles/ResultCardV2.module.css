@@ -639,7 +639,275 @@
   border: 1px solid var(--color-border);
 }
 
+/* ─── Phase 5 Bridge Banner ─── */
+.phase5Bridge {
+  background: linear-gradient(135deg, #EFF6FF 0%, #F5F3FF 50%, #EFF6FF 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  animation: fadeInUp 0.5s 0.45s ease-out both;
+  position: relative;
+  overflow: hidden;
+}
+
+.phase5Bridge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), #8b5cf6, var(--color-secondary));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.phase5BridgeHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.phase5BridgeTitleBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.phase5BridgeIconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.phase5BridgeIconBox svg {
+  width: 22px;
+  height: 22px;
+}
+
+.phase5BridgeTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.phase5BridgeSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.phase5NewAppBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  flex-shrink: 0;
+}
+
+.phase5NewAppBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
+.phase5NewAppBtn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.phase5Grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.phase5Card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: white;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+.phase5Card:nth-child(1) { animation-delay: 0.55s; }
+.phase5Card:nth-child(2) { animation-delay: 0.62s; }
+.phase5Card:nth-child(3) { animation-delay: 0.69s; }
+.phase5Card:nth-child(4) { animation-delay: 0.76s; }
+
+.phase5Card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.12);
+}
+
+.phase5Card::after {
+  content: '→';
+  position: absolute;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.phase5Card:hover::after {
+  transform: translateX(3px);
+  color: var(--color-primary);
+}
+
+.phase5CardIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.phase5CardIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.phase5CardIcon.create {
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  color: var(--color-primary);
+}
+
+.phase5CardIcon.interview {
+  background: linear-gradient(135deg, #F5F3FF, #EDE9FE);
+  color: #7C3AED;
+}
+
+.phase5CardIcon.letter {
+  background: linear-gradient(135deg, #ECFDF5, #D1FAE5);
+  color: #059669;
+}
+
+.phase5CardIcon.package {
+  background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+  color: #D97706;
+}
+
+.phase5CardLabel {
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.phase5CardTitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.phase5CardDesc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ─── Application Detail: Feature Links Section ─── */
+.featureLinksSection {
+  margin-top: var(--space-6);
+}
+
+.featureLinksTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.featureLinksGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.featureLinkCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.featureLinkCard:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
+}
+
+.featureLinkCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.featureLinkCard:hover::before { opacity: 1; }
+
+.featureLinkCard.interview::before { background: linear-gradient(90deg, #7C3AED, #6366f1); }
+.featureLinkCard.letter::before { background: linear-gradient(90deg, #059669, #10b981); }
+.featureLinkCard.packageLink::before { background: linear-gradient(90deg, #D97706, #F59E0B); }
+
 /* ─── Responsive ─── */
+@media (max-width: 900px) {
+  .phase5Grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .sectionCard {
     padding: var(--space-5);

@@ -109,21 +109,31 @@ export default function ApplicationDetailPage() {
                   className={styles.btnPrimary}
                   id="go-to-package-btn"
                 >
-                  📦 Package
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  </svg>
+                  Package
                 </Link>
                 <Link
                   href={`/applications/${id}/cover-letter`}
                   className={styles.btnSecondary}
                   id="go-to-cover-letter-btn"
                 >
-                  ✉️ Cover Letter
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  Cover Letter
                 </Link>
                 <Link
                   href={`/applications/${id}/interview`}
                   className={styles.btnSecondary}
                   id="go-to-interview-btn"
                 >
-                  🎤 Interview
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                  Interview
                 </Link>
               </div>
             </div>
@@ -189,12 +199,118 @@ export default function ApplicationDetailPage() {
             </div>
 
             {app.best_analysis_job_id ? (
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                An analysis is attached to this application. You can generate a package, cover letter, and interview questions.
-                <span style={{ display: 'block', marginTop: '0.5rem', color: 'var(--color-text-muted)' }}>
-                  Job ID: <code style={{ background: 'var(--color-bg)', padding: '2px 6px', borderRadius: 4, fontSize: '0.8125rem' }}>{app.best_analysis_job_id}</code>
-                </span>
-              </p>
+              <>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+                  Phân tích đã được đính kèm. Bạn có thể tạo package, cover letter và luyện tập phỏng vấn ngay bây giờ.
+                  <span style={{ display: 'block', marginTop: '0.5rem', color: 'var(--color-text-muted)' }}>
+                    Job ID: <code style={{ background: 'var(--color-bg)', padding: '2px 6px', borderRadius: 4, fontSize: '0.8125rem' }}>{app.best_analysis_job_id}</code>
+                  </span>
+                </p>
+
+                {/* Feature Links */}
+                <div className={styles.featureLinksSection}>
+                  <div className={styles.featureLinksTitle}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                    </svg>
+                    Các tính năng AI có sẵn
+                  </div>
+                  <div className={styles.featureLinksGrid}>
+                    {/* Interview */}
+                    <Link
+                      href={`/applications/${id}/interview`}
+                      className={`${styles.featureLinkCard} ${styles.interview}`}
+                      id="feature-link-interview"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                          background: 'linear-gradient(135deg, #F5F3FF, #EDE9FE)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7C3AED'
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>AI Interview</div>
+                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Luyện phỏng vấn</div>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                        Thực hành trả lời câu hỏi phỏng vấn AI tạo riêng cho vị trí này
+                      </p>
+                      <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: '#7C3AED', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        Bắt đầu luyện tập
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                      </span>
+                    </Link>
+
+                    {/* Cover Letter */}
+                    <Link
+                      href={`/applications/${id}/cover-letter`}
+                      className={`${styles.featureLinkCard} ${styles.letter}`}
+                      id="feature-link-cover-letter"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                          background: 'linear-gradient(135deg, #ECFDF5, #D1FAE5)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669'
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                            <polyline points="22,6 12,13 2,6" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>AI Writing</div>
+                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Tạo Cover Letter</div>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                        Thư xin việc được cá nhân hoá theo kết quả phân tích CV & JD
+                      </p>
+                      <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: '#059669', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        Tạo ngay
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                      </span>
+                    </Link>
+
+                    {/* Package */}
+                    <Link
+                      href={`/applications/${id}/package`}
+                      className={`${styles.featureLinkCard} ${styles.packageLink}`}
+                      id="feature-link-package"
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                          width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                          background: 'linear-gradient(135deg, #FFF7ED, #FFEDD5)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D97706'
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                            <line x1="12" y1="22.08" x2="12" y2="12" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>Full Package</div>
+                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Application Package</div>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
+                        Bộ hồ sơ hoàn chỉnh gồm CV tối ưu, cover letter và câu hỏi phỏng vấn
+                      </p>
+                      <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: '#D97706', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        Xem package
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                      </span>
+                    </Link>
+                  </div>
+                </div>
+              </>
             ) : (
               <>
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: 1.6 }}>

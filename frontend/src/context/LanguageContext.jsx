@@ -553,7 +553,8 @@ export function LanguageProvider({ children }) {
   };
 
   const t = (key) => {
-    return dictionary[lang]?.[key] || key;
+    const val = dictionary[lang]?.[key];
+    return val !== undefined ? val : key;
   };
 
   return (
