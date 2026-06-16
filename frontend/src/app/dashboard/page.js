@@ -408,6 +408,62 @@ function DashboardContent() {
                 onCompare={() => setIsComparing(true)}
               />
             </div>
+
+            {/* Phase 5 bridge CTA */}
+            <div style={{
+              marginTop: '1.5rem',
+              background: 'var(--color-card)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-xl)',
+              padding: 'var(--space-6)',
+              animation: 'fadeInUp 0.4s ease-out 0.1s both',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.375rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>🚀</span>
+                <h2 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text)' }}>
+                  {t('bridge.title')}
+                </h2>
+              </div>
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
+                {t('bridge.desc')}
+                {jobId && (
+                  <span style={{ display: 'block', marginTop: '0.375rem', color: 'var(--color-text-muted)', fontSize: '0.8125rem' }}>
+                    {t('bridge.jobIdHint')} <code style={{ background: 'var(--color-bg)', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }}>{jobId}</code>
+                  </span>
+                )}
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <a
+                  href="/applications/new"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.625rem 1.25rem',
+                    background: 'linear-gradient(135deg, var(--color-primary), #4F46E5)',
+                    color: 'white', fontWeight: 600, fontSize: 'var(--font-size-sm)',
+                    borderRadius: 'var(--radius-md)', textDecoration: 'none',
+                    transition: 'all 150ms',
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  {t('bridge.cta.create')}
+                </a>
+                <a
+                  href="/applications"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                    padding: '0.625rem 1.25rem',
+                    background: 'var(--color-bg)', border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-secondary)', fontWeight: 600, fontSize: 'var(--font-size-sm)',
+                    borderRadius: 'var(--radius-md)', textDecoration: 'none',
+                    transition: 'all 150ms',
+                  }}
+                >
+                  📋 {t('bridge.cta.viewAll')}
+                </a>
+              </div>
+            </div>
           </div>
         )}
       </main>

@@ -154,11 +154,11 @@ export default function ApplicationDetailPage() {
               </svg>
               Overview
             </Link>
-            <Link href={`/applications/${id}/package`} className={styles.tab}>
+            <Link href={`/applications/${id}/interview`} className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              Package
+              Interview
             </Link>
             <Link href={`/applications/${id}/cover-letter`} className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -167,11 +167,18 @@ export default function ApplicationDetailPage() {
               </svg>
               Cover Letter
             </Link>
-            <Link href={`/applications/${id}/interview`} className={styles.tab}>
+            <Link href={`/applications/${id}/package`} className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
               </svg>
-              Interview
+              Package
+            </Link>
+            <Link href="/profile/evidence" className={styles.tab}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Evidence
             </Link>
           </nav>
 
@@ -229,6 +236,56 @@ export default function ApplicationDetailPage() {
                 </form>
               </>
             )}
+          </div>
+
+          {/* Workspace hub cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginTop: '1.5rem' }}>
+            {[
+              {
+                href: `/applications/${id}/interview`,
+                icon: '🎤',
+                title: 'Interview Practice',
+                desc: 'Answer AI-generated questions and get rubric-based feedback.',
+                id: 'hub-interview',
+              },
+              {
+                href: `/applications/${id}/cover-letter`,
+                icon: '✉️',
+                title: 'Cover Letter',
+                desc: 'Generate and edit a personalised cover letter for this role.',
+                id: 'hub-cover-letter',
+              },
+              {
+                href: `/applications/${id}/package`,
+                icon: '📦',
+                title: 'Application Package',
+                desc: 'Get an AI fit score, skill gap analysis, and next actions.',
+                id: 'hub-package',
+              },
+              {
+                href: '/profile/evidence',
+                icon: '🗂️',
+                title: 'Evidence Vault',
+                desc: 'Manage skills, projects, and achievements used in your materials.',
+                id: 'hub-evidence',
+              },
+            ].map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                id={item.id}
+                style={{
+                  display: 'flex', flexDirection: 'column', gap: '0.5rem',
+                  background: 'var(--color-card)', border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-lg)', padding: '1.25rem',
+                  textDecoration: 'none', transition: 'all 150ms',
+                }}
+              >
+                <span style={{ fontSize: '1.5rem' }}>{item.icon}</span>
+                <span style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, color: 'var(--color-text)' }}>{item.title}</span>
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>{item.desc}</span>
+              </Link>
+            ))}
           </div>
 
           {/* Job description preview */}

@@ -71,9 +71,12 @@ export default function NewApplicationPage() {
       <h1 className={styles.heroCompany} style={{ marginBottom: '0.5rem' }}>
         New Application
       </h1>
-      <p className={styles.heroRole} style={{ marginBottom: '2rem' }}>
+      <p className={styles.heroRole} style={{ marginBottom: '0.75rem' }}>
         Track a job you&apos;re applying for and generate AI-powered materials.
       </p>
+      <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.875rem 1rem', marginBottom: '1.75rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+        💡 After creating the application, go to the <strong>Overview</strong> tab to attach a CV fit analysis. This unlocks interview questions, a personalised cover letter, and a readiness package.
+      </div>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 

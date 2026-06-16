@@ -57,6 +57,10 @@ const dictionary = {
     // Dashboard Header
     'header.badge': 'AI',
     'header.logout': 'Logout',
+    'nav.dashboard': 'CV Analysis',
+    'nav.history': 'History',
+    'nav.applications': 'Applications',
+    'nav.profile': 'Profile',
 
     // Dashboard Page
     'dashboard.title': 'CV Analysis',
@@ -266,7 +270,14 @@ const dictionary = {
     'phase4.history.viewResult': 'View Result',
     'phase4.history.compare': 'Compare',
     'phase4.history.revision': 'Revision',
-    'phase4.history.noAccessToken': 'Result no longer accessible'
+    'phase4.history.noAccessToken': 'Result no longer accessible',
+
+    // Phase 5 Bridge CTA (dashboard → applications)
+    'bridge.title': 'Next step: build your application',
+    'bridge.desc': 'Turn this CV analysis into interview practice, a cover letter, and an application package. Create an application and attach this analysis to unlock all Phase 5 tools.',
+    'bridge.jobIdHint': 'Analysis Job ID (paste into Application → Attach Analysis):',
+    'bridge.cta.create': 'Create Application',
+    'bridge.cta.viewAll': 'View My Applications'
   },
   vi: {
     // Landing Page
@@ -275,8 +286,8 @@ const dictionary = {
     'landing.getStarted': 'Bắt đầu ngay',
     'landing.badge': 'Phân tích bằng AI',
     'landing.headline.1': 'Chinh phục công việc mơ ước với phân tích CV',
-    'landing.headline.2': 'Bằng AI',
-    'landing.headline.3': '',
+    'landing.headline.2': 'bằng AI',
+    'landing.headline.3': 'thông minh',
     'landing.subheadline': 'So sánh ngay lập tức sơ yếu lý lịch của bạn với bất kỳ mô tả công việc nào. Khám phá lỗ hổng kỹ năng, nhận điểm số độ phù hợp và các đề xuất tối ưu hồ sơ.',
     'landing.ctaPrimary': 'Bắt đầu phân tích miễn phí',
     'landing.features.title': 'Tại sao chọn CV Fit Analyzer?',
@@ -322,6 +333,10 @@ const dictionary = {
     // Dashboard Header
     'header.badge': 'AI',
     'header.logout': 'Đăng xuất',
+    'nav.dashboard': 'Phân tích CV',
+    'nav.history': 'Lịch sử',
+    'nav.applications': 'Hồ sơ ứng tuyển',
+    'nav.profile': 'Hồ sơ năng lực',
 
     // Dashboard Page
     'dashboard.title': 'Phân tích CV',
@@ -531,7 +546,14 @@ const dictionary = {
     'phase4.history.viewResult': 'Xem kết quả',
     'phase4.history.compare': 'So sánh',
     'phase4.history.revision': 'Phiên bản',
-    'phase4.history.noAccessToken': 'Kết quả không còn truy cập được'
+    'phase4.history.noAccessToken': 'Kết quả không còn truy cập được',
+
+    // Phase 5 Bridge CTA (dashboard → applications)
+    'bridge.title': 'Bước tiếp theo: chuẩn bị hồ sơ ứng tuyển',
+    'bridge.desc': 'Biến kết quả phân tích CV thành buổi luyện phỏng vấn, thư ứng tuyển và gói hồ sơ. Tạo hồ sơ ứng tuyển và đính kèm phân tích này để mở khoá tất cả tính năng.',
+    'bridge.jobIdHint': 'Job ID phân tích (dán vào Hồ sơ → Đính kèm phân tích):',
+    'bridge.cta.create': 'Tạo hồ sơ ứng tuyển',
+    'bridge.cta.viewAll': 'Xem hồ sơ của tôi'
   }
 };
 
@@ -553,7 +575,8 @@ export function LanguageProvider({ children }) {
   };
 
   const t = (key) => {
-    return dictionary[lang]?.[key] || key;
+    const val = dictionary[lang]?.[key];
+    return val !== undefined ? val : key;
   };
 
   return (
