@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { getResultData, getFitLevel } from '@/utils/resultHelpers';
 import ScoreCircle from './ScoreCircle';
@@ -126,6 +127,97 @@ export default function ResultCardV2({ result, jobId, accessToken, onNewAnalysis
           )}
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════
+          1b. Phase 5 Bridge — CTA to Application Workspace
+          ═══════════════════════════════════════════════ */}
+      <div className={styles.phase5Bridge} id="phase5-bridge">
+        <div className={styles.phase5BridgeHeader}>
+          <div className={styles.phase5BridgeTitleBlock}>
+            <div className={styles.phase5BridgeIconBox}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+              </svg>
+            </div>
+            <div>
+              <div className={styles.phase5BridgeTitle}>Bước tiếp theo với kết quả này</div>
+              <div className={styles.phase5BridgeSubtitle}>Tạo application và sử dụng AI để chuẩn bị hồ sơ ứng tuyển hoàn chỉnh</div>
+            </div>
+          </div>
+          <Link
+            href="/applications/new"
+            className={styles.phase5NewAppBtn}
+            id="phase5-create-application-btn"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Tạo application mới
+          </Link>
+        </div>
+
+        <div className={styles.phase5Grid}>
+          {/* Card 1: Tạo Application */}
+          <Link href="/applications/new" className={styles.phase5Card} id="phase5-new-app-card">
+            <div className={`${styles.phase5CardIcon} ${styles.create}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className={styles.phase5CardLabel}>Bắt đầu</div>
+              <div className={styles.phase5CardTitle}>Tạo Application</div>
+              <div className={styles.phase5CardDesc}>Lưu kết quả phân tích vào application workspace để quản lý hồ sơ ứng tuyển</div>
+            </div>
+          </Link>
+
+          {/* Card 2: Luyện phỏng vấn */}
+          <Link href="/applications" className={styles.phase5Card} id="phase5-interview-card">
+            <div className={`${styles.phase5CardIcon} ${styles.interview}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <div>
+              <div className={styles.phase5CardLabel}>AI Interview</div>
+              <div className={styles.phase5CardTitle}>Luyện phỏng vấn</div>
+              <div className={styles.phase5CardDesc}>Thực hành trả lời câu hỏi phỏng vấn được AI tạo ra dựa trên JD và CV của bạn</div>
+            </div>
+          </Link>
+
+          {/* Card 3: Tạo Cover Letter */}
+          <Link href="/applications" className={styles.phase5Card} id="phase5-cover-letter-card">
+            <div className={`${styles.phase5CardIcon} ${styles.letter}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,13 2,6" />
+              </svg>
+            </div>
+            <div>
+              <div className={styles.phase5CardLabel}>AI Writing</div>
+              <div className={styles.phase5CardTitle}>Tạo Cover Letter</div>
+              <div className={styles.phase5CardDesc}>Tạo thư xin việc chuyên nghiệp được cá nhân hoá dựa trên phân tích CV & JD</div>
+            </div>
+          </Link>
+
+          {/* Card 4: Application Package */}
+          <Link href="/applications" className={styles.phase5Card} id="phase5-package-card">
+            <div className={`${styles.phase5CardIcon} ${styles.package}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg>
+            </div>
+            <div>
+              <div className={styles.phase5CardLabel}>Full Package</div>
+              <div className={styles.phase5CardTitle}>Application Package</div>
+              <div className={styles.phase5CardDesc}>Tổng hợp toàn bộ hồ sơ: CV tối ưu, cover letter, và bộ câu hỏi phỏng vấn</div>
+            </div>
+          </Link>
+        </div>
+      </div>
 
       {/* ═══════════════════════════════════════════════
           2. Score Breakdown
