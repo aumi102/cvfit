@@ -108,7 +108,7 @@ export default function ApplicationsPage() {
         <EmptyStatePage
           icon={folderIcon}
           title="No applications yet"
-          description="Create an application to practice interviews, generate a cover letter, and build a job-specific AI package. Attach a CV analysis to personalise everything."
+          description="Create a target job from a job description (JD) to unlock interview practice, a cover letter, and an AI readiness package. Attach a CV analysis to personalise everything."
           action={
             <Link href="/applications/new" className={styles.newBtn}>
               Create your first application
