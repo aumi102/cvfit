@@ -8,6 +8,7 @@ import PageShell from '@/components/common/PageShell';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import { createApplication } from '@/services/applicationsApi';
 import { extractApiError } from '@/utils/errorHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/ApplicationDetail.module.css';
 
 const MAX_JD_CHARS = 8000;
@@ -48,6 +49,11 @@ export default function NewApplicationPage() {
         company_name: form.company_name.trim(),
         job_title: form.job_title.trim(),
         jd_text: form.jd_text.trim(),
+      });
+      trackEvent(ANALYTICS_EVENTS.APPLICATION_CREATE_SUCCESS, {
+        feature_name: 'applications',
+        application_status: app?.status || 'draft',
+        has_analysis: Boolean(app?.best_analysis_job_id),
       });
       router.push(`/applications/${app.id}`);
     } catch (err) {

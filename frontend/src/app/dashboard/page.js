@@ -19,6 +19,7 @@ import { useJobPolling } from '@/hooks/useJobPolling';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { createScoreJob, getJobResult, getJobStatus } from '@/services/jobApi';
 import { useLanguage } from '@/context/LanguageContext';
+import { trackEvent, ANALYTICS_EVENTS, scoreBucket } from '@/lib/analytics';
 import {
   STRICTNESS_OPTIONS,
   LANGUAGE_OPTIONS,
@@ -26,6 +27,23 @@ import {
   JOB_STATUS,
 } from '@/utils/constants';
 import styles from '@/styles/Dashboard.module.css';
+
+/**
+ * Extract the 0–100 fit score from either a v1 or v2 result shape for safe
+ * bucketing. Returns null when no numeric score is present. The raw result
+ * object is never used for analytics beyond this single number.
+ */
+function extractFitScore(data) {
+  const inner = data?.result ?? data ?? {};
+  const raw =
+    inner?.overall?.fit_score ??
+    inner?.fit_score ??
+    inner?.overall_score ??
+    inner?.score ??
+    inner?.scores?.fit_score;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
 
 function DashboardContent() {
   const { t } = useLanguage();
@@ -73,16 +91,21 @@ function DashboardContent() {
           const data = await getJobResult(jobId, accessToken);
           setResult(data);
           setWorkflowStep(WORKFLOW_STEPS.RESULT);
+          const bucket = scoreBucket(extractFitScore(data));
+          trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_SUCCESS, { feature_name: 'cv_analysis', status: 'success', score_bucket: bucket });
+          trackEvent(ANALYTICS_EVENTS.RESULT_VIEW, { feature_name: 'cv_analysis', score_bucket: bucket });
         } catch (err) {
           const { message } = extractApiError(err, 'Failed to fetch results.');
           setWorkflowError(message);
           setWorkflowStep(WORKFLOW_STEPS.ERROR);
+          trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, { feature_name: 'cv_analysis', status: 'error', error_type: 'result_fetch_failed' });
         }
       })();
     }
     if (jobStatus === JOB_STATUS.FAILED && workflowStep !== WORKFLOW_STEPS.ERROR) {
       setWorkflowStep(WORKFLOW_STEPS.ERROR);
       setWorkflowError(pollingError || 'Analysis failed. Please try again.');
+      trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, { feature_name: 'cv_analysis', status: 'error', error_type: 'job_failed' });
     }
   }, [jobStatus, jobId, accessToken, pollingError, workflowStep]);
 
@@ -130,6 +153,7 @@ function DashboardContent() {
 
     setWorkflowError(null);
     setResult(null);
+    trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_SUBMIT, { feature_name: 'cv_analysis' });
 
     /* Step 1: Upload CV */
     setWorkflowStep(WORKFLOW_STEPS.UPLOADING);
@@ -137,6 +161,7 @@ function DashboardContent() {
     if (!cvFileId) {
       setWorkflowStep(WORKFLOW_STEPS.ERROR);
       setWorkflowError('CV upload failed. Please try again.');
+      trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, { feature_name: 'cv_analysis', status: 'error', error_type: 'upload_failed' });
       return;
     }
 
@@ -163,6 +188,13 @@ function DashboardContent() {
       const { message } = extractApiError(err, 'Failed to create analysis job.');
       setWorkflowError(message);
       setWorkflowStep(WORKFLOW_STEPS.ERROR);
+      const statusCode = err?.response?.status;
+      trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, {
+        feature_name: 'cv_analysis',
+        status: 'error',
+        error_type: 'job_create_failed',
+        ...(typeof statusCode === 'number' ? { status_code: statusCode } : {}),
+      });
     }
   }, [file, jdText, targetRole, language, strictness, upload, t]);
 

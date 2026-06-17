@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { login } from '@/services/authApi';
 import { storeAuthSession } from '@/services/authStorage';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/LoginForm.module.css';
 
 export default function LoginForm() {
@@ -33,6 +34,7 @@ export default function LoginForm() {
         password,
       });
       storeAuthSession(authResponse);
+      trackEvent(ANALYTICS_EVENTS.LOGIN_SUCCESS, { feature_name: 'auth' });
       router.push('/dashboard');
     } catch (err) {
       setError(t('login.error.invalid'));

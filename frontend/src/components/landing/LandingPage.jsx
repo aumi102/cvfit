@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/LandingPage.module.css';
 
 export default function LandingPage() {
@@ -50,7 +51,11 @@ export default function LandingPage() {
               {t('landing.subheadline')}
             </p>
             <div className={styles.ctaGroup}>
-              <Link href="/login" className={styles.primaryCta}>
+              <Link
+                href="/login"
+                className={styles.primaryCta}
+                onClick={() => trackEvent(ANALYTICS_EVENTS.LANDING_CTA_CLICK, { feature_name: 'landing', source: 'hero_cta' })}
+              >
                 {t('landing.ctaPrimary')}
               </Link>
               <a href="#how-it-works" className={styles.secondaryCta}>

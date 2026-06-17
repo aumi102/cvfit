@@ -7,6 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import { logout } from '@/services/authApi';
 import { clearAuthSession, getStoredAuthToken, getStoredUser } from '@/services/authStorage';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Header.module.css';
 
 export default function Header() {
@@ -29,6 +30,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
+    trackEvent(ANALYTICS_EVENTS.LOGOUT_CLICK, { feature_name: 'auth' });
     const token = getStoredAuthToken();
     if (token) {
       try {

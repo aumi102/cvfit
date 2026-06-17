@@ -12,6 +12,7 @@ import RiskBadge from '@/components/common/RiskBadge';
 import Disclaimer from '@/components/common/Disclaimer';
 import { getInterviewQuestions, submitAnswer, getAnswers } from '@/services/interviewApi';
 import { extractApiError } from '@/utils/errorHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Interview.module.css';
 
 /* ─────────────────────────────────────────
@@ -72,6 +73,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
         answer_text: answerText.trim(),
       });
       setResult(data);
+      trackEvent(ANALYTICS_EVENTS.INTERVIEW_ANSWER_SUBMIT_SUCCESS, { feature_name: 'interview' });
     } catch (err) {
       const { message } = extractApiError(err, 'Failed to submit answer. Please try again.');
       setError(message);
@@ -246,8 +248,12 @@ export default function InterviewPage() {
       ]);
 
       if (qData.status === 'fulfilled') {
-        setQuestions(Array.isArray(qData.value?.questions) ? qData.value.questions : []);
+        const loadedQuestions = Array.isArray(qData.value?.questions) ? qData.value.questions : [];
+        setQuestions(loadedQuestions);
         setDisclaimer(qData.value?.disclaimer || null);
+        if (loadedQuestions.length > 0) {
+          trackEvent(ANALYTICS_EVENTS.INTERVIEW_START, { feature_name: 'interview' });
+        }
       } else {
         const { message } = extractApiError(qData.reason, 'Could not load interview questions.');
         setError(message);
