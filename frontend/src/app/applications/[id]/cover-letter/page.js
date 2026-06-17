@@ -263,6 +263,13 @@ export default function CoverLetterPage() {
           </div>
         </>
       )}
+
+      {/* Next steps */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2rem', fontSize: '0.875rem' }}>
+        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Back to application</Link>
+        <span style={{ color: 'var(--color-text-muted)' }}>·</span>
+        <Link href={`/applications/${id}/package`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Continue to package / readiness</Link>
+      </div>
     </PageShell>
   );
 }

@@ -72,6 +72,12 @@ export default function Header() {
           <Link href="/profile" className={`${styles.navLink} ${pathname?.startsWith('/profile') ? styles['navLink--active'] : ''}`}>
             {t('nav.profile')}
           </Link>
+          <Link href="/learning" className={`${styles.navLink} ${pathname?.startsWith('/learning') ? styles['navLink--active'] : ''}`}>
+            {t('nav.learning')}
+          </Link>
+          <Link href="/help" className={`${styles.navLink} ${pathname?.startsWith('/help') ? styles['navLink--active'] : ''}`}>
+            {t('nav.help')}
+          </Link>
         </nav>
         <LanguageSwitcher />
         <div className={styles.userInfo}>

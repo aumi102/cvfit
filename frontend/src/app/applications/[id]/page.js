@@ -8,6 +8,7 @@ import PageShell from '@/components/common/PageShell';
 import ErrorBanner from '@/components/common/ErrorBanner';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { getApplication, attachAnalysis } from '@/services/applicationsApi';
+import { getJobHistory } from '@/services/jobApi';
 import { extractApiError } from '@/utils/errorHelpers';
 import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/ApplicationDetail.module.css';
@@ -37,6 +38,10 @@ export default function ApplicationDetailPage() {
   const [attachError, setAttachError] = useState(null);
   const [attachSuccess, setAttachSuccess] = useState(false);
 
+  // Recent completed analyses (for the picker)
+  const [recentAnalyses, setRecentAnalyses] = useState([]);
+  const [loadingAnalyses, setLoadingAnalyses] = useState(false);
+
   const loadApp = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -61,17 +66,40 @@ export default function ApplicationDetailPage() {
     loadApp();
   }, [isAuthChecking, loadApp]);
 
-  const handleAttach = async (e) => {
-    e.preventDefault();
-    if (!attachJobId.trim()) {
-      setAttachError('Please enter a Job ID.');
+  // Load recent completed analyses for the picker once we know the app is unattached.
+  useEffect(() => {
+    if (isAuthChecking || isLoading || !app || app.best_analysis_job_id) return;
+    let active = true;
+    setLoadingAnalyses(true);
+    (async () => {
+      try {
+        const data = await getJobHistory();
+        if (!active) return;
+        const items = Array.isArray(data?.items) ? data.items : [];
+        // Only completed analyses are attachable; show the most recent first.
+        const completed = items.filter((j) => j.status === 'succeeded');
+        setRecentAnalyses(completed);
+      } catch {
+        // Picker is a convenience; manual paste remains available on failure.
+        if (active) setRecentAnalyses([]);
+      } finally {
+        if (active) setLoadingAnalyses(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [isAuthChecking, isLoading, app]);
+
+  const attachJob = async (jobId) => {
+    const value = (jobId || '').trim();
+    if (!value) {
+      setAttachError('Please choose a completed analysis or enter a Job ID.');
       return;
     }
     setIsAttaching(true);
     setAttachError(null);
     setAttachSuccess(false);
     try {
-      await attachAnalysis(id, attachJobId.trim());
+      await attachAnalysis(id, value);
       trackEvent(ANALYTICS_EVENTS.ATTACH_ANALYSIS_SUCCESS, { feature_name: 'applications', has_analysis: true });
       setAttachSuccess(true);
       setAttachJobId('');
@@ -83,6 +111,11 @@ export default function ApplicationDetailPage() {
     } finally {
       setIsAttaching(false);
     }
+  };
+
+  const handleAttach = (e) => {
+    e.preventDefault();
+    attachJob(attachJobId);
   };
 
   return (
@@ -198,6 +231,29 @@ export default function ApplicationDetailPage() {
               Evidence
             </Link>
           </nav>
+
+          {/* Next steps strip */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', margin: '0 0 1.5rem', fontSize: 'var(--font-size-sm)' }}>
+            <span style={{ fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.06em', marginRight: '0.25rem' }}>
+              Next steps
+            </span>
+            {[
+              { href: `/applications/${id}/interview`, label: 'Interview Practice' },
+              { href: `/applications/${id}/cover-letter`, label: 'Cover Letter' },
+              { href: `/applications/${id}/package`, label: 'Package' },
+              { href: '/profile/evidence', label: 'Evidence' },
+              { href: '/learning', label: 'Learning' },
+              { href: '/help', label: 'Help' },
+            ].map((step) => (
+              <Link
+                key={step.label}
+                href={step.href}
+                style={{ padding: '0.3rem 0.7rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-full)', color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 600 }}
+              >
+                {step.label}
+              </Link>
+            ))}
+          </div>
 
           {/* Analysis attachment section */}
           <div className={styles.analysisCard}>
@@ -328,7 +384,10 @@ export default function ApplicationDetailPage() {
             ) : (
               <>
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: 1.6 }}>
-                  Attach a CV fit analysis to unlock Package, Cover Letter, and Interview generation. Run an analysis from the Dashboard first, then paste the Job ID here.
+                  Attach a completed CV fit analysis to unlock Interview, Cover Letter, and Package.
+                  Pick one of your recent analyses below, or paste a Job ID from your{' '}
+                  <Link href="/history" style={{ color: 'var(--color-primary)' }}>Analysis History</Link>.
+                  No analysis yet? <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>Run one on CV Analysis</Link>.
                 </p>
                 {attachError && (
                   <ErrorBanner message={attachError} onDismiss={() => setAttachError(null)} />
@@ -338,13 +397,58 @@ export default function ApplicationDetailPage() {
                     ✓ Analysis attached successfully.
                   </div>
                 )}
+
+                {/* Recent completed analyses picker */}
+                {loadingAnalyses && (
+                  <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                    Loading your recent analyses…
+                  </p>
+                )}
+                {!loadingAnalyses && recentAnalyses.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)' }}>
+                      Recent completed analyses
+                    </div>
+                    {recentAnalyses.slice(0, 5).map((job) => (
+                      <div
+                        key={job.job_id}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.625rem 0.875rem' }}
+                      >
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {job.target_role || 'CV fit analysis'}
+                          </div>
+                          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
+                            {job.overall_fit_score != null ? `Fit ${job.overall_fit_score} · ` : ''}{formatDate(job.created_at)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className={`${styles.btnPrimary} ${styles.btnSm}`}
+                          disabled={isAttaching}
+                          onClick={() => attachJob(job.job_id)}
+                        >
+                          {isAttaching ? 'Attaching…' : 'Attach'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!loadingAnalyses && recentAnalyses.length === 0 && (
+                  <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                    No completed analyses found yet — run one on{' '}
+                    <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>CV Analysis</Link>, or paste a Job ID below.
+                  </p>
+                )}
+
+                {/* Manual paste fallback */}
                 <form onSubmit={handleAttach} className={styles.attachForm}>
                   <input
                     type="text"
                     className={styles.attachInput}
                     value={attachJobId}
                     onChange={(e) => setAttachJobId(e.target.value)}
-                    placeholder="Paste Job ID from Dashboard analysis…"
+                    placeholder="…or paste a Job ID from Analysis History"
                     disabled={isAttaching}
                     id="attach-job-id-input"
                   />

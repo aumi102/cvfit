@@ -61,6 +61,8 @@ const dictionary = {
     'nav.history': 'History',
     'nav.applications': 'Applications',
     'nav.profile': 'Profile',
+    'nav.learning': 'Learning',
+    'nav.help': 'Help',
 
     // Dashboard Page
     'dashboard.title': 'CV Analysis',
@@ -330,6 +332,8 @@ const dictionary = {
     'nav.history': 'Lịch sử',
     'nav.applications': 'Hồ sơ ứng tuyển',
     'nav.profile': 'Hồ sơ năng lực',
+    'nav.learning': 'Học tập',
+    'nav.help': 'Trợ giúp',
 
     // Dashboard Page
     'dashboard.title': 'Phân tích CV',
