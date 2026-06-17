@@ -9,6 +9,7 @@ import ErrorBanner from '@/components/common/ErrorBanner';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { getApplication, attachAnalysis } from '@/services/applicationsApi';
 import { extractApiError } from '@/utils/errorHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/ApplicationDetail.module.css';
 
 function formatDate(value) {
@@ -42,6 +43,11 @@ export default function ApplicationDetailPage() {
     try {
       const data = await getApplication(id);
       setApp(data);
+      trackEvent(ANALYTICS_EVENTS.APPLICATION_DETAIL_VIEW, {
+        feature_name: 'applications',
+        application_status: data?.status || 'draft',
+        has_analysis: Boolean(data?.best_analysis_job_id),
+      });
     } catch (err) {
       const { message } = extractApiError(err, 'Could not load application details.');
       setError(message);
@@ -66,6 +72,7 @@ export default function ApplicationDetailPage() {
     setAttachSuccess(false);
     try {
       await attachAnalysis(id, attachJobId.trim());
+      trackEvent(ANALYTICS_EVENTS.ATTACH_ANALYSIS_SUCCESS, { feature_name: 'applications', has_analysis: true });
       setAttachSuccess(true);
       setAttachJobId('');
       // Reload the application to reflect attached analysis

@@ -10,6 +10,7 @@ import ErrorBanner, { AnalysisRequiredBanner } from '@/components/common/ErrorBa
 import Disclaimer from '@/components/common/Disclaimer';
 import { generateCoverLetter, getCoverLetter, updateCoverLetter } from '@/services/coverLetterApi';
 import { extractApiError, isAnalysisRequiredError } from '@/utils/errorHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/CoverLetter.module.css';
 
 function extractSections(letter) {
@@ -68,6 +69,7 @@ export default function CoverLetterPage() {
     setAnalysisRequired(false);
     try {
       await generateCoverLetter(id);
+      trackEvent(ANALYTICS_EVENTS.COVER_LETTER_GENERATE_SUCCESS, { feature_name: 'cover_letter', has_analysis: true });
       await loadLetter();
       setSaved(false);
     } catch (err) {
@@ -99,6 +101,7 @@ export default function CoverLetterPage() {
       const data = await updateCoverLetter(id, patch);
       setLetter(data);
       setSections(extractSections(data));
+      trackEvent(ANALYTICS_EVENTS.COVER_LETTER_SAVE_SUCCESS, { feature_name: 'cover_letter', has_analysis: true });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {

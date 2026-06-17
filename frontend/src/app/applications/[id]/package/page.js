@@ -13,6 +13,7 @@ import Disclaimer from '@/components/common/Disclaimer';
 import { generatePackage, getPackage } from '@/services/packageApi';
 import { extractApiError, isAnalysisRequiredError } from '@/utils/errorHelpers';
 import { deduplicateStrings } from '@/utils/riskHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Package.module.css';
 
 export default function PackagePage() {
@@ -58,6 +59,7 @@ export default function PackagePage() {
     setAnalysisRequired(false);
     try {
       await generatePackage(id);
+      trackEvent(ANALYTICS_EVENTS.PACKAGE_GENERATE_SUCCESS, { feature_name: 'package', has_analysis: true });
       await loadPackage();
     } catch (err) {
       if (isAnalysisRequiredError(err)) {

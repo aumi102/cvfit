@@ -10,6 +10,7 @@ import EmptyStatePage from '@/components/common/EmptyStatePage';
 import { getEvidence, createEvidence, updateEvidence, deleteEvidence } from '@/services/profileApi';
 import { extractApiError } from '@/utils/errorHelpers';
 import { deduplicateByKey } from '@/utils/riskHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Evidence.module.css';
 
 const TABS = [
@@ -226,6 +227,7 @@ export default function EvidencePage() {
       } else {
         const created = await createEvidence(payload);
         setAllItems((prev) => [...prev, created]);
+        trackEvent(ANALYTICS_EVENTS.PROFILE_ITEM_CREATE_SUCCESS, { feature_name: 'profile', item_type: created?.item_type || payload.item_type });
       }
       setShowForm(false);
       setEditingItem(null);
