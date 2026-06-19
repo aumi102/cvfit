@@ -14,10 +14,12 @@
 | Shareable Readiness | `/v1/share-links/*`, `/v1/public/share/{token}` (6) | `ENABLE_PHASE6_SHARE_LINKS` (**off**) | #70 |
 | Usage / Plan shell | `/v1/usage/me`, `/v1/plans` (2) | `ENABLE_PHASE6_USAGE_SHELL` (on) | #71 |
 
-> **Status:** All six modules are **merged on `main`** (commit `a1aa4ca`). Backend is closeout-ready.
-> Frontend (Quân), privacy/analytics/QA sign-off (Đạt), and the deployed Render rollout remain.
-> See [phase6_deployed_e2e_execution_report.md](phase6_deployed_e2e_execution_report.md) for the
-> deployed smoke result.
+> **Status:** All six modules are **merged on `main`** (latest closeout commit `060fb16`), the Render
+> backend has been **redeployed and migrated to head `20260620_0001`**, and the **deployed E2E smoke
+> PASSES** (read-only + full mutating happy path). Backend closeout is **complete**. Remaining:
+> frontend integration (Quân) and privacy/analytics/E2E sign-off (Đạt); Share Links stay flag-off
+> until the privacy review passes. See
+> [phase6_deployed_e2e_execution_report.md](phase6_deployed_e2e_execution_report.md) for the run.
 
 ## Migrations
 
