@@ -2,16 +2,46 @@
 
 > **Date:** 2026-06-19
 > **Backend URL:** `https://cvfit.onrender.com`
-> **Main commit at time of run:** `a1aa4ca` (PR #71 merged)
+> **Main commit:** `060fb16` (PR #73 merged)
 > **Expected migration head:** `20260620_0001`
 > **Tool:** `scripts/smoke_phase6_e2e.py`
 
-## Summary verdict: **BLOCKED_BY_ENV**
+## Summary verdict: **PASS**
 
-The backend **code on `main` is complete and green** (all Phase 6 modules merged; 158 local
-tests pass; every PR passed Backend Checks + PostgreSQL Migration Checks). However, the **deployed
-Render instance has not been redeployed to the Phase 6 backend** — Phase 6 routes return 404. This
-is a deploy/ops gap, **not a code defect**.
+After the manual Render redeploy of `main` and the manual DB migration to head `20260620_0001`
+(`20260610_0003 → 20260618_0001 → 20260619_0001 → 20260620_0001`, `check_db_schema.py` passing),
+the deployed Phase 6 backend was re-smoked. **Read-only and full mutating happy-path both pass.**
+All six Phase 6 modules respond correctly end-to-end; Share Links correctly returns 404 because
+`ENABLE_PHASE6_SHARE_LINKS=false`.
+
+### Final run (2026-06-19, main @ `060fb16`, migrated DB head `20260620_0001`)
+
+| Step | Result |
+|------|--------|
+| `GET /health` | PASS |
+| `POST /v1/auth/register` (synthetic) | PASS |
+| `POST /v1/auth/login` | PASS (token fully redacted) |
+| `GET /v1/plans` | PASS (free_demo, no checkout) |
+| `GET /v1/usage/me` | PASS (`enforcement_enabled=false`, plan=free_demo) |
+| `GET /v1/share-links` | PASS (404 — flag-off, intended) |
+| `POST /v1/target-jobs` + list | PASS |
+| `POST .../learning/generate` | PASS (2 tasks, limited fallback) |
+| `POST /v1/interview/sessions` → questions → answer → summary | PASS |
+| `POST /v1/help/assistant` (`next_best_action`) | PASS (`fallback_used=false`) |
+| `GET /v1/target-jobs/<unknown-uuid>` | PASS (404 non-leak ownership) |
+
+**Read-only verdict:** PASS · **Mutating verdict:** PASS · **Overall:** **PASS**
+
+Mutating run created throwaway synthetic records (target job, interview session/answer) under a
+synthetic throwaway account; there is no cleanup endpoint, so these demo records remain (demo-safe).
+
+---
+
+## Prior run (resolved): BLOCKED_BY_ENV
+
+> Recorded for history. Before the redeploy/migration, the deployed instance served pre-Phase-6
+> code and Phase 6 routes returned 404. Code on `main` was already complete and green; the gap was
+> purely deploy/ops. This is now **resolved** by the run above.
 
 ## Runs
 
