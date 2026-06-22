@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # Order lifecycle vocabulary (mirrors PAYMENT_ORDER_STATUS in db.models).
@@ -62,6 +62,8 @@ class BillingUsageResponse(BaseModel):
 
 
 class CheckoutRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     # Only the plan code is accepted — the amount is resolved server-side.
     plan_code: str = Field(min_length=1, max_length=50)
 
