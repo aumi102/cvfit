@@ -40,7 +40,7 @@ export default function PackagePage() {
       } else if (isAnalysisRequiredError(err)) {
         setAnalysisRequired(true);
       } else {
-        const { message } = extractApiError(err, 'Could not load package.');
+        const { message } = extractApiError(err, 'Không thể tải bộ hồ sơ.');
         setError(message);
       }
     } finally {
@@ -65,7 +65,7 @@ export default function PackagePage() {
       if (isAnalysisRequiredError(err)) {
         setAnalysisRequired(true);
       } else {
-        const { message } = extractApiError(err, 'Failed to generate package. Please try again.');
+        const { message } = extractApiError(err, 'Không thể tạo bộ hồ sơ. Vui lòng thử lại.');
         setError(message);
       }
     } finally {
@@ -89,17 +89,17 @@ export default function PackagePage() {
     <PageShell isAuthChecking={isAuthChecking}>
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Applications</Link>
+        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Hồ sơ ứng tuyển</Link>
         <span>›</span>
-        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Application</Link>
+        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Chi tiết</Link>
         <span>›</span>
-        <span>Package</span>
+        <span>Bộ hồ sơ</span>
       </nav>
 
       <div className={styles.header}>
         <div>
-          <h1 className={styles.pageTitle}>Application Package</h1>
-          <p className={styles.pageSubtitle}>AI-generated package summarising your fit for this role.</p>
+          <h1 className={styles.pageTitle}>Bộ hồ sơ ứng tuyển</h1>
+          <p className={styles.pageSubtitle}>Bộ hồ sơ do AI tạo tóm tắt mức độ phù hợp của bạn với vị trí này.</p>
         </div>
         <button
           className={styles.generateBtn}
@@ -108,13 +108,13 @@ export default function PackagePage() {
           id="generate-package-btn"
         >
           {isGenerating ? (
-            <><span className={styles.spinner} /> Generating…</>
+            <><span className={styles.spinner} /> Đang tạo…</>
           ) : (
             <>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
-              {pkg ? 'Regenerate' : 'Generate Package'}
+              {pkg ? 'Tạo lại' : 'Tạo bộ hồ sơ'}
             </>
           )}
         </button>
@@ -123,7 +123,7 @@ export default function PackagePage() {
       {analysisRequired && <AnalysisRequiredBanner appId={id} />}
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-      {isLoading && <LoadingSpinner fullPage label="Loading package…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải bộ hồ sơ…" />}
 
       {!isLoading && !pkg && !analysisRequired && !error && (
         <EmptyStatePage
@@ -132,8 +132,8 @@ export default function PackagePage() {
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
             </svg>
           }
-          title="No package yet"
-          description="Click 'Generate Package' to create an AI-powered application package for this role. An analysis must be attached first."
+          title="Chưa có bộ hồ sơ"
+          description="Nhấn 'Tạo bộ hồ sơ' để tạo bộ hồ sơ ứng tuyển từ AI. Cần đính kèm phân tích trước."
         />
       )}
 
@@ -143,13 +143,13 @@ export default function PackagePage() {
           {hasReadiness && (
             <div className={styles.readinessCard}>
               <h2 className={styles.readinessTitle}>
-                📊 Readiness Summary
+                📊 Đánh giá mức sẵn sàng
               </h2>
               <div className={styles.readinessGrid}>
                 {fitScore != null && (
                   <div className={styles.readinessStat}>
                     <div className={styles.readinessStatValue}>{Math.round(fitScore * 100)}%</div>
-                    <div className={styles.readinessStatLabel}>Fit Score</div>
+                    <div className={styles.readinessStatLabel}>Điểm phù hợp</div>
                   </div>
                 )}
                 {readinessLevel != null && (
@@ -157,7 +157,7 @@ export default function PackagePage() {
                     <div style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, color: 'var(--color-primary)', marginBottom: '0.25rem', lineHeight: 1.2 }}>
                       {readinessLevel}
                     </div>
-                    <div className={styles.readinessStatLabel}>Readiness Level</div>
+                    <div className={styles.readinessStatLabel}>Mức sẵn sàng</div>
                   </div>
                 )}
               </div>
@@ -167,7 +167,7 @@ export default function PackagePage() {
           {/* Matched skills */}
           {skills.length > 0 && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>✓ Matched Skills</h2>
+              <h2 className={styles.sectionTitle}>✓ Kỹ năng đáp ứng</h2>
               <div className={styles.chips}>
                 {skills.map((s) => (
                   <span key={s} className={styles.chip}>✓ {s}</span>
@@ -179,7 +179,7 @@ export default function PackagePage() {
           {/* Skill gaps */}
           {gaps.length > 0 && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>⚠ Skill Gaps</h2>
+              <h2 className={styles.sectionTitle}>⚠ Lỗ hổng kỹ năng</h2>
               <div className={styles.chips}>
                 {gaps.map((g) => (
                   <span key={g} className={styles.chip} style={{ background: 'var(--color-warning-light)', color: '#92400E' }}>
@@ -193,14 +193,14 @@ export default function PackagePage() {
           {/* Rubric */}
           {rubric.length > 0 && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>📋 Evaluation Rubric</h2>
+              <h2 className={styles.sectionTitle}>📋 Tiêu chí đánh giá</h2>
               <table className={styles.rubricTable}>
                 <thead>
                   <tr>
-                    <th>Criterion</th>
-                    <th>Score</th>
-                    <th>Risk</th>
-                    <th>Notes</th>
+                    <th>Tiêu chí</th>
+                    <th>Điểm</th>
+                    <th>Rủi ro</th>
+                    <th>Ghi chú</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -224,7 +224,7 @@ export default function PackagePage() {
           {/* Summary text */}
           {packageSummary && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>💬 Summary</h2>
+              <h2 className={styles.sectionTitle}>💬 Tóm tắt</h2>
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
                 {packageSummary}
               </p>
@@ -234,7 +234,7 @@ export default function PackagePage() {
           {/* Next actions */}
           {nextActions.length > 0 && (
             <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>📋 Recommended Next Actions</h2>
+              <h2 className={styles.sectionTitle}>📋 Hành động tiếp theo đề xuất</h2>
               <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8 }}>
                 {nextActions.map((action, i) => (
                   <li key={i}>{typeof action === 'string' ? action : JSON.stringify(action)}</li>
@@ -252,11 +252,11 @@ export default function PackagePage() {
 
       {/* Next steps */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2rem', fontSize: '0.875rem' }}>
-        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Back to application</Link>
+        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Quay lại hồ sơ</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Open learning roadmap</Link>
+        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Mở lộ trình học tập</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Open help</Link>
+        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Mở trợ giúp</Link>
       </div>
     </PageShell>
   );

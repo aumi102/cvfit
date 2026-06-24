@@ -20,20 +20,20 @@
 export function getHttpErrorMessage(status) {
   switch (status) {
     case 401:
-      return 'Your session has expired. Please log in again.';
+      return 'Phiên của bạn đã hết hạn. Vui lòng đăng nhập lại.';
     case 403:
-      return "You don't have permission to perform this action.";
+      return 'Bạn không có quyền thực hiện thao tác này.';
     case 404:
-      return 'The requested resource was not found.';
+      return 'Không tìm thấy tài nguyên yêu cầu.';
     case 422:
-      return 'The request could not be processed. Please check your input.';
+      return 'Không thể xử lý yêu cầu. Vui lòng kiểm tra lại thông tin đầu vào.';
     case 500:
-      return 'A server error occurred. Please try again later.';
+      return 'Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.';
     case 502:
     case 503:
-      return 'The service is temporarily unavailable. Please try again.';
+      return 'Dịch vụ tạm thời không khả dụng. Vui lòng thử lại.';
     default:
-      return `An error occurred (${status}). Please try again.`;
+      return `Đã xảy ra lỗi (${status}). Vui lòng thử lại.`;
   }
 }
 
@@ -68,7 +68,7 @@ export function isAnalysisRequiredError(err) {
  * @param {string} [fallback='Something went wrong. Please try again.']
  * @returns {{ message: string, hint: string|null }}
  */
-export function extractApiError(err, fallback = 'Something went wrong. Please try again.') {
+export function extractApiError(err, fallback = 'Đã có lỗi xảy ra. Vui lòng thử lại.') {
   const data = err?.response?.data;
   const detail = data?.detail;
 
@@ -109,6 +109,7 @@ export function extractApiError(err, fallback = 'Something went wrong. Please tr
   // Axios error.message — skip generic ones that aren't helpful
   const genericMessages = [
     'Network Error',
+    'Lỗi kết nối mạng',
     'Request failed with status code',
   ];
   if (err?.message && !genericMessages.some((g) => err.message.startsWith(g))) {

@@ -65,9 +65,9 @@ function StatusChip({ status, onChange, taskId, disabled }) {
         fontFamily: 'var(--font-family)',
       }}
     >
-      <option value="todo">Todo</option>
-      <option value="in_progress">In Progress</option>
-      <option value="done">Done</option>
+      <option value="todo">Cần làm</option>
+      <option value="in_progress">Đang thực hiện</option>
+      <option value="done">Hoàn thành</option>
     </select>
   );
 }
@@ -106,7 +106,7 @@ export default function LearningPage() {
         setTasks(Array.isArray(data?.items) ? data.items : []);
       } catch (err) {
         if (!active) return;
-        const { message } = extractApiError(err, 'Could not load your learning roadmap.');
+        const { message } = extractApiError(err, 'Không thể tải lộ trình học tập.');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -139,7 +139,7 @@ export default function LearningPage() {
         trackEvent(ANALYTICS_EVENTS.LEARNING_TASK_COMPLETED, { feature_name: 'learning', task_type: tasks.find((t) => t.id === taskId)?.type });
       }
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to update task status.');
+      const { message } = extractApiError(err, 'Không thể cập nhật trạng thái nhiệm vụ.');
       setError(message);
     } finally {
       setUpdatingId(null);
@@ -168,17 +168,17 @@ export default function LearningPage() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', animation: 'fadeInUp 0.35s ease-out' }}>
         <div>
           <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.025em', marginBottom: '0.25rem' }}>
-            Learning Roadmap
+            Lộ trình học tập
           </h1>
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, maxWidth: 560 }}>
-            Your personalised upskilling path based on your CV analysis. Tackle high-priority tasks first to close skill gaps.
+            Lộ trình nâng cao kỹ năng cá nhân dựa trên phân tích CV của bạn. Ưu tiên các nhiệm vụ quan trọng để lấp lỗ hổng kỹ năng.
           </p>
         </div>
         <Link
           href="/interview/sessions/new"
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1rem', background: 'var(--color-primary)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none' }}
         >
-          Practice Interview
+          Luyện phỏng vấn
         </Link>
       </div>
 
@@ -186,10 +186,10 @@ export default function LearningPage() {
       {!isLoading && tasks.length > 0 && (
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', animation: 'fadeIn 0.4s ease-out' }}>
           {[
-            { label: 'Total Tasks', value: stats.total, color: 'var(--color-primary)' },
-            { label: 'Done', value: stats.done, color: 'var(--color-success)' },
-            { label: 'In Progress', value: stats.inProgress, color: '#F59E0B' },
-            { label: 'High Priority', value: stats.high, color: 'var(--color-danger)' },
+            { label: 'Tổng nhiệm vụ', value: stats.total, color: 'var(--color-primary)' },
+            { label: 'Hoàn thành', value: stats.done, color: 'var(--color-success)' },
+            { label: 'Đang thực hiện', value: stats.inProgress, color: '#F59E0B' },
+            { label: 'Ưu tiên cao', value: stats.high, color: 'var(--color-danger)' },
           ].map((s) => (
             <div key={s.label} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.625rem 1rem', minWidth: 100 }}>
               <div style={{ fontSize: '1.5rem', fontWeight: 800, color: s.color, lineHeight: 1, letterSpacing: '-0.04em' }}>{s.value}</div>
@@ -201,7 +201,7 @@ export default function LearningPage() {
           {stats.total > 0 && (
             <div style={{ flex: 1, minWidth: 200, background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.625rem 1rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem', fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
-                <span>Overall Progress</span>
+                <span>Tiến độ chung</span>
                 <span>{Math.round((stats.done / stats.total) * 100)}%</span>
               </div>
               <div style={{ height: 8, background: 'var(--color-border)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
@@ -219,7 +219,7 @@ export default function LearningPage() {
             onClick={() => setCategoryFilter('')}
             style={{ padding: '0.3rem 0.75rem', borderRadius: 'var(--radius-full)', border: '1px solid', borderColor: !categoryFilter ? 'var(--color-primary)' : 'var(--color-border)', background: !categoryFilter ? 'var(--color-primary-light)' : 'var(--color-card)', color: !categoryFilter ? 'var(--color-primary)' : 'var(--color-text-secondary)', fontSize: 'var(--font-size-xs)', fontWeight: 600, cursor: 'pointer' }}
           >
-            All Categories
+            Tất cả danh mục
           </button>
           {categories.map((cat, i) => (
             <button
@@ -244,11 +244,11 @@ export default function LearningPage() {
       {!isLoading && tasks.length === 0 && !error && (
         <EmptyStatePage
           icon={bookIcon}
-          title="No learning tasks yet"
-          description="Run a CV vs JD analysis to get a personalised roadmap of skills to learn and evidence to build."
+          title="Chưa có nhiệm vụ học tập"
+          description="Chạy phân tích CV so với JD để nhận lộ trình cá nhân về kỹ năng cần học và bằng chứng cần xây dựng."
           action={
             <Link href="/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1.25rem', background: 'linear-gradient(135deg, var(--color-primary), #4F46E5)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none' }}>
-              Run CV Analysis →
+              Chạy phân tích CV →
             </Link>
           }
         />
@@ -266,7 +266,7 @@ export default function LearningPage() {
               <div className={styles.cardContent}>
                 <div className={styles.cardHeader}>
                   <Link href={`/learning/${task.id}`} className={styles.skillName} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    {task.skill || task.title || 'Learning Task'}
+                    {task.skill || task.title || 'Nhiệm vụ học tập'}
                   </Link>
                   <PriorityBadge priority={task.priority} />
                   {task.category && (
@@ -293,7 +293,7 @@ export default function LearningPage() {
                         <polyline points="9 11 12 14 22 4" />
                         <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
                       </svg>
-                      Topics
+                      Chủ đề
                     </div>
                     <div className={styles.topicChips}>
                       {task.topics.map((topic) => (
@@ -305,13 +305,13 @@ export default function LearningPage() {
 
                 {task.mini_project && (
                   <div className={styles.miniProjectBox}>
-                    <strong>Mini Project:</strong> {task.mini_project}
+                    <strong>Dự án nhỏ:</strong> {task.mini_project}
                   </div>
                 )}
 
                 {task.cv_evidence && (
                   <div className={styles.cvEvidenceBox}>
-                    <strong>Add to Evidence:</strong> {task.cv_evidence}
+                    <strong>Thêm vào bằng chứng:</strong> {task.cv_evidence}
                   </div>
                 )}
 
@@ -321,21 +321,21 @@ export default function LearningPage() {
                     href={`/learning/${task.id}`}
                     style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-primary)', textDecoration: 'none' }}
                   >
-                    View Details →
+                    Xem chi tiết →
                   </Link>
                   <span style={{ color: 'var(--color-text-muted)' }}>·</span>
                   <Link
                     href="/profile/evidence"
                     style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', textDecoration: 'none' }}
                   >
-                    Add Evidence
+                    Thêm bằng chứng
                   </Link>
                   <span style={{ color: 'var(--color-text-muted)' }}>·</span>
                   <Link
                     href="/interview/sessions/new"
                     style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', textDecoration: 'none' }}
                   >
-                    Practice Interview
+                    Luyện phỏng vấn
                   </Link>
                 </div>
               </div>
@@ -346,13 +346,13 @@ export default function LearningPage() {
 
       {/* Footer links — preserved from Phase 5 */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: 'var(--font-size-sm)', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-        <Link href="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← CV Analysis</Link>
+        <Link href="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Phân tích CV</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Applications</Link>
+        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Hồ sơ ứng tuyển</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/profile/evidence" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Evidence Vault</Link>
+        <Link href="/profile/evidence" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Kho bằng chứng</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Help</Link>
+        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Trợ giúp</Link>
       </div>
     </PageShell>
   );

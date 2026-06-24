@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+
 import { logout } from '@/services/authApi';
 import { clearAuthSession, getStoredAuthToken, getStoredUser } from '@/services/authStorage';
 import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
@@ -20,12 +20,12 @@ export default function Header() {
   useEffect(() => {
     const user = getStoredUser();
     if (user) {
-      const name = user.full_name || user.email || 'User';
+      const name = user.full_name || user.email || 'Người dùng';
       setUserName(name);
       setUserInitial(name.charAt(0).toUpperCase());
       return;
     }
-    setUserName('User');
+    setUserName('Người dùng');
     setUserInitial('U');
   }, []);
 
@@ -70,10 +70,10 @@ export default function Header() {
             {t('nav.applications')}
           </Link>
           <Link href="/jobs" className={`${styles.navLink} ${pathname?.startsWith('/jobs') ? styles['navLink--active'] : ''}`}>
-            Jobs
+            Việc làm
           </Link>
           <Link href="/interview/sessions" className={`${styles.navLink} ${pathname?.startsWith('/interview') ? styles['navLink--active'] : ''}`}>
-            Interview
+            Phỏng vấn
           </Link>
           <Link href="/profile" className={`${styles.navLink} ${pathname?.startsWith('/profile') ? styles['navLink--active'] : ''}`}>
             {t('nav.profile')}
@@ -82,13 +82,13 @@ export default function Header() {
             {t('nav.learning')}
           </Link>
           <Link href="/usage" className={`${styles.navLink} ${['/usage', '/billing', '/pricing'].some((route) => pathname === route || pathname?.startsWith(`${route}/`)) ? styles['navLink--active'] : ''}`}>
-            Usage
+            Mức sử dụng
           </Link>
           <Link href="/help" className={`${styles.navLink} ${pathname?.startsWith('/help') ? styles['navLink--active'] : ''}`}>
             {t('nav.help')}
           </Link>
         </nav>
-        <LanguageSwitcher />
+
         <div className={styles.userInfo}>
           <div className={styles.avatar}>{userInitial}</div>
           <span className={styles.userName}>{userName}</span>

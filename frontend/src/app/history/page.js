@@ -15,7 +15,7 @@ function formatDate(value) {
   if (Number.isNaN(date.getTime())) {
     return 'N/A';
   }
-  return date.toLocaleString();
+  return date.toLocaleString('vi-VN');
 }
 
 function formatScore(value) {
@@ -26,7 +26,7 @@ function formatScore(value) {
 }
 
 function formatReport(value) {
-  return value ? 'Ready' : 'Not ready';
+  return value ? 'Sẵn sàng' : 'Chưa sẵn sàng';
 }
 
 export default function HistoryPage() {
@@ -51,7 +51,7 @@ export default function HistoryPage() {
         setItems(Array.isArray(data?.items) ? data.items : []);
       } catch {
         if (!active) return;
-        setError('Could not load history. Please try again.');
+        setError('Không thể tải lịch sử. Vui lòng thử lại.');
       } finally {
         if (active) {
           setIsLoading(false);
@@ -68,7 +68,7 @@ export default function HistoryPage() {
     return (
       <div className={styles.page}>
         <main className={styles.main}>
-          <div className={styles.statusCard}>Checking session...</div>
+          <div className={styles.statusCard}>Đang kiểm tra phiên...</div>
         </main>
       </div>
     );
@@ -80,15 +80,15 @@ export default function HistoryPage() {
       <main className={styles.main}>
         <div className={styles.topRow}>
           <div>
-            <h1 className={styles.title}>Analysis History</h1>
-            <p className={styles.subtitle}>Review your saved CV fit analysis jobs.</p>
+            <h1 className={styles.title}>Lịch sử phân tích</h1>
+            <p className={styles.subtitle}>Xem lại các phân tích CV đã lưu của bạn.</p>
           </div>
           <Link href="/dashboard" className={styles.dashboardLink}>
-            New Analysis
+            Phân tích mới
           </Link>
         </div>
 
-        {isLoading && <div className={styles.statusCard}>Loading history...</div>}
+        {isLoading && <div className={styles.statusCard}>Đang tải lịch sử...</div>}
 
         {!isLoading && error && (
           <div className={styles.errorCard} role="alert">
@@ -97,13 +97,13 @@ export default function HistoryPage() {
         )}
 
         {!isLoading && !error && items.length === 0 && (
-          <div className={styles.emptyCard}>No analysis jobs found yet.</div>
+          <div className={styles.emptyCard}>Chưa có phân tích nào.</div>
         )}
 
         {!isLoading && !error && items.length > 0 && (() => {
-          // Group by target_role (or "Unknown Role")
+          // Group by target_role (or "Chưa rõ vị trí")
           const grouped = items.reduce((acc, item) => {
-            const role = item.target_role || 'Unknown Role';
+            const role = item.target_role || 'Chưa rõ vị trí';
             if (!acc[role]) acc[role] = [];
             acc[role].push(item);
             return acc;
@@ -123,26 +123,26 @@ export default function HistoryPage() {
                         <article key={item.job_id} className={styles.historyItem}>
                           <div className={styles.itemHeader}>
                             <div>
-                              <div className={styles.jobId}>Job {item.job_id}</div>
+                              <div className={styles.jobId}>Công việc {item.job_id}</div>
                             </div>
-                            <span className={styles.statusBadge}>{item.status || 'unknown'}</span>
+                            <span className={styles.statusBadge}>{item.status || 'không rõ'}</span>
                           </div>
 
                           <div className={styles.metaGrid}>
                             <div className={styles.metaItem}>
-                              <span className={styles.metaLabel}>Progress</span>
+                              <span className={styles.metaLabel}>Tiến trình</span>
                               <span className={styles.metaValue}>{item.progress ?? 0}%</span>
                             </div>
                             <div className={styles.metaItem}>
-                              <span className={styles.metaLabel}>Fit score</span>
+                              <span className={styles.metaLabel}>Điểm phù hợp</span>
                               <span className={styles.metaValue}>{formatScore(item.overall_fit_score)}</span>
                             </div>
                             <div className={styles.metaItem}>
-                              <span className={styles.metaLabel}>Report</span>
+                              <span className={styles.metaLabel}>Báo cáo</span>
                               <span className={styles.metaValue}>{formatReport(item.has_report)}</span>
                             </div>
                             <div className={styles.metaItem}>
-                              <span className={styles.metaLabel}>Created</span>
+                              <span className={styles.metaLabel}>Ngày tạo</span>
                               <span className={styles.metaValue}>{formatDate(item.created_at)}</span>
                             </div>
                           </div>
@@ -153,7 +153,7 @@ export default function HistoryPage() {
                                 href={`/dashboard?job_id=${item.job_id}`}
                                 className={styles.viewResultBtn}
                               >
-                                View Result
+                                Xem kết quả
                               </Link>
                             )}
                             {canCompare && (
@@ -166,7 +166,7 @@ export default function HistoryPage() {
                                   <line x1="12" y1="20" x2="12" y2="4" />
                                   <line x1="6" y1="20" x2="6" y2="14" />
                                 </svg>
-                                Compare with Previous
+                                So sánh với phiên bản trước
                               </Link>
                             )}
                           </div>

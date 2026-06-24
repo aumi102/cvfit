@@ -50,7 +50,7 @@ export default function CoverLetterPage() {
       } else if (isAnalysisRequiredError(err)) {
         setAnalysisRequired(true);
       } else {
-        const { message } = extractApiError(err, 'Could not load cover letter.');
+        const { message } = extractApiError(err, 'Không thể tải thư xin việc.');
         setError(message);
       }
     } finally {
@@ -76,7 +76,7 @@ export default function CoverLetterPage() {
       if (isAnalysisRequiredError(err)) {
         setAnalysisRequired(true);
       } else {
-        const { message } = extractApiError(err, 'Failed to generate cover letter.');
+        const { message } = extractApiError(err, 'Không thể tạo thư xin việc.');
         setError(message);
       }
     } finally {
@@ -105,7 +105,7 @@ export default function CoverLetterPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to save cover letter.');
+      const { message } = extractApiError(err, 'Không thể lưu thư xin việc.');
       setError(message);
     } finally {
       setIsSaving(false);
@@ -118,27 +118,27 @@ export default function CoverLetterPage() {
   const reviewNotes = Array.isArray(payload.review_notes) ? payload.review_notes : [];
 
   const sectionFields = [
-    { key: 'opening', label: 'Opening' },
-    { key: 'why_role_company', label: 'Why This Role & Company' },
-    { key: 'contribution_fit', label: 'Contribution & Fit' },
-    { key: 'closing', label: 'Closing' },
+    { key: 'opening', label: 'Mở đầu' },
+    { key: 'why_role_company', label: 'Tại sao vị trí & công ty này' },
+    { key: 'contribution_fit', label: 'Đóng góp & Phù hợp' },
+    { key: 'closing', label: 'Kết thúc' },
   ];
 
   return (
     <PageShell isAuthChecking={isAuthChecking}>
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
-        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Applications</Link>
+        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Hồ sơ ứng tuyển</Link>
         <span>›</span>
-        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Application</Link>
+        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Chi tiết</Link>
         <span>›</span>
-        <span>Cover Letter</span>
+        <span>Thư xin việc</span>
       </nav>
 
       <div className={styles.header}>
         <div>
-          <h1 className={styles.pageTitle}>Cover Letter</h1>
-          <p className={styles.pageSubtitle}>AI-generated, fully editable cover letter for this application.</p>
+          <h1 className={styles.pageTitle}>Thư xin việc</h1>
+          <p className={styles.pageSubtitle}>Thư xin việc do AI tạo, có thể chỉnh sửa cho hồ sơ ứng tuyển này.</p>
         </div>
         <button
           className={styles.generateBtn}
@@ -147,13 +147,13 @@ export default function CoverLetterPage() {
           id="generate-cover-letter-btn"
         >
           {isGenerating ? (
-            <><span className={styles.spinner} /> Generating…</>
+            <><span className={styles.spinner} /> Đang tạo…</>
           ) : (
             <>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
               </svg>
-              {letter ? 'Regenerate' : 'Generate Cover Letter'}
+              {letter ? 'Tạo lại' : 'Tạo thư xin việc'}
             </>
           )}
         </button>
@@ -162,14 +162,14 @@ export default function CoverLetterPage() {
       {analysisRequired && <AnalysisRequiredBanner appId={id} />}
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-      {isLoading && <LoadingSpinner fullPage label="Loading cover letter…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải thư xin việc…" />}
 
       {!isLoading && !letter && !analysisRequired && !error && (
         <div style={{ textAlign: 'center', padding: '4rem 2rem', color: 'var(--color-text-secondary)' }}>
           <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✉️</div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.5rem' }}>No cover letter yet</h2>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.5rem' }}>Chưa có thư xin việc</h2>
           <p style={{ fontSize: '0.9375rem', maxWidth: 380, margin: '0 auto' }}>
-            Click &apos;Generate Cover Letter&apos; to create an AI-powered draft. An analysis must be attached to this application first.
+            Nhấn &apos;Tạo thư xin việc&apos; để tạo bản thảo AI. Cần đính kèm phân tích cho hồ sơ này trước.
           </p>
         </div>
       )}
@@ -178,7 +178,7 @@ export default function CoverLetterPage() {
         <>
           <div className={styles.editorCard}>
             <div className={styles.editorToolbar}>
-              <span className={styles.editorLabel}>Edit each section below</span>
+              <span className={styles.editorLabel}>Chỉnh sửa từng phần bên dưới</span>
             </div>
 
             {sectionFields.map(({ key, label }) => (
@@ -207,7 +207,7 @@ export default function CoverLetterPage() {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  Saved
+                  Đã lưu
                 </span>
               )}
               <button
@@ -219,7 +219,7 @@ export default function CoverLetterPage() {
                 {isSaving ? (
                   <>
                     <span style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
-                    Saving…
+                    Đang lưu…
                   </>
                 ) : (
                   <>
@@ -228,7 +228,7 @@ export default function CoverLetterPage() {
                       <polyline points="17 21 17 13 7 13 7 21" />
                       <polyline points="7 3 7 8 15 8" />
                     </svg>
-                    Save Changes
+                    Lưu thay đổi
                   </>
                 )}
               </button>
@@ -238,7 +238,7 @@ export default function CoverLetterPage() {
           {missingEvidence.length > 0 && (
             <div style={{ marginTop: '1.5rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
               <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                Missing Evidence
+                Bằng chứng còn thiếu
               </p>
               <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
                 {missingEvidence.map((item, i) => <li key={i}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>)}
@@ -249,7 +249,7 @@ export default function CoverLetterPage() {
           {reviewNotes.length > 0 && (
             <div style={{ marginTop: '1rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
               <p style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                Review Notes
+                Ghi chú xem lại
               </p>
               <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
                 {reviewNotes.map((note, i) => <li key={i}>{typeof note === 'string' ? note : JSON.stringify(note)}</li>)}
@@ -266,9 +266,9 @@ export default function CoverLetterPage() {
 
       {/* Next steps */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2rem', fontSize: '0.875rem' }}>
-        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Back to application</Link>
+        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Quay lại hồ sơ</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href={`/applications/${id}/package`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Continue to package / readiness</Link>
+        <Link href={`/applications/${id}/package`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Tiếp tục tới bộ hồ sơ</Link>
       </div>
     </PageShell>
   );

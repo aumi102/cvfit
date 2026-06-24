@@ -7,44 +7,41 @@ import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import { useEffect } from 'react';
 
 /**
- * Static guided Help / FAQ shell.
- *
- * Enhanced for Phase 6: adds AI Assistant CTA card at the top and preserves
- * all existing FAQs. No structural changes to FAQ content.
+ * Trang Trợ giúp / Hướng dẫn tĩnh.
  */
 
 const FAQS = [
   {
-    q: 'What should I do first?',
-    a: 'Start on CV Analysis. Upload your CV, paste a job description (JD), and run the analysis to get a fit score, matched/missing skills, and recommendations.',
+    q: 'Tôi nên bắt đầu từ đâu?',
+    a: 'Bắt đầu với Phân tích CV. Tải lên CV, dán mô tả công việc (JD) và chạy phân tích để nhận điểm phù hợp, kỹ năng đáp ứng/thiếu và đề xuất cải thiện.',
   },
   {
-    q: 'How do I analyze my CV against a job description?',
-    a: 'Open CV Analysis, upload a PDF or DOCX CV, paste the JD, choose strictness and language, then start the analysis. The result appears with your fit score and skill gaps.',
+    q: 'Làm thế nào để phân tích CV so với mô tả công việc?',
+    a: 'Mở Phân tích CV, tải lên file PDF hoặc DOCX, dán JD, chọn mức độ khắt khe và ngôn ngữ, sau đó bắt đầu phân tích. Kết quả sẽ hiển thị điểm phù hợp và kỹ năng còn thiếu.',
   },
   {
-    q: 'How do I create an application?',
-    a: 'Go to Applications → New. Enter the company, role title, and the job description. Each application is a workspace for one target job.',
+    q: 'Làm thế nào để tạo hồ sơ ứng tuyển?',
+    a: 'Vào Hồ sơ ứng tuyển → Tạo mới. Nhập tên công ty, chức danh và mô tả công việc. Mỗi hồ sơ là một không gian làm việc cho một vị trí mục tiêu.',
   },
   {
-    q: 'How do I attach an analysis to an application?',
-    a: 'Open the application and use "Attach analysis". Pick a recent completed analysis from the list, or paste a Job ID from your Analysis History. Attaching unlocks interview practice, cover letter, and the readiness package.',
+    q: 'Làm thế nào để đính kèm phân tích vào hồ sơ ứng tuyển?',
+    a: 'Mở hồ sơ ứng tuyển và chọn "Đính kèm phân tích". Chọn một phân tích đã hoàn thành gần đây từ danh sách, hoặc dán Job ID từ Lịch sử phân tích. Đính kèm sẽ mở khóa luyện phỏng vấn, thư xin việc và bộ hồ sơ.',
   },
   {
-    q: 'How do I use interview practice?',
-    a: 'From an application with an attached analysis, open Interview. Answer each AI-generated question and review the structured rubric feedback. Your answers are saved as history.',
+    q: 'Làm thế nào để luyện phỏng vấn?',
+    a: 'Từ hồ sơ ứng tuyển đã đính kèm phân tích, mở Phỏng vấn. Trả lời từng câu hỏi AI tạo ra và xem phản hồi theo thang điểm. Các câu trả lời được lưu lại.',
   },
   {
-    q: 'How do I generate a cover letter or readiness package?',
-    a: 'From the application, open Cover Letter or Package and click Generate. Both require an attached analysis. The cover letter is fully editable and saveable.',
+    q: 'Làm thế nào để tạo thư xin việc hoặc bộ hồ sơ?',
+    a: 'Từ hồ sơ ứng tuyển, mở Thư xin việc hoặc Bộ hồ sơ và nhấn Tạo. Cả hai đều cần có phân tích đã đính kèm. Thư xin việc có thể chỉnh sửa và lưu lại.',
   },
   {
-    q: 'What analytics events are tracked?',
-    a: 'Only privacy-safe product events (e.g. page navigation, login, analysis started/completed, application created, generate/save actions). We never send CV text, JD text, interview answers, cover letter text, emails, tokens, or IDs.',
+    q: 'Những sự kiện phân tích nào được theo dõi?',
+    a: 'Chỉ các sự kiện sản phẩm an toàn về quyền riêng tư (ví dụ: điều hướng trang, đăng nhập, bắt đầu/hoàn thành phân tích, tạo hồ sơ). Chúng tôi không bao giờ gửi nội dung CV, JD, câu trả lời phỏng vấn, thư xin việc, email hay mã định danh.',
   },
   {
-    q: 'Why should demo data be synthetic?',
-    a: 'For presentations, use synthetic CVs/JDs and a demo account only. Never present real candidate data. This protects privacy and keeps the demo reproducible.',
+    q: 'Tại sao dữ liệu demo nên là giả lập?',
+    a: 'Khi trình bày, hãy sử dụng CV/JD giả lập và tài khoản demo. Không bao giờ trình bày dữ liệu ứng viên thật. Điều này bảo vệ quyền riêng tư và giữ cho bản demo có thể tái tạo.',
   },
 ];
 
@@ -58,22 +55,22 @@ export default function HelpPage() {
   return (
     <PageShell isAuthChecking={isAuthChecking}>
       <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.5rem' }}>
-        Help &amp; Guide
+        Trợ giúp &amp; Hướng dẫn
       </h1>
       <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: '1.75rem', maxWidth: 640 }}>
-        A quick guide to the AI CV Fit workflow. Follow it top to bottom:
-        <strong> CV Analysis → Result → Application → Interview → Cover Letter → Package</strong>.
+        Hướng dẫn nhanh về quy trình AI CV Fit. Thực hiện từ trên xuống dưới:
+        <strong> Phân tích CV → Kết quả → Hồ sơ ứng tuyển → Phỏng vấn → Thư xin việc → Bộ hồ sơ</strong>.
       </p>
 
-      {/* Phase 6: AI Assistant CTA */}
+      {/* Trợ lý AI */}
       <div style={{ background: 'linear-gradient(135deg, #EFF6FF, #F5F3FF)', border: '1px solid #BFDBFE', borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap', animation: 'fadeInUp 0.35s ease-out' }}>
         <div style={{ fontSize: '2.5rem', lineHeight: 1 }}>🤖</div>
         <div style={{ flex: 1, minWidth: 220 }}>
           <div style={{ fontSize: 'var(--font-size-base)', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.25rem' }}>
-            AI Help Assistant
+            Trợ lý AI
           </div>
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
-            Not sure what to do next? Ask the AI assistant — it reads your profile, analyses, and learning tasks to give personalised guidance.
+            Không biết nên làm gì tiếp? Hãy hỏi trợ lý AI — nó sẽ đọc hồ sơ, phân tích và nhiệm vụ học tập của bạn để đưa ra hướng dẫn cá nhân hóa.
           </p>
         </div>
         <Link
@@ -81,7 +78,7 @@ export default function HelpPage() {
           id="open-ai-assistant-btn"
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1.25rem', background: 'linear-gradient(135deg, var(--color-primary), #4F46E5)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}
         >
-          Open Assistant →
+          Mở trợ lý →
         </Link>
       </div>
 
@@ -102,15 +99,15 @@ export default function HelpPage() {
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: 'var(--font-size-sm)' }}>
-        <Link href="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>CV Analysis</Link>
+        <Link href="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Phân tích CV</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Applications</Link>
+        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Hồ sơ ứng tuyển</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/profile/evidence" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Evidence Vault</Link>
+        <Link href="/profile/evidence" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Kho bằng chứng</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Learning</Link>
+        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Học tập</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/help/assistant" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>AI Assistant</Link>
+        <Link href="/help/assistant" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Trợ lý AI</Link>
       </div>
     </PageShell>
   );

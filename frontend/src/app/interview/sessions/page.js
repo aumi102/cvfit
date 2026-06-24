@@ -53,7 +53,7 @@ export default function InterviewSessionsPage() {
         setSessions(Array.isArray(data?.items) ? data.items : []);
       } catch (err) {
         if (!active) return;
-        const { message } = extractApiError(err, 'Could not load interview sessions.');
+        const { message } = extractApiError(err, 'Không thể tải phiên phỏng vấn.');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -76,9 +76,9 @@ export default function InterviewSessionsPage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="860px">
       <div className={styles.topRow}>
         <div>
-          <h1 className={styles.pageTitle}>Interview Practice</h1>
+          <h1 className={styles.pageTitle}>Luyện phỏng vấn</h1>
           <p className={styles.pageSubtitle}>
-            Practice AI-generated interview questions and get structured rubric feedback on every answer.
+            Thực hành trả lời câu hỏi phỏng vấn do AI tạo và nhận phản hồi theo tiêu chí cho từng câu trả lời.
           </p>
         </div>
         <Link href="/interview/sessions/new" className={styles.newBtn} id="new-session-btn">
@@ -86,7 +86,7 @@ export default function InterviewSessionsPage() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New Session
+          Phiên mới
         </Link>
       </div>
 
@@ -101,11 +101,11 @@ export default function InterviewSessionsPage() {
       {!isLoading && !error && sessions.length === 0 && (
         <EmptyStatePage
           icon={micIcon}
-          title="No sessions yet"
-          description="Start a practice session to get AI-generated questions tailored to a question type and difficulty level. Each session saves your answers and scores."
+          title="Chưa có phiên nào"
+          description="Bắt đầu một phiên luyện tập để nhận câu hỏi AI phù hợp với loại câu hỏi và độ khó. Mỗi phiên sẽ lưu lại câu trả lời và điểm số của bạn."
           action={
             <Link href="/interview/sessions/new" className={styles.newBtn}>
-              Start your first session
+              Bắt đầu phiên đầu tiên
             </Link>
           }
         />
@@ -123,24 +123,24 @@ export default function InterviewSessionsPage() {
             >
               <div className={styles.cardHeader}>
                 <div className={styles.cardTitle}>
-                  {session.question_type
+                  Phiên {session.question_type
                     ? session.question_type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-                    : 'Interview Session'} Session
+                    : 'phỏng vấn'}
                 </div>
                 <DifficultyBadge difficulty={session.difficulty} />
               </div>
               <div className={styles.cardMeta}>
                 <span>{formatDate(session.created_at)}</span>
                 {session.questions_count != null && (
-                  <span>{session.questions_count} question{session.questions_count !== 1 ? 's' : ''}</span>
+                  <span>{session.questions_count} câu hỏi</span>
                 )}
                 {session.avg_score != null && (
                   <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
-                    Avg. {session.avg_score}/10
+                    ĐTB. {session.avg_score}/10
                   </span>
                 )}
                 {session.completed_at && (
-                  <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>✓ Completed</span>
+                  <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>✓ Hoàn thành</span>
                 )}
               </div>
             </Link>

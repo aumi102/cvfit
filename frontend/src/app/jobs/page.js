@@ -12,15 +12,15 @@ import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/TargetJobs.module.css';
 
 const JOB_STATUSES = [
-  { value: '', label: 'All Statuses' },
-  { value: 'saved', label: 'Saved' },
-  { value: 'analyzing', label: 'Analyzing' },
-  { value: 'ready_to_apply', label: 'Ready to Apply' },
-  { value: 'interviewing', label: 'Interviewing' },
-  { value: 'applied', label: 'Applied' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'offer', label: 'Offer' },
-  { value: 'archived', label: 'Archived' },
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: 'saved', label: 'Đã lưu' },
+  { value: 'analyzing', label: 'Đang phân tích' },
+  { value: 'ready_to_apply', label: 'Sẵn sàng ứng tuyển' },
+  { value: 'interviewing', label: 'Đang phỏng vấn' },
+  { value: 'applied', label: 'Đã ứng tuyển' },
+  { value: 'rejected', label: 'Bị từ chối' },
+  { value: 'offer', label: 'Nhận đề nghị' },
+  { value: 'archived', label: 'Đã lưu trữ' },
 ];
 
 function formatDate(value) {
@@ -69,7 +69,7 @@ export default function JobsPage() {
         setJobs(Array.isArray(data?.items) ? data.items : []);
       } catch (err) {
         if (!active) return;
-        const { message } = extractApiError(err, 'Could not load target jobs.');
+        const { message } = extractApiError(err, 'Không thể tải danh sách việc làm.');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -101,9 +101,9 @@ export default function JobsPage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="960px">
       <div className={styles.topRow}>
         <div>
-          <h1 className={styles.pageTitle}>Target Jobs</h1>
+          <h1 className={styles.pageTitle}>Việc làm mục tiêu</h1>
           <p className={styles.pageSubtitle}>
-            Track jobs you&apos;re targeting. Each job unlocks readiness scoring, learning tasks, and interview practice.
+            Theo dõi các việc làm bạn đang nhắm đến. Mỗi việc làm mở khóa đánh giá mức sẵn sàng, nhiệm vụ học tập và luyện phỏng vấn.
           </p>
         </div>
         <Link href="/jobs/new" className={styles.newBtn} id="new-job-btn">
@@ -111,7 +111,7 @@ export default function JobsPage() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New Job
+          Thêm việc mới
         </Link>
       </div>
 
@@ -120,7 +120,7 @@ export default function JobsPage() {
         <input
           type="text"
           className={styles.searchInput}
-          placeholder="Search by title or company…"
+          placeholder="Tìm theo tiêu đề hoặc công ty…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           id="jobs-search"
@@ -148,11 +148,11 @@ export default function JobsPage() {
       {!isLoading && !error && jobs.length === 0 && (
         <EmptyStatePage
           icon={briefcaseIcon}
-          title="No target jobs yet"
-          description="Add a job you're targeting to track your readiness, plan your learning, and prepare for interviews — all in one place."
+          title="Chưa có việc làm mục tiêu"
+          description="Thêm việc làm bạn đang nhắm đến để theo dõi mức sẵn sàng, lên kế hoạch học tập và chuẩn bị phỏng vấn — tất cả trong một nơi."
           action={
             <Link href="/jobs/new" className={styles.newBtn}>
-              Add your first target job
+              Thêm việc làm đầu tiên
             </Link>
           }
         />
@@ -160,12 +160,12 @@ export default function JobsPage() {
 
       {!isLoading && !error && jobs.length > 0 && filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
-          No jobs match your current filters.{' '}
+          Không có việc làm nào khớp với bộ lọc.{' '}
           <button
             style={{ color: 'var(--color-primary)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
             onClick={() => { setSearch(''); setStatusFilter(''); }}
           >
-            Clear filters
+            Xóa bộ lọc
           </button>
         </div>
       )}
@@ -183,18 +183,18 @@ export default function JobsPage() {
               <div className={styles.cardHeader}>
                 <div>
                   <div className={styles.cardCompany}>{job.company || '—'}</div>
-                  <div className={styles.cardRole}>{job.job_title || 'Untitled Role'}</div>
+                  <div className={styles.cardRole}>{job.job_title || 'Chưa có tiêu đề'}</div>
                 </div>
                 <StatusBadge status={job.status} />
               </div>
               <div className={styles.cardMeta}>
                 <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Added</span>
+                  <span className={styles.metaLabel}>Ngày thêm</span>
                   <span className={styles.metaValue}>{formatDate(job.created_at)}</span>
                 </div>
                 {job.readiness_score != null && (
                   <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Readiness</span>
+                    <span className={styles.metaLabel}>Mức sẵn sàng</span>
                     <span className={styles.scoreChip}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -205,7 +205,7 @@ export default function JobsPage() {
                 )}
                 {job.target_role && (
                   <div className={styles.metaItem}>
-                    <span className={styles.metaLabel}>Target Role</span>
+                    <span className={styles.metaLabel}>Vị trí mục tiêu</span>
                     <span className={styles.metaValue}>{job.target_role}</span>
                   </div>
                 )}

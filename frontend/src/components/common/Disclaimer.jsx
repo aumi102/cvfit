@@ -9,12 +9,12 @@ import styles from '@/styles/PageShell.module.css';
  *
  * @param {{ text?: string, title?: string }} props
  */
-export default function Disclaimer({ text, title = 'Important Disclaimer' }) {
+export default function Disclaimer({ text, title = 'Lưu ý quan trọng' }) {
   const content =
     text ||
-    'This content is AI-generated and is provided for informational purposes only. ' +
-      'It should not be relied upon as professional advice. ' +
-      'Always verify information independently before making career decisions.';
+    'Nội dung này được AI tạo ra và chỉ mang tính tham khảo. ' +
+      'Không nên coi đây là tư vấn chuyên môn. ' +
+      'Luôn xác minh thông tin độc lập trước khi đưa ra quyết định nghề nghiệp.';
 
   return (
     <aside className={styles.disclaimer} role="note" aria-label="Disclaimer">

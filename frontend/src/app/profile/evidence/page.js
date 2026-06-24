@@ -14,9 +14,9 @@ import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Evidence.module.css';
 
 const TABS = [
-  { id: 'skill', label: '🛠 Skills' },
-  { id: 'project', label: '📁 Projects' },
-  { id: 'achievement', label: '🏆 Achievements' },
+  { id: 'skill', label: '🛠 Kỹ năng' },
+  { id: 'project', label: '📁 Dự án' },
+  { id: 'achievement', label: '🏆 Thành tựu' },
 ];
 
 const EMPTY_FORM = { title: '', description: '', tags: '' };
@@ -100,17 +100,17 @@ function EvidenceForm({ activeTab, editingItem, onSave, onCancel, isSaving }) {
   }
 
   const isEditing = Boolean(editingItem);
-  const typeLabels = { skill: 'Skill', project: 'Project', achievement: 'Achievement' };
+  const typeLabels = { skill: 'Kỹ năng', project: 'Dự án', achievement: 'Thành tựu' };
 
   return (
     <div className={styles.addCard}>
       <p className={styles.addTitle}>
-        {isEditing ? `Edit ${typeLabels[activeTab]}` : `Add ${typeLabels[activeTab]}`}
+        {isEditing ? `Chỉnh sửa ${typeLabels[activeTab]}` : `Thêm ${typeLabels[activeTab]}`}
       </p>
       <form onSubmit={handleSubmit}>
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel} htmlFor={`evidence-title-${activeTab}`}>
-            {activeTab === 'skill' ? 'Skill Name' : 'Title'} *
+            {activeTab === 'skill' ? 'Tên kỹ năng' : 'Tiêu đề'} *
           </label>
           <input
             id={`evidence-title-${activeTab}`}
@@ -121,10 +121,10 @@ function EvidenceForm({ activeTab, editingItem, onSave, onCancel, isSaving }) {
             onChange={handleChange}
             placeholder={
               activeTab === 'skill'
-                ? 'e.g. Python, React, FastAPI'
+                ? 'ví dụ: Python, React, FastAPI'
                 : activeTab === 'project'
-                  ? 'e.g. E-commerce Platform'
-                  : 'e.g. Increased revenue by 30%'
+                  ? 'ví dụ: Nền tảng E-commerce'
+                  : 'ví dụ: Tăng doanh thu 30%'
             }
             required
             disabled={isSaving}
@@ -132,7 +132,7 @@ function EvidenceForm({ activeTab, editingItem, onSave, onCancel, isSaving }) {
         </div>
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel} htmlFor={`evidence-desc-${activeTab}`}>
-            Description (optional)
+            Mô tả (không bắt buộc)
           </label>
           <textarea
             id={`evidence-desc-${activeTab}`}
@@ -140,13 +140,13 @@ function EvidenceForm({ activeTab, editingItem, onSave, onCancel, isSaving }) {
             className={styles.fieldTextarea}
             value={form.description}
             onChange={handleChange}
-            placeholder="Brief description…"
+            placeholder="Mô tả ngắn gọn…"
             disabled={isSaving}
           />
         </div>
         <div className={styles.fieldGroup}>
           <label className={styles.fieldLabel} htmlFor={`evidence-tags-${activeTab}`}>
-            Tags (comma-separated, optional)
+            Thẻ (cách nhau bằng dấu phẩy, không bắt buộc)
           </label>
           <input
             id={`evidence-tags-${activeTab}`}
@@ -155,13 +155,13 @@ function EvidenceForm({ activeTab, editingItem, onSave, onCancel, isSaving }) {
             className={styles.fieldInput}
             value={form.tags}
             onChange={handleChange}
-            placeholder="e.g. backend, api, python"
+            placeholder="ví dụ: backend, api, python"
             disabled={isSaving}
           />
         </div>
         <div className={styles.addActions}>
           <button type="button" className={styles.btnGhost} onClick={onCancel} disabled={isSaving}>
-            Cancel
+            Hủy
           </button>
           <button
             type="submit"
@@ -169,7 +169,7 @@ function EvidenceForm({ activeTab, editingItem, onSave, onCancel, isSaving }) {
             disabled={isSaving || !form.title.trim()}
             id="save-evidence-btn"
           >
-            {isSaving ? 'Saving…' : isEditing ? 'Update' : 'Add'}
+            {isSaving ? 'Đang lưu…' : isEditing ? 'Cập nhật' : 'Thêm'}
           </button>
         </div>
       </form>
@@ -197,7 +197,7 @@ export default function EvidencePage() {
       const data = await getEvidence();
       setAllItems(Array.isArray(data?.items) ? data.items : []);
     } catch (err) {
-      const { message } = extractApiError(err, 'Could not load evidence items.');
+      const { message } = extractApiError(err, 'Không thể tải các bằng chứng.');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -232,7 +232,7 @@ export default function EvidencePage() {
       setShowForm(false);
       setEditingItem(null);
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to save. Please try again.');
+      const { message } = extractApiError(err, 'Không thể lưu. Vui lòng thử lại.');
       setError(message);
     } finally {
       setIsSaving(false);
@@ -240,13 +240,13 @@ export default function EvidencePage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this evidence item?')) return;
+    if (!confirm('Xóa bằng chứng này?')) return;
     setDeletingId(id);
     try {
       await deleteEvidence(id);
       setAllItems((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to delete item.');
+      const { message } = extractApiError(err, 'Không thể xóa bằng chứng.');
       setError(message);
     } finally {
       setDeletingId(null);
@@ -274,13 +274,13 @@ export default function EvidencePage() {
     <PageShell isAuthChecking={isAuthChecking}>
       <div className={styles.topRow}>
         <div>
-          <h1 className={styles.pageTitle}>Evidence Vault</h1>
+          <h1 className={styles.pageTitle}>Kho bằng chứng</h1>
           <p className={styles.pageSubtitle}>
-            Manage your skills, projects, and achievements. Used to personalise AI-generated materials.
+            Quản lý các kỹ năng, dự án và thành tựu của bạn. Dùng để cá nhân hóa các tài liệu do AI tạo ra.
           </p>
         </div>
         <Link href="/profile" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary)', textDecoration: 'none' }}>
-          ← Back to Profile
+          ← Quay lại Hồ sơ
         </Link>
       </div>
 
@@ -307,7 +307,7 @@ export default function EvidencePage() {
         ))}
       </div>
 
-      {isLoading && <LoadingSpinner fullPage label="Loading evidence…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải bằng chứng…" />}
 
       {!isLoading && (
         <>
@@ -348,7 +348,7 @@ export default function EvidencePage() {
                   <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
                 <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>
-                  Add {activeTab}
+                  Thêm {typeLabels[activeTab]}
                 </span>
               </button>
             )}
@@ -358,8 +358,8 @@ export default function EvidencePage() {
           {tabItems.length === 0 && !showForm && (
             <EmptyStatePage
               icon={vaultIcon}
-              title={`No ${activeTab}s yet`}
-              description={`Add your first ${activeTab} to start building your evidence vault. This information helps personalise your AI-generated cover letters and packages.`}
+              title={`Chưa có ${typeLabels[activeTab].toLowerCase()} nào`}
+              description={`Thêm ${typeLabels[activeTab].toLowerCase()} đầu tiên của bạn để bắt đầu xây dựng kho bằng chứng. Thông tin này giúp cá nhân hóa thư xin việc và bộ hồ sơ do AI tạo ra.`}
             />
           )}
         </>

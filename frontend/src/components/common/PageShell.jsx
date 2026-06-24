@@ -15,7 +15,7 @@ export default function PageShell({ isAuthChecking, children, maxWidth = '960px'
   if (isAuthChecking) {
     return (
       <div className={styles.page}>
-        <LoadingSpinner fullPage label="Checking session…" />
+        <LoadingSpinner fullPage label="Đang kiểm tra phiên…" />
       </div>
     );
   }

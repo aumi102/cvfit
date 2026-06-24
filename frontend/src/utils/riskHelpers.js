@@ -13,10 +13,10 @@
  */
 export function getRiskLevel(score) {
   const n = Number(score);
-  if (Number.isNaN(n)) return { label: 'Unknown', emoji: '⚪', level: 'unknown' };
-  if (n <= 1) return { label: 'Low Risk', emoji: '🟢', level: 'low' };
-  if (n <= 3) return { label: 'Medium Risk', emoji: '🟡', level: 'medium' };
-  return { label: 'High Risk', emoji: '🔴', level: 'high' };
+  if (Number.isNaN(n)) return { label: 'Không rõ', emoji: '⚪', level: 'unknown' };
+  if (n <= 1) return { label: 'Rủi ro thấp', emoji: '🟢', level: 'low' };
+  if (n <= 3) return { label: 'Rủi ro trung bình', emoji: '🟡', level: 'medium' };
+  return { label: 'Rủi ro cao', emoji: '🔴', level: 'high' };
 }
 
 /**

@@ -12,10 +12,10 @@ import { extractApiError } from '@/utils/errorHelpers';
 import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 
 const PROMPT_CHIPS = [
-  { id: 'next', label: '🎯 What should I do next?' },
-  { id: 'score', label: '📊 Why is my score low?' },
-  { id: 'learn', label: '📚 What should I learn first?' },
-  { id: 'prep', label: '🎤 How should I prepare for interview?' },
+  { id: 'next', label: '🎯 Tôi nên làm gì tiếp theo?' },
+  { id: 'score', label: '📊 Tại sao điểm của tôi thấp?' },
+  { id: 'learn', label: '📚 Tôi nên học gì trước?' },
+  { id: 'prep', label: '🎤 Tôi nên chuẩn bị phỏng vấn thế nào?' },
 ];
 
 const ACTION_ICONS = {
@@ -78,7 +78,7 @@ export default function HelpAssistantPage() {
       const result = await askAssistant({ prompt: prompt.trim(), context });
       setAnswer(result);
     } catch (err) {
-      const { message } = extractApiError(err, 'Could not get an answer right now. Please try again.');
+      const { message } = extractApiError(err, 'Không thể nhận câu trả lời lúc này. Vui lòng thử lại.');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -99,17 +99,17 @@ export default function HelpAssistantPage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="760px">
       {/* Header */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: '1.5rem', animation: 'fadeInDown 0.3s ease-out' }} aria-label="Breadcrumb">
-        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Help</Link>
+        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Trợ giúp</Link>
         <span>›</span>
-        <span>AI Assistant</span>
+        <span>Trợ lý AI</span>
       </nav>
 
       <div style={{ marginBottom: '1.75rem', animation: 'fadeInUp 0.35s ease-out' }}>
         <h1 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.025em', marginBottom: '0.375rem' }}>
-          AI Help Assistant
+          Trợ lý Trợ giúp AI
         </h1>
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6, maxWidth: 560 }}>
-          Ask a question about your job search progress. The assistant uses your CV analyses, applications, and learning tasks as context.
+          Đặt câu hỏi về quá trình tìm việc của bạn. Trợ lý sử dụng phân tích CV, hồ sơ ứng tuyển và nhiệm vụ học tập làm ngữ cảnh.
         </p>
       </div>
 
@@ -149,9 +149,9 @@ export default function HelpAssistantPage() {
             style={{ padding: '0.5rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)', background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', cursor: 'pointer' }}
             id="context-type-select"
           >
-            <option value="">No specific context</option>
-            <option value="job">Target Job</option>
-            <option value="application">Application</option>
+            <option value="">Không có ngữ cảnh cụ thể</option>
+            <option value="job">Việc làm mục tiêu</option>
+            <option value="application">Hồ sơ ứng tuyển</option>
           </select>
 
           {contextType === 'job' && contextOptions.jobs.length > 0 && (
@@ -161,7 +161,7 @@ export default function HelpAssistantPage() {
               style={{ flex: 1, padding: '0.5rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)', background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', cursor: 'pointer' }}
               id="context-job-select"
             >
-              <option value="">Select a job…</option>
+              <option value="">Chọn việc làm…</option>
               {contextOptions.jobs.map((j) => (
                 <option key={j.id} value={j.id}>{j.company} — {j.job_title}</option>
               ))}
@@ -175,7 +175,7 @@ export default function HelpAssistantPage() {
               style={{ flex: 1, padding: '0.5rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)', background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', cursor: 'pointer' }}
               id="context-application-select"
             >
-              <option value="">Select an application…</option>
+              <option value="">Chọn hồ sơ ứng tuyển…</option>
               {contextOptions.applications.map((a) => (
                 <option key={a.id} value={a.id}>{a.company_name} — {a.job_title}</option>
               ))}
@@ -187,7 +187,7 @@ export default function HelpAssistantPage() {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Ask a question… e.g. What skills should I focus on this week?"
+          placeholder="Hỏi một câu hỏi… ví dụ: Tuần này tôi nên tập trung vào kỹ năng nào?"
           rows={3}
           style={{ width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: 'var(--font-size-sm)', fontFamily: 'var(--font-family)', lineHeight: 1.6, background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', resize: 'vertical', transition: 'border-color var(--transition-fast)', marginBottom: '0.75rem' }}
           onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
@@ -207,7 +207,7 @@ export default function HelpAssistantPage() {
             {isLoading ? (
               <>
                 <span style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
-                Thinking…
+                Đang suy nghĩ…
               </>
             ) : (
               <>
@@ -215,7 +215,7 @@ export default function HelpAssistantPage() {
                   <line x1="22" y1="2" x2="11" y2="13" />
                   <polygon points="22 2 15 22 11 13 2 9 22 2" />
                 </svg>
-                Ask
+                Hỏi
               </>
             )}
           </button>
@@ -227,7 +227,7 @@ export default function HelpAssistantPage() {
         <div style={{ background: 'linear-gradient(135deg, #EFF6FF, #F5F3FF 60%, white)', border: '1px solid #BFDBFE', borderRadius: 'var(--radius-xl)', padding: '1.75rem', animation: 'scaleIn 0.35s ease-out', marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <span style={{ fontSize: '1.25rem' }}>🤖</span>
-            <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: 'var(--font-size-base)' }}>Assistant Answer</span>
+            <span style={{ fontWeight: 700, color: 'var(--color-primary)', fontSize: 'var(--font-size-base)' }}>Trợ lý trả lời</span>
           </div>
 
           <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text)', lineHeight: 1.75, marginBottom: '1rem', whiteSpace: 'pre-wrap' }}>
@@ -238,7 +238,7 @@ export default function HelpAssistantPage() {
           {answer.based_on?.length > 0 && (
             <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(255,255,255,0.7)', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: '0.375rem' }}>
-                Based On
+                Dựa trên
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.375rem' }}>
                 {answer.based_on.map((ref, i) => (
@@ -254,7 +254,7 @@ export default function HelpAssistantPage() {
           {answer.limitations?.length > 0 && (
             <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(255, 243, 199, 0.6)', border: '1px solid #FDE68A', borderRadius: 'var(--radius-md)' }}>
               <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#B45309', marginBottom: '0.375rem' }}>
-                ⚠ Limitations
+                ⚠ Giới hạn
               </div>
               <ul style={{ listStyle: 'disc', paddingLeft: '1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 {answer.limitations.map((l, i) => (
@@ -268,7 +268,7 @@ export default function HelpAssistantPage() {
           {answer.actions?.length > 0 && (
             <div>
               <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: '0.625rem' }}>
-                Suggested Actions
+                Hành động đề xuất
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {answer.actions.map((action, i) => (
@@ -290,17 +290,17 @@ export default function HelpAssistantPage() {
       {!answer && !isLoading && !error && (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)', animation: 'fadeIn 0.4s ease-out' }}>
           <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>💬</div>
-          <p>Select a prompt chip or type your own question to get AI-powered guidance.</p>
+          <p>Chọn một câu hỏi gợi ý hoặc nhập câu hỏi của riêng bạn để nhận hướng dẫn từ AI.</p>
         </div>
       )}
 
       {/* Nav links */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: 'var(--font-size-sm)', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Help Guide</Link>
+        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Hướng dẫn sử dụng</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Learning Roadmap</Link>
+        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Lộ trình học tập</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/interview/sessions" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Interview Practice</Link>
+        <Link href="/interview/sessions" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Luyện phỏng vấn</Link>
       </div>
     </PageShell>
   );

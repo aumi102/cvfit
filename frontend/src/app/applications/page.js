@@ -13,7 +13,7 @@ import styles from '@/styles/Applications.module.css';
 function formatDate(value) {
   if (!value) return '—';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
+  return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('vi-VN');
 }
 
 function StatusBadge({ status }) {
@@ -23,9 +23,10 @@ function StatusBadge({ status }) {
       : status === 'archived'
         ? styles['statusBadge--archived']
         : styles['statusBadge--draft'];
+  const labels = { active: 'Đang hoạt động', archived: 'Đã lưu trữ', draft: 'Bản nháp' };
   return (
     <span className={`${styles.statusBadge} ${cls}`}>
-      {status || 'draft'}
+      {labels[status] || 'Bản nháp'}
     </span>
   );
 }
@@ -59,7 +60,7 @@ export default function ApplicationsPage() {
         setApps(Array.isArray(data?.items) ? data.items : []);
       } catch (err) {
         if (!active) return;
-        const { message } = extractApiError(err, 'Could not load applications.');
+        const { message } = extractApiError(err, 'Không thể tải danh sách hồ sơ ứng tuyển.');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -79,15 +80,15 @@ export default function ApplicationsPage() {
     <PageShell isAuthChecking={isAuthChecking}>
       <div className={styles.topRow}>
         <div>
-          <h1 className={styles.pageTitle}>My Applications</h1>
-          <p className={styles.pageSubtitle}>Track jobs you&apos;re applying for. Each application unlocks interview practice, a cover letter, and an AI readiness package.</p>
+          <h1 className={styles.pageTitle}>Hồ sơ ứng tuyển</h1>
+          <p className={styles.pageSubtitle}>Theo dõi các công việc bạn đang ứng tuyển. Mỗi hồ sơ mở khóa luyện phỏng vấn, thư xin việc và bộ hồ sơ AI.</p>
         </div>
         <Link href="/applications/new" className={styles.newBtn} id="new-application-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          New Application
+          Tạo hồ sơ mới
         </Link>
       </div>
 
@@ -107,11 +108,11 @@ export default function ApplicationsPage() {
       {!isLoading && !error && apps.length === 0 && (
         <EmptyStatePage
           icon={folderIcon}
-          title="No applications yet"
-          description="Create a target job from a job description (JD) to unlock interview practice, a cover letter, and an AI readiness package. Attach a CV analysis to personalise everything."
+          title="Chưa có hồ sơ ứng tuyển"
+          description="Tạo hồ sơ ứng tuyển từ mô tả công việc (JD) để mở khóa luyện phỏng vấn, thư xin việc và bộ hồ sơ AI. Đính kèm phân tích CV để cá nhân hóa mọi thứ."
           action={
             <Link href="/applications/new" className={styles.newBtn}>
-              Create your first application
+              Tạo hồ sơ ứng tuyển đầu tiên
             </Link>
           }
         />
@@ -130,19 +131,19 @@ export default function ApplicationsPage() {
               <div className={styles.cardHeader}>
                 <div>
                   <div className={styles.cardCompany}>{app.company_name || '—'}</div>
-                  <div className={styles.cardRole}>{app.job_title || 'Untitled Role'}</div>
+                  <div className={styles.cardRole}>{app.job_title || 'Chưa có tiêu đề'}</div>
                 </div>
                 <StatusBadge status={app.status} />
               </div>
               <div className={styles.cardMeta}>
                 <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Applied</span>
+                  <span className={styles.metaLabel}>Ngày tạo</span>
                   <span className={styles.metaValue}>{formatDate(app.created_at)}</span>
                 </div>
                 <div className={styles.metaItem}>
-                  <span className={styles.metaLabel}>Analysis</span>
+                  <span className={styles.metaLabel}>Phân tích</span>
                   <span className={styles.metaValue}>
-                    {app.best_analysis_job_id ? '✓ Attached' : 'Not attached'}
+                    {app.best_analysis_job_id ? '✓ Đã đính kèm' : 'Chưa đính kèm'}
                   </span>
                 </div>
               </div>

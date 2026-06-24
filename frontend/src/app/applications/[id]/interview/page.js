@@ -75,7 +75,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
       setResult(data);
       trackEvent(ANALYTICS_EVENTS.INTERVIEW_ANSWER_SUBMIT_SUCCESS, { feature_name: 'interview' });
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to submit answer. Please try again.');
+      const { message } = extractApiError(err, 'Không thể nộp câu trả lời. Vui lòng thử lại.');
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -109,12 +109,12 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
           onClick={() => setShowHistory((v) => !v)}
           id={`history-toggle-${index + 1}`}
         >
-          {showHistory ? '▲ Hide previous answer' : '▼ Show previous answer'}
+          {showHistory ? '▲ Ẩn câu trả lời trước' : '▼ Hiển thị câu trả lời trước'}
         </button>
       )}
       {showHistory && pastAnswer && (
         <div className={styles.historyPanel}>
-          <p className={styles.historyLabel}>Your previous answer</p>
+          <p className={styles.historyLabel}>Câu trả lời trước của bạn</p>
           <p className={styles.historyText}>{pastAnswer.answer_text}</p>
         </div>
       )}
@@ -126,7 +126,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
             className={styles.answerTextarea}
             value={answerText}
             onChange={(e) => setAnswerText(e.target.value)}
-            placeholder="Type your answer here…"
+            placeholder="Nhập câu trả lời của bạn vào đây…"
             disabled={isSubmitting}
             id={`answer-textarea-${index + 1}`}
             aria-label={`Answer for question ${index + 1}`}
@@ -134,7 +134,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
           {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
           <div className={styles.answerFooter}>
             <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-              {answerText.length} characters
+              {answerText.length} ký tự
             </span>
             <button
               type="submit"
@@ -143,7 +143,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
               id={`submit-answer-btn-${index + 1}`}
             >
               {isSubmitting ? (
-                <><span className={styles.submitSpinner} /> Submitting…</>
+                <><span className={styles.submitSpinner} /> Đang nộp…</>
               ) : (
                 <>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -151,7 +151,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
                     <line x1="22" y1="2" x2="11" y2="13" />
                     <polygon points="22 2 15 22 11 13 2 9 22 2" />
                   </svg>
-                  Submit Answer
+                  Nộp câu trả lời
                 </>
               )}
             </button>
@@ -165,7 +165,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
               strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            AI Feedback
+            Phản hồi AI
           </p>
 
           {/* ── Overall score + risk_gap ── */}
@@ -174,7 +174,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
               <>
                 <span className={styles.scoreValue}>{overall}</span>
                 <div>
-                  <div className={styles.scoreMeta}>overall / 5</div>
+                  <div className={styles.scoreMeta}>tổng điểm / 5</div>
                   {riskGap != null && <RiskBadge score={riskGap} showScore />}
                 </div>
               </>
@@ -187,26 +187,26 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
           {/* ── Rubric breakdown ── */}
           {Object.keys(rubric).some((k) => k !== 'overall' && k !== 'risk_gap' && rubric[k] != null) && (
             <div className={styles.rubricGrid}>
-              <p className={styles.feedbackSuggestionsTitle}>Rubric Breakdown</p>
-              <RubricRow label="Relevance"    value={rubric.relevance} />
-              <RubricRow label="Specificity"  value={rubric.specificity} />
-              <RubricRow label="Evidence"     value={rubric.evidence} />
-              <RubricRow label="Structure"    value={rubric.structure} />
-              <RubricRow label="Risk / Gap"   value={rubric.risk_gap} />
+              <p className={styles.feedbackSuggestionsTitle}>Chi tiết điểm đánh giá</p>
+              <RubricRow label="Mức độ liên quan"    value={rubric.relevance} />
+              <RubricRow label="Tính cụ thể"  value={rubric.specificity} />
+              <RubricRow label="Bằng chứng"     value={rubric.evidence} />
+              <RubricRow label="Cấu trúc"    value={rubric.structure} />
+              <RubricRow label="Rủi ro / Lỗ hổng"   value={rubric.risk_gap} />
             </div>
           )}
 
           {/* ── Feedback sections ── */}
-          <FeedbackSection title="💪 Strengths"            items={feedback.strengths} />
-          <FeedbackSection title="📎 Missing Evidence"     items={feedback.missing_evidence} />
-          <FeedbackSection title="🔧 Suggested Improvements" items={feedback.suggested_improvements} />
-          <FeedbackSection title="📋 Sample Outline"       items={feedback.sample_outline} />
-          <FeedbackSection title="⚠️ Risk Notes"           items={feedback.risk_notes} />
+          <FeedbackSection title="💪 Điểm mạnh"            items={feedback.strengths} />
+          <FeedbackSection title="📎 Bằng chứng còn thiếu"     items={feedback.missing_evidence} />
+          <FeedbackSection title="🔧 Đề xuất cải thiện" items={feedback.suggested_improvements} />
+          <FeedbackSection title="📋 Dàn ý tham khảo"       items={feedback.sample_outline} />
+          <FeedbackSection title="⚠️ Ghi chú rủi ro"           items={feedback.risk_notes} />
 
           {/* ── Disclaimer — always visible ── */}
           {feedback.disclaimer && (
             <div className={styles.inlineFeedbackDisclaimer}>
-              <Disclaimer text={feedback.disclaimer} title="AI Disclaimer" />
+              <Disclaimer text={feedback.disclaimer} title="Lưu ý từ AI" />
             </div>
           )}
 
@@ -216,7 +216,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
             onClick={() => { setResult(null); setAnswerText(''); }}
             id={`retry-answer-btn-${index + 1}`}
           >
-            ↩ Try again
+            ↩ Thử lại
           </button>
         </div>
       )}
@@ -255,7 +255,7 @@ export default function InterviewPage() {
           trackEvent(ANALYTICS_EVENTS.INTERVIEW_START, { feature_name: 'interview' });
         }
       } else {
-        const { message } = extractApiError(qData.reason, 'Could not load interview questions.');
+        const { message } = extractApiError(qData.reason, 'Không thể tải câu hỏi phỏng vấn.');
         setError(message);
       }
 
@@ -298,36 +298,36 @@ export default function InterviewPage() {
         fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem',
       }}>
         <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-          Applications
+          Hồ sơ ứng tuyển
         </Link>
         <span>›</span>
         <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-          Application
+          Chi tiết
         </Link>
         <span>›</span>
-        <span>Interview Practice</span>
+        <span>Luyện phỏng vấn</span>
       </nav>
 
       <div className={styles.header}>
-        <h1 className={styles.pageTitle}>Interview Practice</h1>
+        <h1 className={styles.pageTitle}>Luyện phỏng vấn</h1>
         <p className={styles.pageSubtitle}>
-          Answer each question and receive AI-powered feedback and risk assessments.
+          Trả lời từng câu hỏi và nhận phản hồi, đánh giá rủi ro từ AI.
         </p>
         {answers.length > 0 && (
           <span className={styles.historyBadge}>
-            {answers.length} answer{answers.length > 1 ? 's' : ''} in history
+            {answers.length} câu trả lời trong lịch sử
           </span>
         )}
       </div>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-      {isLoading && <LoadingSpinner fullPage label="Loading questions…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải câu hỏi…" />}
 
       {!isLoading && !error && questions.length === 0 && (
         <EmptyStatePage
           icon={micIcon}
-          title="No questions available"
-          description="Interview questions will appear here once your application analysis is ready and processed."
+          title="Chưa có câu hỏi"
+          description="Câu hỏi phỏng vấn sẽ xuất hiện ở đây sau khi phân tích hồ sơ hoàn tất."
         />
       )}
 
@@ -358,11 +358,11 @@ export default function InterviewPage() {
 
       {/* Next steps */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2rem', fontSize: '0.875rem' }}>
-        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Back to application</Link>
+        <Link href={`/applications/${id}`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>← Quay lại hồ sơ</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href={`/applications/${id}/cover-letter`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Continue to cover letter</Link>
+        <Link href={`/applications/${id}/cover-letter`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Tiếp tục tới thư xin việc</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href={`/applications/${id}/package`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Open package / readiness</Link>
+        <Link href={`/applications/${id}/package`} style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Mở bộ hồ sơ</Link>
       </div>
     </PageShell>
   );

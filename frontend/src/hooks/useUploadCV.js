@@ -24,7 +24,7 @@ export function useUploadCV() {
   const upload = useCallback(async (fileToUpload) => {
     const targetFile = fileToUpload || file;
     if (!targetFile) {
-      setError('No file selected');
+      setError('Chưa chọn tệp');
       setErrorHint(null);
       return null;
     }
@@ -47,7 +47,7 @@ export function useUploadCV() {
       setProgress(100);
       return data.cv_file_id;
     } catch (err) {
-      const { message, hint } = extractApiError(err, 'Upload failed. Please try again.');
+      const { message, hint } = extractApiError(err, 'Tải lên thất bại. Vui lòng thử lại.');
       setError(message);
       setErrorHint(hint);
       setIsUploading(false);

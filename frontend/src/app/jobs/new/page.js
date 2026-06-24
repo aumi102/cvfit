@@ -35,11 +35,11 @@ export default function NewJobPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.job_title.trim() || !form.company.trim()) {
-      setError('Job title and company are required.');
+      setError('Vị trí công việc và công ty là bắt buộc.');
       return;
     }
     if (!form.jd_text.trim()) {
-      setError('Job description is required.');
+      setError('Mô tả công việc là bắt buộc.');
       return;
     }
 
@@ -64,7 +64,7 @@ export default function NewJobPage() {
 
       router.push(`/jobs/${job.id}`);
     } catch (err) {
-      const { message, hint } = extractApiError(err, 'Failed to create target job. Please try again.');
+      const { message, hint } = extractApiError(err, 'Không thể tạo công việc mục tiêu. Vui lòng thử lại.');
       setError(hint ? `${message} — ${hint}` : message);
       setIsSubmitting(false);
     }
@@ -80,17 +80,17 @@ export default function NewJobPage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="640px">
       {/* Breadcrumb */}
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        <Link href="/jobs">Target Jobs</Link>
+        <Link href="/jobs">Việc làm mục tiêu</Link>
         <span className={styles.breadcrumbSep}>›</span>
-        <span>New Job</span>
+        <span>Công việc mới</span>
       </nav>
 
       <div className={styles.formCard}>
         <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.375rem' }}>
-          Add Target Job
+          Thêm việc làm mục tiêu
         </h1>
         <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: '1.75rem', lineHeight: 1.6 }}>
-          Save a job you&apos;re targeting. Attach a CV analysis to unlock personalized readiness scoring, learning roadmap, and interview prep.
+          Lưu lại một công việc bạn đang nhắm tới. Đính kèm phân tích CV để mở khóa điểm sẵn sàng cá nhân hóa, lộ trình học tập và luyện phỏng vấn.
         </p>
 
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
@@ -99,7 +99,7 @@ export default function NewJobPage() {
           {/* Job Title */}
           <div className={styles.fieldGroup}>
             <label htmlFor="job_title" className={styles.fieldLabel}>
-              Job Title <span style={{ color: 'var(--color-danger)' }}>*</span>
+              Vị trí công việc <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               id="job_title"
@@ -109,7 +109,7 @@ export default function NewJobPage() {
               value={form.job_title}
               onChange={handleChange}
               disabled={isSubmitting}
-              placeholder="e.g. Senior Frontend Engineer"
+              placeholder="ví dụ: Senior Frontend Engineer"
               className={styles.fieldInput}
             />
           </div>
@@ -117,7 +117,7 @@ export default function NewJobPage() {
           {/* Company */}
           <div className={styles.fieldGroup}>
             <label htmlFor="company" className={styles.fieldLabel}>
-              Company <span style={{ color: 'var(--color-danger)' }}>*</span>
+              Công ty <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               id="company"
@@ -127,7 +127,7 @@ export default function NewJobPage() {
               value={form.company}
               onChange={handleChange}
               disabled={isSubmitting}
-              placeholder="e.g. Google, Shopify, Stripe"
+              placeholder="ví dụ: Google, Shopify, Stripe"
               className={styles.fieldInput}
             />
           </div>
@@ -135,7 +135,7 @@ export default function NewJobPage() {
           {/* Target Role (optional) */}
           <div className={styles.fieldGroup}>
             <label htmlFor="target_role" className={styles.fieldLabel}>
-              Target Role <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, textTransform: 'none' }}>(optional — overrides job title for analysis)</span>
+              Vị trí mục tiêu <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, textTransform: 'none' }}>(không bắt buộc — ghi đè vị trí công việc khi phân tích)</span>
             </label>
             <input
               id="target_role"
@@ -144,7 +144,7 @@ export default function NewJobPage() {
               value={form.target_role}
               onChange={handleChange}
               disabled={isSubmitting}
-              placeholder="e.g. Frontend Engineer"
+              placeholder="ví dụ: Frontend Engineer"
               className={styles.fieldInput}
             />
           </div>
@@ -152,7 +152,7 @@ export default function NewJobPage() {
           {/* Source URL (optional) */}
           <div className={styles.fieldGroup}>
             <label htmlFor="source_url" className={styles.fieldLabel}>
-              Job Post URL <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, textTransform: 'none' }}>(optional)</span>
+              URL bài đăng tuyển <span style={{ color: 'var(--color-text-muted)', fontWeight: 400, textTransform: 'none' }}>(không bắt buộc)</span>
             </label>
             <input
               id="source_url"
@@ -169,7 +169,7 @@ export default function NewJobPage() {
           {/* JD Text */}
           <div className={styles.fieldGroup}>
             <label htmlFor="jd_text" className={styles.fieldLabel}>
-              Job Description <span style={{ color: 'var(--color-danger)' }}>*</span>
+              Mô tả công việc <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <textarea
               id="jd_text"
@@ -178,7 +178,7 @@ export default function NewJobPage() {
               onChange={handleChange}
               disabled={isSubmitting}
               maxLength={MAX_JD_CHARS}
-              placeholder="Paste the full job description here…"
+              placeholder="Dán toàn bộ mô tả công việc vào đây…"
               className={`${styles.fieldInput} ${styles.fieldTextarea}`}
             />
             <div className={styles.charCount}>
@@ -188,7 +188,7 @@ export default function NewJobPage() {
 
           <div className={styles.formActions}>
             <Link href="/jobs" className={styles.btnSecondary}>
-              Cancel
+              Hủy
             </Link>
             <button
               type="submit"
@@ -199,9 +199,9 @@ export default function NewJobPage() {
               {isSubmitting ? (
                 <>
                   <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
-                  Saving…
+                  Đang lưu…
                 </>
-              ) : 'Save Target Job'}
+              ) : 'Lưu công việc mục tiêu'}
             </button>
           </div>
         </form>
