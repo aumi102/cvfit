@@ -86,7 +86,7 @@ export default function RegisterForm() {
                 id="register-full-name"
                 className={styles.input}
                 type="text"
-                placeholder="Nguyen Van A"
+                placeholder="Nguyễn Văn A"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"

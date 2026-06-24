@@ -55,7 +55,7 @@ export default function PublicSharePage() {
         <div className={styles.publicContainer}>
           <div style={{ textAlign: 'center', paddingTop: '4rem' }}>
             <div style={{ width: 48, height: 48, border: '3px solid #BFDBFE', borderTopColor: 'var(--color-primary)', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 1rem' }} />
-            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>Loading readiness profile…</p>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>Đang tải hồ sơ đánh giá mức độ sẵn sàng…</p>
           </div>
         </div>
       </div>
@@ -64,10 +64,10 @@ export default function PublicSharePage() {
 
   if (error) {
     const errorInfo = {
-      not_found: { icon: '🔍', title: 'Share Link Not Found', desc: 'This readiness profile link doesn\'t exist or has never been shared.' },
-      expired: { icon: '⏰', title: 'Link Has Expired', desc: 'This share link has expired. Ask the owner to generate a new one.' },
-      revoked: { icon: '🔒', title: 'Access Revoked', desc: 'The owner has revoked access to this profile.' },
-      error: { icon: '⚠️', title: 'Something Went Wrong', desc: 'We couldn\'t load this profile right now. Please try again later.' },
+      not_found: { icon: '🔍', title: 'Không tìm thấy liên kết chia sẻ', desc: 'Liên kết hồ sơ đánh giá này không tồn tại hoặc chưa từng được chia sẻ.' },
+      expired: { icon: '⏰', title: 'Liên kết đã hết hạn', desc: 'Liên kết chia sẻ này đã hết hạn. Yêu cầu chủ sở hữu tạo liên kết mới.' },
+      revoked: { icon: '🔒', title: 'Quyền truy cập bị thu hồi', desc: 'Chủ sở hữu đã thu hồi quyền truy cập vào hồ sơ này.' },
+      error: { icon: '⚠️', title: 'Đã có lỗi xảy ra', desc: 'Chúng tôi không thể tải hồ sơ này ngay bây giờ. Vui lòng thử lại sau.' },
     };
     const info = errorInfo[error] || errorInfo.error;
 
@@ -82,7 +82,7 @@ export default function PublicSharePage() {
               href="/"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1.25rem', background: 'var(--color-primary)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none' }}
             >
-              Go to AI CV Fit
+              Đi đến AI CV Fit
             </Link>
           </div>
         </div>
@@ -114,7 +114,7 @@ export default function PublicSharePage() {
           )}
           {data.company && (
             <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-              Applying to {data.company}
+              Ứng tuyển vào {data.company}
             </div>
           )}
         </div>
@@ -123,7 +123,7 @@ export default function PublicSharePage() {
         {data.readiness_score != null && (
           <div className={styles.scoreCard}>
             <div className={styles.scoreValue}>{data.readiness_score}%</div>
-            <div className={styles.scoreLabel}>Job Readiness Score</div>
+            <div className={styles.scoreLabel}>Điểm sẵn sàng</div>
             <div style={{ marginTop: '1rem', height: 10, background: '#E0E7FF', borderRadius: 'var(--radius-full)', overflow: 'hidden', maxWidth: 300, margin: '1rem auto 0' }}>
               <div style={{ height: '100%', width: `${data.readiness_score}%`, background: 'linear-gradient(90deg, var(--color-primary), #8B5CF6)', borderRadius: 'var(--radius-full)', transition: 'width 1.2s ease-out' }} />
             </div>
@@ -142,7 +142,7 @@ export default function PublicSharePage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
-              Score Breakdown
+              Phân tích điểm
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.75rem' }}>
               {Object.entries(data.score_breakdown).map(([key, val]) => (
@@ -167,7 +167,7 @@ export default function PublicSharePage() {
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              Highlights &amp; Evidence
+              Điểm nổi bật &amp; Bằng chứng
             </div>
             <div className={styles.evidenceList}>
               {data.evidence.map((item, i) => (
@@ -189,7 +189,7 @@ export default function PublicSharePage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
               </svg>
-              Package Summary
+              Tóm tắt bộ hồ sơ
             </div>
             <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
               {data.package_summary}
@@ -200,9 +200,9 @@ export default function PublicSharePage() {
         {/* Footer */}
         <div className={styles.publicFooter}>
           <p>
-            Powered by{' '}
+            Cung cấp bởi{' '}
             <Link href="/">AI CV Fit</Link>
-            {' '}· This is a candidate-shared readiness profile. Private data, raw CV, and raw JD are not included.
+            {' '}· Đây là hồ sơ đánh giá được ứng viên chia sẻ. Dữ liệu riêng tư, CV gốc và JD gốc không được bao gồm.
           </p>
         </div>
       </div>

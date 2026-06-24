@@ -61,8 +61,8 @@ export function AnalysisRequiredBanner({ appId }) {
   return (
     <ErrorBanner
       analysisRequired
-      message="Attach analysis first"
-      hint="Generate an analysis for this application and attach it before creating a package or cover letter."
+      message="Cần đính kèm phân tích trước"
+      hint="Tạo phân tích cho hồ sơ ứng tuyển này và đính kèm trước khi tạo bộ hồ sơ hoặc thư xin việc."
     />
   );
 }

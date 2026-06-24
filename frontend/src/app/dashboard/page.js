@@ -95,7 +95,7 @@ function DashboardContent() {
           trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_SUCCESS, { feature_name: 'cv_analysis', status: 'success', score_bucket: bucket });
           trackEvent(ANALYTICS_EVENTS.RESULT_VIEW, { feature_name: 'cv_analysis', score_bucket: bucket });
         } catch (err) {
-          const { message } = extractApiError(err, 'Failed to fetch results.');
+          const { message } = extractApiError(err, 'Không thể lấy kết quả.');
           setWorkflowError(message);
           setWorkflowStep(WORKFLOW_STEPS.ERROR);
           trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, { feature_name: 'cv_analysis', status: 'error', error_type: 'result_fetch_failed' });
@@ -104,7 +104,7 @@ function DashboardContent() {
     }
     if (jobStatus === JOB_STATUS.FAILED && workflowStep !== WORKFLOW_STEPS.ERROR) {
       setWorkflowStep(WORKFLOW_STEPS.ERROR);
-      setWorkflowError(pollingError || 'Analysis failed. Please try again.');
+      setWorkflowError(pollingError || 'Phân tích thất bại. Vui lòng thử lại.');
       trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, { feature_name: 'cv_analysis', status: 'error', error_type: 'job_failed' });
     }
   }, [jobStatus, jobId, accessToken, pollingError, workflowStep]);
@@ -160,7 +160,7 @@ function DashboardContent() {
     const cvFileId = await upload();
     if (!cvFileId) {
       setWorkflowStep(WORKFLOW_STEPS.ERROR);
-      setWorkflowError('CV upload failed. Please try again.');
+      setWorkflowError('Tải CV lên thất bại. Vui lòng thử lại.');
       trackEvent(ANALYTICS_EVENTS.CV_ANALYSIS_ERROR, { feature_name: 'cv_analysis', status: 'error', error_type: 'upload_failed' });
       return;
     }
@@ -185,7 +185,7 @@ function DashboardContent() {
       /* Step 3: Start Polling */
       setWorkflowStep(WORKFLOW_STEPS.POLLING);
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to create analysis job.');
+      const { message } = extractApiError(err, 'Không thể tạo yêu cầu phân tích.');
       setWorkflowError(message);
       setWorkflowStep(WORKFLOW_STEPS.ERROR);
       const statusCode = err?.response?.status;

@@ -25,7 +25,7 @@ export default function LandingPage() {
           {t('landing.logo')}
         </Link>
         <div className={styles.navLinks}>
-          <LanguageSwitcher />
+
           <Link href="/login" className={styles.signInBtn}>{t('landing.signIn')}</Link>
           <Link href="/login" className={styles.getStartedBtnNav}>{t('landing.getStarted')}</Link>
         </div>
@@ -85,7 +85,7 @@ export default function LandingPage() {
 
               <div className={styles.cardHeader}>
                 <span className={styles.cardTitle}>Kết quả phân tích CV</span>
-                <span className={styles.cardBadge}>AI Ready</span>
+                <span className={styles.cardBadge}>AI Sẵn sàng</span>
               </div>
 
               {/* Score ring */}
@@ -97,7 +97,7 @@ export default function LandingPage() {
                   </svg>
                   <div className={styles.ringText}>
                     <span className={styles.ringScore}>87%</span>
-                    <span className={styles.ringLabel}>Match</span>
+                    <span className={styles.ringLabel}>Phù hợp</span>
                   </div>
                 </div>
                 <div className={styles.scoreInfo}>

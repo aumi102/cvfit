@@ -15,21 +15,21 @@ import styles from '@/styles/InterviewSessions.module.css';
 const RUBRIC_KEYS = ['relevance', 'evidence', 'clarity', 'structure', 'confidence', 'risk'];
 
 const RUBRIC_LABELS = {
-  relevance: 'Relevance',
-  evidence: 'Evidence',
-  clarity: 'Clarity',
-  structure: 'Structure',
-  confidence: 'Confidence',
-  risk: 'Risk',
+  relevance: 'Mức độ liên quan',
+  evidence: 'Bằng chứng',
+  clarity: 'Độ rõ ràng',
+  structure: 'Cấu trúc',
+  confidence: 'Sự tự tin',
+  risk: 'Rủi ro',
 };
 
 const RUBRIC_DESCS = {
-  relevance: 'How directly the answer addresses the question',
-  evidence: 'Concrete examples and proof points used',
-  clarity: 'Clear, easy to understand communication',
-  structure: 'Logical flow and organisation (e.g. STAR)',
-  confidence: 'Tone, assertiveness, and conviction',
-  risk: 'Potential red flags or concerns raised',
+  relevance: 'Mức độ trả lời trực tiếp vào câu hỏi',
+  evidence: 'Các ví dụ và dẫn chứng cụ thể được sử dụng',
+  clarity: 'Giao tiếp rõ ràng, dễ hiểu',
+  structure: 'Luồng và cấu trúc logic (ví dụ: STAR)',
+  confidence: 'Giọng điệu, sự quyết đoán và sức thuyết phục',
+  risk: 'Các dấu hiệu cảnh báo hoặc mối lo ngại tiềm ẩn',
 };
 
 function RubricBar({ score, max = 10 }) {
@@ -71,7 +71,7 @@ export default function SessionDetailPage() {
         setAnswersMap(map);
       }
     } catch (err) {
-      const { message } = extractApiError(err, 'Could not load session.');
+      const { message } = extractApiError(err, 'Không thể tải phiên.');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -113,7 +113,7 @@ export default function SessionDetailPage() {
         difficulty: session.difficulty,
       });
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to submit answer. Please try again.');
+      const { message } = extractApiError(err, 'Không thể nộp câu trả lời. Vui lòng thử lại.');
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
@@ -128,20 +128,20 @@ export default function SessionDetailPage() {
   const handleExport = () => {
     if (!session) return;
     const lines = [];
-    lines.push(`Interview Session Export`);
-    lines.push(`Type: ${session.question_type} | Difficulty: ${session.difficulty}`);
-    lines.push(`Date: ${new Date().toLocaleDateString()}`);
+    lines.push(`Xuất phiên phỏng vấn`);
+    lines.push(`Loại: ${session.question_type} | Độ khó: ${session.difficulty}`);
+    lines.push(`Ngày: ${new Date().toLocaleDateString()}`);
     lines.push('');
     (session.questions || []).forEach((q, i) => {
-      lines.push(`Q${i + 1}: ${q.text}`);
+      lines.push(`Câu ${i + 1}: ${q.text}`);
       const ans = answersMap[q.id];
       if (ans?.text) {
-        lines.push(`Answer: ${ans.text}`);
+        lines.push(`Câu trả lời: ${ans.text}`);
         if (ans.feedback?.overall_score != null) {
-          lines.push(`Score: ${ans.feedback.overall_score}/10`);
+          lines.push(`Điểm: ${ans.feedback.overall_score}/10`);
         }
       } else {
-        lines.push('Answer: (not answered)');
+        lines.push('Câu trả lời: (chưa trả lời)');
       }
       lines.push('');
     });
@@ -167,13 +167,13 @@ export default function SessionDetailPage() {
   return (
     <PageShell isAuthChecking={isAuthChecking} maxWidth="1080px">
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        <Link href="/interview/sessions">Interview Practice</Link>
+        <Link href="/interview/sessions">Luyện phỏng vấn</Link>
         <span className={styles.breadcrumbSep}>›</span>
-        <span>{session ? `${session.question_type?.replace(/_/g, ' ')} — ${session.difficulty}` : 'Loading…'}</span>
+        <span>{session ? `${session.question_type?.replace(/_/g, ' ')} — ${session.difficulty}` : 'Đang tải…'}</span>
       </nav>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-      {isLoading && <LoadingSpinner fullPage label="Loading session…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải phiên…" />}
 
       {!isLoading && session && (
         <>
@@ -187,8 +187,8 @@ export default function SessionDetailPage() {
                 {session.difficulty}
               </span>
               <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)' }}>
-                {questions.length} question{questions.length !== 1 ? 's' : ''}
-                {' · '}{Object.keys(answersMap).length} answered
+                {questions.length} câu hỏi
+                {' · '}{Object.keys(answersMap).length} đã trả lời
               </span>
             </div>
             <button className={styles.exportBtn} onClick={handleExport} id="export-session-btn">
@@ -197,14 +197,14 @@ export default function SessionDetailPage() {
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              Export Summary
+              Xuất báo cáo
             </button>
           </div>
 
           <div className={styles.sessionLayout}>
             {/* Question Nav */}
             <aside className={styles.questionNav} aria-label="Question list">
-              <div className={styles.navTitle}>Questions</div>
+              <div className={styles.navTitle}>Câu hỏi</div>
               <div className={styles.questionList}>
                 {questions.map((q, i) => {
                   const answered = !!answersMap[q.id];
@@ -233,7 +233,7 @@ export default function SessionDetailPage() {
               {currentQ && (
                 <div className={styles.questionCard}>
                   <div className={styles.questionMeta}>
-                    <span className={styles.qTypeBadge}>Q{activeQ + 1} of {questions.length}</span>
+                    <span className={styles.qTypeBadge}>Câu {activeQ + 1} / {questions.length}</span>
                     {currentQ.type && <span className={styles.qTypeBadge} style={{ background: '#EDE9FE', color: '#5B21B6' }}>{currentQ.type.replace(/_/g, ' ')}</span>}
                   </div>
                   <p className={styles.questionText}>{currentQ.text}</p>
@@ -244,7 +244,7 @@ export default function SessionDetailPage() {
                         className={styles.answerTextarea}
                         value={answerDraft}
                         onChange={(e) => setAnswerDraft(e.target.value)}
-                        placeholder="Type your answer here… Use the STAR method for behavioral questions (Situation, Task, Action, Result)."
+                        placeholder="Nhập câu trả lời của bạn vào đây… Sử dụng phương pháp STAR cho các câu hỏi hành vi (Situation, Task, Action, Result)."
                         disabled={isSubmitting}
                         id={`answer-input-${activeQ}`}
                       />
@@ -256,7 +256,7 @@ export default function SessionDetailPage() {
                       <div className={styles.answerActions}>
                         {activeQ > 0 && (
                           <button type="button" className={styles.btnSecondary} onClick={() => setActiveQ((p) => p - 1)}>
-                            ← Previous
+                            ← Trước
                           </button>
                         )}
                         <button
@@ -269,13 +269,13 @@ export default function SessionDetailPage() {
                           {isSubmitting ? (
                             <>
                               <span style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
-                              Evaluating…
+                              Đang đánh giá…
                             </>
-                          ) : 'Submit Answer'}
+                          ) : 'Nộp câu trả lời'}
                         </button>
                         {activeQ < questions.length - 1 && (
                           <button type="button" className={styles.btnSecondary} onClick={() => setActiveQ((p) => p + 1)}>
-                            Skip →
+                            Bỏ qua →
                           </button>
                         )}
                       </div>
@@ -283,11 +283,11 @@ export default function SessionDetailPage() {
                   ) : (
                     <div className={styles.answerActions}>
                       <button type="button" className={styles.btnOutline} onClick={handleRetry} id={`retry-answer-${activeQ}`}>
-                        ↺ Retry Answer
+                        ↺ Thử lại
                       </button>
                       {activeQ < questions.length - 1 && (
                         <button type="button" className={styles.btnPrimary} onClick={() => setActiveQ((p) => p + 1)}>
-                          Next Question →
+                          Câu tiếp theo →
                         </button>
                       )}
                     </div>
@@ -302,7 +302,7 @@ export default function SessionDetailPage() {
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                     </svg>
-                    AI Feedback
+                    Phản hồi từ AI
                     {feedback.overall_score != null && (
                       <span style={{ marginLeft: 'auto', fontSize: 'var(--font-size-xl)', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '-0.04em' }}>
                         {feedback.overall_score}<span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 400, color: '#7C3AED', marginLeft: 1 }}>/10</span>
@@ -332,7 +332,7 @@ export default function SessionDetailPage() {
                   {feedback.suggestions?.length > 0 && (
                     <div style={{ marginTop: '0.5rem' }}>
                       <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6D28D9', marginBottom: '0.5rem' }}>
-                        Suggestions
+                        Đề xuất
                       </div>
                       <ul style={{ listStyle: 'disc', paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                         {feedback.suggestions.map((s, i) => (
@@ -347,7 +347,7 @@ export default function SessionDetailPage() {
               {/* Score Trend */}
               {scoreTrend.length > 1 && (
                 <div className={styles.trendSection}>
-                  <div className={styles.trendTitle}>📈 Score Trend</div>
+                  <div className={styles.trendTitle}>📈 Biểu đồ điểm</div>
                   <div className={styles.trendBars}>
                     {scoreTrend.map((score, i) => (
                       <div
@@ -359,8 +359,8 @@ export default function SessionDetailPage() {
                     ))}
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.375rem', fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                    <span>Q1</span>
-                    <span>Q{scoreTrend.length}</span>
+                    <span>CH1</span>
+                    <span>CH{scoreTrend.length}</span>
                   </div>
                 </div>
               )}

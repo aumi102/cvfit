@@ -558,22 +558,12 @@ const dictionary = {
 export const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState('vi'); // Default language is Vietnamese
+  const lang = 'vi'; // Luôn sử dụng tiếng Việt
 
-  useEffect(() => {
-    const savedLang = localStorage.getItem('app_lang');
-    if (savedLang === 'en' || savedLang === 'vi') {
-      setLang(savedLang);
-    }
-  }, []);
-
-  const changeLanguage = (newLang) => {
-    setLang(newLang);
-    localStorage.setItem('app_lang', newLang);
-  };
+  const changeLanguage = () => {};
 
   const t = (key) => {
-    const val = dictionary[lang]?.[key];
+    const val = dictionary.vi?.[key];
     return val !== undefined ? val : key;
   };
 

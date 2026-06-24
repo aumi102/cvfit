@@ -11,18 +11,18 @@ import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Usage.module.css';
 
 const UPGRADE_FEATURES = [
-  'CV analysis credits',
-  'Interview feedback credits',
-  'Cover letter credits',
-  'Application package credits',
+  'Lượt phân tích CV',
+  'Lượt phản hồi phỏng vấn',
+  'Lượt tạo thư xin việc',
+  'Lượt tạo bộ hồ sơ ứng tuyển',
 ];
 
 const METRIC_META = {
-  analyses:             { icon: '📊', label: 'CV Analyses', sublabel: 'This month' },
-  interview_answers:    { icon: '🎤', label: 'Interview Answers', sublabel: 'This month' },
-  cover_letters:        { icon: '✉️', label: 'Cover Letters', sublabel: 'Generated' },
-  application_packages: { icon: '📦', label: 'App Packages', sublabel: 'Generated' },
-  share_links:          { icon: '🔗', label: 'Share Links', sublabel: 'Active' },
+  analyses:             { icon: '📊', label: 'Phân tích CV', sublabel: 'Tháng này' },
+  interview_answers:    { icon: '🎤', label: 'Câu trả lời phỏng vấn', sublabel: 'Tháng này' },
+  cover_letters:        { icon: '✉️', label: 'Thư xin việc', sublabel: 'Đã tạo' },
+  application_packages: { icon: '📦', label: 'Bộ hồ sơ', sublabel: 'Đã tạo' },
+  share_links:          { icon: '🔗', label: 'Liên kết chia sẻ', sublabel: 'Đang hoạt động' },
 };
 
 function getProgressVariant(pct) {
@@ -66,10 +66,10 @@ function MetricCard({ metricKey, data, index }) {
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              Unlimited
+              Không giới hạn
             </span>
           </div>
-          <p className={styles.progressCaption}>No limit on your current plan</p>
+          <p className={styles.progressCaption}>Không giới hạn trên gói hiện tại</p>
         </div>
       ) : (
         <div className={styles.progressWrapper}>
@@ -84,9 +84,9 @@ function MetricCard({ metricKey, data, index }) {
             />
           </div>
           <p className={styles.progressCaption}>
-            {pct >= 90 ? '⚠ Nearly at limit — consider upgrading' :
-             pct >= 70 ? `${limit - used} remaining this period` :
-             `${limit - used} remaining this period`}
+            {pct >= 90 ? '⚠ Gần đạt giới hạn — cân nhắc nâng cấp' :
+             pct >= 70 ? `Còn ${limit - used} lượt trong kỳ này` :
+             `Còn ${limit - used} lượt trong kỳ này`}
           </p>
         </div>
       )}
@@ -127,7 +127,7 @@ export default function UsagePage() {
         });
       } catch (err) {
         if (!active) return;
-        const { message } = extractApiError(err, 'Could not load your usage data.');
+        const { message } = extractApiError(err, 'Không thể tải dữ liệu sử dụng.');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -153,9 +153,9 @@ export default function UsagePage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="960px">
       {/* Page Header */}
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Usage &amp; Plan</h1>
+        <h1 className={styles.pageTitle}>Mức sử dụng &amp; Gói dịch vụ</h1>
         <p className={styles.pageSubtitle}>
-          Track your monthly usage across all AI features. Limits reset at the start of each billing period.
+          Theo dõi mức sử dụng hàng tháng của tất cả tính năng AI. Giới hạn được đặt lại vào đầu mỗi kỳ thanh toán.
         </p>
       </div>
 
@@ -164,16 +164,16 @@ export default function UsagePage() {
       {/* Plan Card */}
       {(isLoading || plan) && (
         <div className={styles.planCard}>
-          <div className={styles.planBadge}>Current Plan</div>
+          <div className={styles.planBadge}>Gói hiện tại</div>
           <div className={styles.planName}>
-            {isLoading ? 'Loading…' : (plan?.name || 'Free')}
+            {isLoading ? 'Đang tải…' : (plan?.name || 'Miễn phí')}
           </div>
           <p className={styles.planDesc}>
-            {isLoading ? '' : (plan?.description || 'Your current plan includes access to all core features.')}
+            {isLoading ? '' : (plan?.description || 'Gói hiện tại của bạn bao gồm quyền truy cập vào tất cả tính năng chính.')}
           </p>
           {usageData?.period_start && usageData?.period_end && (
             <div className={styles.planPeriod}>
-              Billing period: {formatPeriod(usageData.period_start, usageData.period_end)}
+              Kỳ thanh toán: {formatPeriod(usageData.period_start, usageData.period_end)}
             </div>
           )}
         </div>
@@ -199,9 +199,9 @@ export default function UsagePage() {
           <div className={styles.upgradeHeader}>
             <div className={styles.upgradeIcon}>🚀</div>
             <div style={{ flex: 1 }}>
-              <div className={styles.upgradeTitle}>Need more credits?</div>
+              <div className={styles.upgradeTitle}>Cần thêm lượt dùng?</div>
               <p className={styles.upgradeDesc}>
-                View one-time credit packs for analyses, interview feedback, cover letters, and application packages. No subscription is required.
+                Xem các gói lượt dùng một lần cho phân tích, phản hồi phỏng vấn, thư xin việc và bộ hồ sơ. Không cần đăng ký định kỳ.
               </p>
             </div>
           </div>
@@ -218,20 +218,20 @@ export default function UsagePage() {
           </div>
 
           <div className={styles.upgradeActions}>
-            <Link href="/pricing" className={styles.upgradePrimary}>View Pricing</Link>
-            <Link href="/billing" className={styles.upgradeSecondary}>Billing &amp; Credits</Link>
+            <Link href="/pricing" className={styles.upgradePrimary}>Xem bảng giá</Link>
+            <Link href="/billing" className={styles.upgradeSecondary}>Thanh toán &amp; Lượt dùng</Link>
           </div>
-          <p className={styles.upgradeNote}>Credits are added only after server-verified payment confirmation.</p>
+          <p className={styles.upgradeNote}>Lượt dùng chỉ được cộng sau khi máy chủ xác nhận thanh toán.</p>
         </div>
       )}
 
       {/* Footer */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: 'var(--font-size-sm)', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--color-border)' }}>
-        <Link href="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>CV Analysis</Link>
+        <Link href="/dashboard" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Phân tích CV</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Applications</Link>
+        <Link href="/applications" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Hồ sơ ứng tuyển</Link>
         <span style={{ color: 'var(--color-text-muted)' }}>·</span>
-        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Help</Link>
+        <Link href="/help" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Trợ giúp</Link>
       </div>
     </PageShell>
   );

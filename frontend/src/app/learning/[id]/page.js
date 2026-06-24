@@ -21,9 +21,9 @@ const TASK_TYPE_ICONS = {
 };
 
 const STATUS_LABELS = {
-  todo: { label: 'Todo', bg: 'var(--color-border)', text: 'var(--color-text-secondary)' },
-  in_progress: { label: 'In Progress', bg: 'var(--color-warning-light)', text: '#B45309' },
-  done: { label: 'Done', bg: 'var(--color-success-light)', text: '#065F46' },
+  todo: { label: 'Cần làm', bg: 'var(--color-border)', text: 'var(--color-text-secondary)' },
+  in_progress: { label: 'Đang thực hiện', bg: 'var(--color-warning-light)', text: '#B45309' },
+  done: { label: 'Đã xong', bg: 'var(--color-success-light)', text: '#065F46' },
 };
 
 function PriorityBadge({ priority }) {
@@ -56,7 +56,7 @@ export default function LearningTaskPage() {
         setTask(data);
       } catch (err) {
         if (!active) return;
-        const { message } = extractApiError(err, 'Could not load this learning task.');
+        const { message } = extractApiError(err, 'Không thể tải nhiệm vụ học tập này.');
         setError(message);
       } finally {
         if (active) setIsLoading(false);
@@ -84,7 +84,7 @@ export default function LearningTaskPage() {
         });
       }
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to update status.');
+      const { message } = extractApiError(err, 'Không thể cập nhật trạng thái.');
       setError(message);
     } finally {
       setIsUpdating(false);
@@ -100,13 +100,13 @@ export default function LearningTaskPage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="760px">
       {/* Breadcrumb */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: '1.5rem', animation: 'fadeInDown 0.3s ease-out' }} aria-label="Breadcrumb">
-        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Learning Roadmap</Link>
+        <Link href="/learning" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>Lộ trình học tập</Link>
         <span>›</span>
-        <span>{task ? (task.skill || task.title || 'Task') : 'Loading…'}</span>
+        <span>{task ? (task.skill || task.title || 'Nhiệm vụ') : 'Đang tải…'}</span>
       </nav>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-      {isLoading && <LoadingSpinner fullPage label="Loading task…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải nhiệm vụ…" />}
 
       {!isLoading && task && (
         <>
@@ -120,7 +120,7 @@ export default function LearningTaskPage() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h1 style={{ fontSize: 'var(--font-size-xl)', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.375rem', letterSpacing: '-0.02em' }}>
-                  {task.skill || task.title || 'Learning Task'}
+                  {task.skill || task.title || 'Nhiệm vụ học tập'}
                 </h1>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                   <PriorityBadge priority={task.priority} />
@@ -140,7 +140,7 @@ export default function LearningTaskPage() {
               {/* Status selector */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', alignItems: 'flex-end' }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Status
+                  Trạng thái
                 </label>
                 <select
                   value={task.status}
@@ -149,9 +149,9 @@ export default function LearningTaskPage() {
                   id="task-status-select"
                   style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: statusInfo.bg, color: statusInfo.text, fontSize: 'var(--font-size-sm)', fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-family)' }}
                 >
-                  <option value="todo">Todo</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="done">Done</option>
+                  <option value="todo">Cần làm</option>
+                  <option value="in_progress">Đang thực hiện</option>
+                  <option value="done">Đã xong</option>
                 </select>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function LearningTaskPage() {
           {/* Why */}
           {task.why && (
             <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1rem', animation: 'fadeInUp 0.4s ease-out both' }}>
-              <div className={styles.detailLabel} style={{ marginBottom: '0.625rem' }}>Why this matters</div>
+              <div className={styles.detailLabel} style={{ marginBottom: '0.625rem' }}>Tại sao điều này quan trọng</div>
               <p className={styles.whySection}>{task.why}</p>
             </div>
           )}
@@ -168,7 +168,7 @@ export default function LearningTaskPage() {
           {/* Topics */}
           {task.topics?.length > 0 && (
             <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1rem', animation: 'fadeInUp 0.42s ease-out both' }}>
-              <div className={styles.detailLabel} style={{ marginBottom: '0.75rem' }}>Topics to Study</div>
+              <div className={styles.detailLabel} style={{ marginBottom: '0.75rem' }}>Chủ đề cần học</div>
               <div className={styles.topicChips}>
                 {task.topics.map((t) => <span key={t} className={styles.topicChip}>{t}</span>)}
               </div>
@@ -178,21 +178,21 @@ export default function LearningTaskPage() {
           {/* Mini Project */}
           {task.mini_project && (
             <div className={styles.miniProjectBox} style={{ marginBottom: '1rem', animation: 'fadeInUp 0.44s ease-out both' }}>
-              <strong>Hands-On Project:</strong> {task.mini_project}
+              <strong>Dự án thực hành:</strong> {task.mini_project}
             </div>
           )}
 
           {/* CV Evidence */}
           {task.cv_evidence && (
             <div className={styles.cvEvidenceBox} style={{ marginBottom: '1rem', animation: 'fadeInUp 0.46s ease-out both' }}>
-              <strong>Add to CV Evidence:</strong> {task.cv_evidence}
+              <strong>Thêm vào Bằng chứng CV:</strong> {task.cv_evidence}
             </div>
           )}
 
           {/* Resources */}
           {task.resources?.length > 0 && (
             <div style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', marginBottom: '1rem', animation: 'fadeInUp 0.48s ease-out both' }}>
-              <div className={styles.detailLabel} style={{ marginBottom: '0.75rem' }}>Resources</div>
+              <div className={styles.detailLabel} style={{ marginBottom: '0.75rem' }}>Tài nguyên</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {task.resources.map((r, i) => (
                   <a key={i} href={r.url || r} target="_blank" rel="noopener noreferrer" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
@@ -211,20 +211,20 @@ export default function LearningTaskPage() {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1.1rem', background: 'linear-gradient(135deg, #059669, #10B981)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none' }}
               id="add-evidence-btn"
             >
-              📁 Add Evidence To Profile
+              📁 Thêm bằng chứng vào hồ sơ
             </Link>
             <Link
               href="/interview/sessions/new"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1.1rem', background: 'linear-gradient(135deg, #7C3AED, #4F46E5)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none' }}
               id="practice-interview-btn"
             >
-              🎤 Practice Interview For Skill
+              🎤 Luyện phỏng vấn kỹ năng
             </Link>
             <Link
               href="/learning"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', padding: '0.625rem 1.1rem', background: 'var(--color-card)', color: 'var(--color-text)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontWeight: 600, fontSize: 'var(--font-size-sm)', textDecoration: 'none' }}
             >
-              ← All Tasks
+              ← Tất cả nhiệm vụ
             </Link>
           </div>
         </>

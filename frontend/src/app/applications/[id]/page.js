@@ -54,7 +54,7 @@ export default function ApplicationDetailPage() {
         has_analysis: Boolean(data?.best_analysis_job_id),
       });
     } catch (err) {
-      const { message } = extractApiError(err, 'Could not load application details.');
+      const { message } = extractApiError(err, 'Không thể tải chi tiết hồ sơ ứng tuyển.');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -92,7 +92,7 @@ export default function ApplicationDetailPage() {
   const attachJob = async (jobId) => {
     const value = (jobId || '').trim();
     if (!value) {
-      setAttachError('Please choose a completed analysis or enter a Job ID.');
+      setAttachError('Vui lòng chọn phân tích hoàn thành hoặc nhập Job ID.');
       return;
     }
     setIsAttaching(true);
@@ -106,7 +106,7 @@ export default function ApplicationDetailPage() {
       // Reload the application to reflect attached analysis
       await loadApp();
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to attach analysis.');
+      const { message } = extractApiError(err, 'Không thể đính kèm phân tích.');
       setAttachError(message);
     } finally {
       setIsAttaching(false);
@@ -122,14 +122,14 @@ export default function ApplicationDetailPage() {
     <PageShell isAuthChecking={isAuthChecking}>
       {/* Breadcrumb */}
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        <Link href="/applications">Applications</Link>
+        <Link href="/applications">Hồ sơ ứng tuyển</Link>
         <span className={styles.breadcrumbSep}>›</span>
-        <span>{app ? `${app.company_name} — ${app.job_title}` : 'Loading…'}</span>
+        <span>{app ? `${app.company_name} — ${app.job_title}` : 'Đang tải…'}</span>
       </nav>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
-      {isLoading && <LoadingSpinner fullPage label="Loading application…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải hồ sơ ứng tuyển…" />}
 
       {!isLoading && app && (
         <>
@@ -140,8 +140,8 @@ export default function ApplicationDetailPage() {
                 {getInitial(app.company_name)}
               </div>
               <div className={styles.heroInfo}>
-                <h1 className={styles.heroCompany}>{app.company_name || 'Unknown Company'}</h1>
-                <p className={styles.heroRole}>{app.job_title || 'Untitled Role'}</p>
+                <h1 className={styles.heroCompany}>{app.company_name || 'Công ty chưa rõ'}</h1>
+                <p className={styles.heroRole}>{app.job_title || 'Chưa có chức danh'}</p>
               </div>
               <div className={styles.heroActions}>
                 <Link
@@ -152,7 +152,7 @@ export default function ApplicationDetailPage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                   </svg>
-                  Package
+                  Bộ hồ sơ
                 </Link>
                 <Link
                   href={`/applications/${id}/cover-letter`}
@@ -163,7 +163,7 @@ export default function ApplicationDetailPage() {
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                     <polyline points="22,6 12,13 2,6" />
                   </svg>
-                  Cover Letter
+                  Thư xin việc
                 </Link>
                 <Link
                   href={`/applications/${id}/interview`}
@@ -173,23 +173,23 @@ export default function ApplicationDetailPage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
-                  Interview
+                  Phỏng vấn
                 </Link>
               </div>
             </div>
 
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
-                <label>Status</label>
+                <label>Trạng thái</label>
                 <span>{app.status || 'draft'}</span>
               </div>
               <div className={styles.infoItem}>
-                <label>Created</label>
+                <label>Ngày tạo</label>
                 <span>{formatDate(app.created_at)}</span>
               </div>
               <div className={styles.infoItem}>
-                <label>Analysis</label>
-                <span>{app.best_analysis_job_id ? '✓ Attached' : 'Not attached'}</span>
+                <label>Phân tích</label>
+                <span>{app.best_analysis_job_id ? '✓ Đã đính kèm' : 'Chưa đính kèm'}</span>
               </div>
             </div>
           </div>
@@ -202,48 +202,48 @@ export default function ApplicationDetailPage() {
                 <line x1="12" y1="8" x2="12" y2="16" />
                 <line x1="8" y1="12" x2="16" y2="12" />
               </svg>
-              Overview
+              Tổng quan
             </Link>
             <Link href={`/applications/${id}/package`} className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
               </svg>
-              Package
+              Bộ hồ sơ
             </Link>
             <Link href={`/applications/${id}/cover-letter`} className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
-              Cover Letter
+              Thư xin việc
             </Link>
             <Link href={`/applications/${id}/interview`} className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              Interview
+              Phỏng vấn
             </Link>
             <Link href="/profile/evidence" className={styles.tab}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              Evidence
+              Bằng chứng
             </Link>
           </nav>
 
           {/* Next steps strip */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', margin: '0 0 1.5rem', fontSize: 'var(--font-size-sm)' }}>
             <span style={{ fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.06em', marginRight: '0.25rem' }}>
-              Next steps
+              Bước tiếp theo
             </span>
             {[
-              { href: `/applications/${id}/interview`, label: 'Interview Practice' },
-              { href: `/applications/${id}/cover-letter`, label: 'Cover Letter' },
-              { href: `/applications/${id}/package`, label: 'Package' },
-              { href: '/profile/evidence', label: 'Evidence' },
-              { href: '/learning', label: 'Learning' },
-              { href: '/help', label: 'Help' },
+              { href: `/applications/${id}/interview`, label: 'Luyện phỏng vấn' },
+              { href: `/applications/${id}/cover-letter`, label: 'Thư xin việc' },
+              { href: `/applications/${id}/package`, label: 'Bộ hồ sơ' },
+              { href: '/profile/evidence', label: 'Bằng chứng' },
+              { href: '/learning', label: 'Học tập' },
+              { href: '/help', label: 'Trợ giúp' },
             ].map((step) => (
               <Link
                 key={step.label}
@@ -259,11 +259,11 @@ export default function ApplicationDetailPage() {
           <div className={styles.analysisCard}>
             <div className={styles.analysisHeader}>
               <h2 className={styles.analysisTitle}>
-                🔗 Attached Analysis
+                🔗 Phân tích đính kèm
               </h2>
               {app.best_analysis_job_id && (
                 <span className={styles.attachedBadge}>
-                  ✓ Analysis attached
+                  ✓ Đã đính kèm phân tích
                 </span>
               )}
             </div>
@@ -303,7 +303,7 @@ export default function ApplicationDetailPage() {
                           </svg>
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>AI Interview</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>Phỏng vấn AI</div>
                           <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Luyện phỏng vấn</div>
                         </div>
                       </div>
@@ -334,8 +334,8 @@ export default function ApplicationDetailPage() {
                           </svg>
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>AI Writing</div>
-                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Tạo Cover Letter</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>Viết AI</div>
+                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Tạo thư xin việc</div>
                         </div>
                       </div>
                       <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
@@ -366,8 +366,8 @@ export default function ApplicationDetailPage() {
                           </svg>
                         </div>
                         <div>
-                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>Full Package</div>
-                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Application Package</div>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)', marginBottom: 3 }}>Hồ sơ đầy đủ</div>
+                          <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 700, color: 'var(--color-text)' }}>Bộ hồ sơ ứng tuyển</div>
                         </div>
                       </div>
                       <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.5, margin: 0 }}>
@@ -384,30 +384,30 @@ export default function ApplicationDetailPage() {
             ) : (
               <>
                 <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginBottom: '1rem', lineHeight: 1.6 }}>
-                  Attach a completed CV fit analysis to unlock Interview, Cover Letter, and Package.
-                  Pick one of your recent analyses below, or paste a Job ID from your{' '}
-                  <Link href="/history" style={{ color: 'var(--color-primary)' }}>Analysis History</Link>.
-                  No analysis yet? <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>Run one on CV Analysis</Link>.
+                  Đính kèm phân tích CV hoàn thành để mở khóa Luyện phỏng vấn, Thư xin việc và Bộ hồ sơ.
+                  Chọn một phân tích gần đây bên dưới, hoặc dán Job ID từ{' '}
+                  <Link href="/history" style={{ color: 'var(--color-primary)' }}>Lịch sử phân tích</Link>.
+                  Chưa có phân tích? <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>Chạy phân tích CV</Link>.
                 </p>
                 {attachError && (
                   <ErrorBanner message={attachError} onDismiss={() => setAttachError(null)} />
                 )}
                 {attachSuccess && (
                   <div style={{ color: 'var(--color-success)', fontSize: 'var(--font-size-sm)', fontWeight: 600, marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                    ✓ Analysis attached successfully.
+                    ✓ Đã đính kèm phân tích thành công.
                   </div>
                 )}
 
                 {/* Recent completed analyses picker */}
                 {loadingAnalyses && (
                   <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
-                    Loading your recent analyses…
+                    Đang tải các phân tích gần đây…
                   </p>
                 )}
                 {!loadingAnalyses && recentAnalyses.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
                     <div style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--color-text-muted)' }}>
-                      Recent completed analyses
+                      Phân tích hoàn thành gần đây
                     </div>
                     {recentAnalyses.slice(0, 5).map((job) => (
                       <div
@@ -416,10 +416,10 @@ export default function ApplicationDetailPage() {
                       >
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {job.target_role || 'CV fit analysis'}
+                            {job.target_role || 'Phân tích CV'}
                           </div>
                           <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                            {job.overall_fit_score != null ? `Fit ${job.overall_fit_score} · ` : ''}{formatDate(job.created_at)}
+                            {job.overall_fit_score != null ? `Phù hợp ${job.overall_fit_score} · ` : ''}{formatDate(job.created_at)}
                           </div>
                         </div>
                         <button
@@ -428,7 +428,7 @@ export default function ApplicationDetailPage() {
                           disabled={isAttaching}
                           onClick={() => attachJob(job.job_id)}
                         >
-                          {isAttaching ? 'Attaching…' : 'Attach'}
+                          {isAttaching ? 'Đang đính kèm…' : 'Đính kèm'}
                         </button>
                       </div>
                     ))}
@@ -436,8 +436,8 @@ export default function ApplicationDetailPage() {
                 )}
                 {!loadingAnalyses && recentAnalyses.length === 0 && (
                   <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
-                    No completed analyses found yet — run one on{' '}
-                    <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>CV Analysis</Link>, or paste a Job ID below.
+                    Chưa có phân tích hoàn thành — chạy phân tích trên{' '}
+                    <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>Phân tích CV</Link>, hoặc dán Job ID bên dưới.
                   </p>
                 )}
 
@@ -448,7 +448,7 @@ export default function ApplicationDetailPage() {
                     className={styles.attachInput}
                     value={attachJobId}
                     onChange={(e) => setAttachJobId(e.target.value)}
-                    placeholder="…or paste a Job ID from Analysis History"
+                    placeholder="…hoặc dán Job ID từ Lịch sử phân tích"
                     disabled={isAttaching}
                     id="attach-job-id-input"
                   />
@@ -458,7 +458,7 @@ export default function ApplicationDetailPage() {
                     disabled={isAttaching || !attachJobId.trim()}
                     id="attach-analysis-btn"
                   >
-                    {isAttaching ? 'Attaching…' : 'Attach'}
+                    {isAttaching ? 'Đang đính kèm…' : 'Đính kèm'}
                   </button>
                 </form>
               </>
@@ -468,7 +468,7 @@ export default function ApplicationDetailPage() {
           {/* Job description preview */}
           {app.jd_text && (
             <div className={styles.analysisCard} style={{ marginTop: '1.5rem' }}>
-              <h2 className={styles.analysisTitle} style={{ marginBottom: '1rem' }}>📄 Job Description</h2>
+              <h2 className={styles.analysisTitle} style={{ marginBottom: '1rem' }}>📄 Mô tả công việc</h2>
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap', maxHeight: '300px', overflow: 'auto' }}>
                 {app.jd_text}
               </p>

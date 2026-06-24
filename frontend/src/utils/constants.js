@@ -18,19 +18,19 @@ export const COLORS = {
 };
 
 export const STRICTNESS_OPTIONS = [
-  { value: 'lenient', label: 'Lenient', description: 'More forgiving analysis' },
-  { value: 'balanced', label: 'Balanced', description: 'Standard evaluation' },
-  { value: 'strict', label: 'Strict', description: 'Rigorous assessment' },
+  { value: 'lenient', label: 'Dễ tính', description: 'Phân tích nới lỏng' },
+  { value: 'balanced', label: 'Cân bằng', description: 'Đánh giá tiêu chuẩn' },
+  { value: 'strict', label: 'Khắt khe', description: 'Đánh giá nghiêm ngặt' },
 ];
 
 export const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'id', label: 'Indonesian' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fr', label: 'French' },
-  { value: 'de', label: 'German' },
-  { value: 'zh', label: 'Chinese' },
-  { value: 'ja', label: 'Japanese' },
+  { value: 'en', label: 'Tiếng Anh' },
+  { value: 'id', label: 'Tiếng Indonesia' },
+  { value: 'es', label: 'Tiếng Tây Ban Nha' },
+  { value: 'fr', label: 'Tiếng Pháp' },
+  { value: 'de', label: 'Tiếng Đức' },
+  { value: 'zh', label: 'Tiếng Trung' },
+  { value: 'ja', label: 'Tiếng Nhật' },
 ];
 
 export const ACCEPTED_FILE_TYPES = {

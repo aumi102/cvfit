@@ -36,7 +36,7 @@ export default function ProfilePage() {
         if (!active) return;
         // Profile endpoint may not exist yet — gracefully degrade
         if (err?.response?.status !== 404) {
-          const { message } = extractApiError(err, 'Could not load profile.');
+          const { message } = extractApiError(err, 'Không thể tải hồ sơ.');
           setError(message);
         }
       } finally {
@@ -47,18 +47,18 @@ export default function ProfilePage() {
     return () => { active = false; };
   }, [isAuthChecking]);
 
-  const name = displayUser?.full_name || displayUser?.email || 'User';
+  const name = displayUser?.full_name || displayUser?.email || 'Người dùng';
   const initial = name.charAt(0).toUpperCase();
 
   return (
     <PageShell isAuthChecking={isAuthChecking}>
-      <h1 className={styles.pageTitle}>Career Profile</h1>
-      <p className={styles.pageSubtitle}>Your professional profile and evidence vault.</p>
+      <h1 className={styles.pageTitle}>Hồ sơ nghề nghiệp</h1>
+      <p className={styles.pageSubtitle}>Hồ sơ chuyên môn và kho bằng chứng của bạn.</p>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
       {isLoading ? (
-        <LoadingSpinner fullPage label="Loading profile…" />
+        <LoadingSpinner fullPage label="Đang tải hồ sơ…" />
       ) : (
         <>
           {/* Profile card */}
@@ -79,7 +79,7 @@ export default function ProfilePage() {
                 <div className={styles.statValue}>
                   {profile?.applications_count ?? '—'}
                 </div>
-                <div className={styles.statLabel}>Applications</div>
+                <div className={styles.statLabel}>Hồ sơ ứng tuyển</div>
               </div>
               <div className={styles.stat}>
                 <div className={styles.statValue}>
@@ -87,19 +87,19 @@ export default function ProfilePage() {
                     ? `${Math.round(profile.avg_fit_score)}%`
                     : '—'}
                 </div>
-                <div className={styles.statLabel}>Avg Fit Score</div>
+                <div className={styles.statLabel}>Điểm phù hợp TB</div>
               </div>
               <div className={styles.stat}>
                 <div className={styles.statValue}>
                   {profile?.evidence_count ?? '—'}
                 </div>
-                <div className={styles.statLabel}>Evidence Items</div>
+                <div className={styles.statLabel}>Bằng chứng</div>
               </div>
               <div className={styles.stat}>
                 <div className={styles.statValue}>
                   {profile?.interviews_completed ?? '—'}
                 </div>
-                <div className={styles.statLabel}>Interviews Done</div>
+                <div className={styles.statLabel}>Phỏng vấn hoàn thành</div>
               </div>
             </div>
           </div>
@@ -111,8 +111,8 @@ export default function ProfilePage() {
                 🗂️
               </div>
               <div>
-                <p className={styles.quickLinkTitle}>Evidence Vault</p>
-                <p className={styles.quickLinkDesc}>Manage your skills, projects & achievements</p>
+                <p className={styles.quickLinkTitle}>Kho bằng chứng</p>
+                <p className={styles.quickLinkDesc}>Quản lý kỹ năng, dự án & thành tích</p>
               </div>
             </Link>
             <Link href="/applications" className={styles.quickLink}>
@@ -120,8 +120,8 @@ export default function ProfilePage() {
                 📋
               </div>
               <div>
-                <p className={styles.quickLinkTitle}>My Applications</p>
-                <p className={styles.quickLinkDesc}>View all your tracked job applications</p>
+                <p className={styles.quickLinkTitle}>Hồ sơ ứng tuyển</p>
+                <p className={styles.quickLinkDesc}>Xem tất cả hồ sơ ứng tuyển của bạn</p>
               </div>
             </Link>
             <Link href="/history" className={styles.quickLink}>
@@ -129,8 +129,8 @@ export default function ProfilePage() {
                 📊
               </div>
               <div>
-                <p className={styles.quickLinkTitle}>Analysis History</p>
-                <p className={styles.quickLinkDesc}>All your CV analysis results</p>
+                <p className={styles.quickLinkTitle}>Lịch sử phân tích</p>
+                <p className={styles.quickLinkDesc}>Tất cả kết quả phân tích CV</p>
               </div>
             </Link>
             <Link href="/dashboard" className={styles.quickLink}>
@@ -138,8 +138,8 @@ export default function ProfilePage() {
                 ⚡
               </div>
               <div>
-                <p className={styles.quickLinkTitle}>New Analysis</p>
-                <p className={styles.quickLinkDesc}>Run a new CV fit analysis</p>
+                <p className={styles.quickLinkTitle}>Phân tích mới</p>
+                <p className={styles.quickLinkDesc}>Chạy phân tích CV mới</p>
               </div>
             </Link>
           </div>

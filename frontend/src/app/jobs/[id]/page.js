@@ -13,14 +13,14 @@ import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/TargetJobs.module.css';
 
 const JOB_STATUSES = [
-  { value: 'saved', label: 'Saved' },
-  { value: 'analyzing', label: 'Analyzing' },
-  { value: 'ready_to_apply', label: 'Ready to Apply' },
-  { value: 'interviewing', label: 'Interviewing' },
-  { value: 'applied', label: 'Applied' },
-  { value: 'rejected', label: 'Rejected' },
-  { value: 'offer', label: 'Offer' },
-  { value: 'archived', label: 'Archived' },
+  { value: 'saved', label: 'Đã lưu' },
+  { value: 'analyzing', label: 'Đang phân tích' },
+  { value: 'ready_to_apply', label: 'Sẵn sàng ứng tuyển' },
+  { value: 'interviewing', label: 'Đang phỏng vấn' },
+  { value: 'applied', label: 'Đã ứng tuyển' },
+  { value: 'rejected', label: 'Bị từ chối' },
+  { value: 'offer', label: 'Đề nghị làm việc (Offer)' },
+  { value: 'archived', label: 'Đã lưu trữ' },
 ];
 
 function formatDate(value) {
@@ -37,7 +37,7 @@ function StatusBadge({ status }) {
   const cls = styles[`status--${status}`] || styles['status--saved'];
   return (
     <span className={`${styles.statusBadge} ${cls}`}>
-      {status?.replace(/_/g, ' ') || 'saved'}
+      {status?.replace(/_/g, ' ') || 'đã lưu'}
     </span>
   );
 }
@@ -59,7 +59,7 @@ export default function JobDetailPage() {
       const data = await getTargetJob(id);
       setJob(data);
     } catch (err) {
-      const { message } = extractApiError(err, 'Could not load job details.');
+      const { message } = extractApiError(err, 'Không thể tải chi tiết công việc.');
       setError(message);
     } finally {
       setIsLoading(false);
@@ -85,7 +85,7 @@ export default function JobDetailPage() {
       });
       setTimeout(() => setStatusSuccess(false), 2500);
     } catch (err) {
-      const { message } = extractApiError(err, 'Failed to update status.');
+      const { message } = extractApiError(err, 'Không thể cập nhật trạng thái.');
       setError(message);
     } finally {
       setIsUpdatingStatus(false);
@@ -96,13 +96,13 @@ export default function JobDetailPage() {
     <PageShell isAuthChecking={isAuthChecking} maxWidth="960px">
       {/* Breadcrumb */}
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        <Link href="/jobs">Target Jobs</Link>
+        <Link href="/jobs">Việc làm mục tiêu</Link>
         <span className={styles.breadcrumbSep}>›</span>
-        <span>{job ? `${job.company} — ${job.job_title}` : 'Loading…'}</span>
+        <span>{job ? `${job.company} — ${job.job_title}` : 'Đang tải…'}</span>
       </nav>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-      {isLoading && <LoadingSpinner fullPage label="Loading job details…" />}
+      {isLoading && <LoadingSpinner fullPage label="Đang tải chi tiết công việc…" />}
 
       {!isLoading && job && (
         <>
@@ -113,11 +113,11 @@ export default function JobDetailPage() {
                 {getInitial(job.company)}
               </div>
               <div className={styles.heroInfo}>
-                <h1 className={styles.heroCompany}>{job.company || 'Unknown Company'}</h1>
-                <p className={styles.heroRole}>{job.job_title || 'Untitled Role'}</p>
+                <h1 className={styles.heroCompany}>{job.company || 'Công ty không xác định'}</h1>
+                <p className={styles.heroRole}>{job.job_title || 'Vị trí không tên'}</p>
                 {job.target_role && (
                   <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)', marginTop: 2 }}>
-                    Target: {job.target_role}
+                    Mục tiêu: {job.target_role}
                   </p>
                 )}
               </div>
@@ -129,7 +129,7 @@ export default function JobDetailPage() {
                   onChange={(e) => handleStatusChange(e.target.value)}
                   disabled={isUpdatingStatus}
                   id="job-status-select"
-                  title="Change job status"
+                  title="Thay đổi trạng thái"
                 >
                   {JOB_STATUSES.map((s) => (
                     <option key={s.value} value={s.value}>{s.label}</option>
@@ -137,7 +137,7 @@ export default function JobDetailPage() {
                 </select>
                 {statusSuccess && (
                   <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-success)', fontWeight: 600 }}>
-                    ✓ Updated
+                    ✓ Đã cập nhật
                   </span>
                 )}
               </div>
@@ -145,16 +145,16 @@ export default function JobDetailPage() {
 
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
-                <label>Status</label>
+                <label>Trạng thái</label>
                 <StatusBadge status={job.status} />
               </div>
               <div className={styles.infoItem}>
-                <label>Added</label>
+                <label>Đã thêm</label>
                 <span>{formatDate(job.created_at)}</span>
               </div>
               {job.readiness_score != null && (
                 <div className={styles.infoItem}>
-                  <label>Readiness Score</label>
+                  <label>Điểm sẵn sàng</label>
                   <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: 'var(--font-size-lg)' }}>
                     {job.readiness_score}%
                   </span>
@@ -162,9 +162,9 @@ export default function JobDetailPage() {
               )}
               {job.source_url && (
                 <div className={styles.infoItem}>
-                  <label>Source</label>
+                  <label>Nguồn</label>
                   <a href={job.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary)', fontSize: 'var(--font-size-sm)', wordBreak: 'break-all' }}>
-                    View Job Post ↗
+                    Xem tin tuyển dụng ↗
                   </a>
                 </div>
               )}
@@ -178,7 +178,7 @@ export default function JobDetailPage() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
-                Readiness Score
+                Điểm sẵn sàng
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
                 <div style={{ fontSize: '3.5rem', fontWeight: 800, color: 'var(--color-primary)', letterSpacing: '-0.04em', lineHeight: 1 }}>
@@ -195,7 +195,7 @@ export default function JobDetailPage() {
                     }} />
                   </div>
                   <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                    Based on your CV vs this job description analysis
+                    Dựa trên phân tích CV của bạn so với mô tả công việc này
                   </p>
                 </div>
               </div>
@@ -205,22 +205,22 @@ export default function JobDetailPage() {
           {/* Attached Analysis */}
           <div className={styles.sectionCard}>
             <div className={styles.sectionTitle}>
-              🔗 Attached Analysis
+              🔗 Phân tích đính kèm
               {job.best_analysis_job_id && (
                 <span style={{ marginLeft: 'auto', fontSize: 'var(--font-size-xs)', background: 'var(--color-success-light)', color: '#065F46', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
-                  ✓ Attached
+                  ✓ Đã đính kèm
                 </span>
               )}
             </div>
             {job.best_analysis_job_id ? (
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                Analysis is attached. You can generate interview questions, a cover letter, and a full application package.
+                Phân tích đã được đính kèm. Bạn có thể tạo câu hỏi phỏng vấn, thư xin việc và toàn bộ hồ sơ ứng tuyển.
               </p>
             ) : (
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
-                No analysis attached yet.{' '}
-                <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>Run a CV analysis</Link>{' '}
-                and attach it to unlock readiness scoring, learning tasks, and interview practice.
+                Chưa đính kèm phân tích nào.{' '}
+                <Link href="/dashboard" style={{ color: 'var(--color-primary)' }}>Chạy phân tích CV</Link>{' '}
+                và đính kèm nó để mở khóa điểm sẵn sàng, nhiệm vụ học tập và luyện phỏng vấn.
               </p>
             )}
 
@@ -235,19 +235,19 @@ export default function JobDetailPage() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                   </svg>
-                  Application Package
+                  Bộ hồ sơ ứng tuyển
                 </Link>
                 <Link
                   href={`/applications/${job.application_id}/interview`}
                   className={styles.btnSecondary}
                 >
-                  Interview Practice
+                  Luyện phỏng vấn
                 </Link>
                 <Link
                   href={`/applications/${job.application_id}/cover-letter`}
                   className={styles.btnSecondary}
                 >
-                  Cover Letter
+                  Thư xin việc
                 </Link>
               </div>
             )}
@@ -256,14 +256,14 @@ export default function JobDetailPage() {
           {/* Learning & Interview Quick Links */}
           <div className={styles.sectionCard}>
             <div className={styles.sectionTitle}>
-              📚 Next Steps
+              📚 Bước tiếp theo
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {[
-                { href: '/learning', label: 'Learning Roadmap' },
-                { href: '/interview/sessions/new', label: 'Interview Practice' },
-                { href: '/dashboard', label: 'Run CV Analysis' },
-                { href: '/help/assistant', label: 'Get Help' },
+                { href: '/learning', label: 'Lộ trình học tập' },
+                { href: '/interview/sessions/new', label: 'Luyện phỏng vấn' },
+                { href: '/dashboard', label: 'Chạy phân tích CV' },
+                { href: '/help/assistant', label: 'Nhận trợ giúp' },
               ].map((step) => (
                 <Link
                   key={step.label}
@@ -287,7 +287,7 @@ export default function JobDetailPage() {
           {/* JD Preview */}
           {job.jd_text && (
             <div className={styles.sectionCard}>
-              <div className={styles.sectionTitle}>📄 Job Description</div>
+              <div className={styles.sectionTitle}>📄 Mô tả công việc</div>
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.8, whiteSpace: 'pre-wrap', maxHeight: 300, overflow: 'auto' }}>
                 {job.jd_text}
               </p>
