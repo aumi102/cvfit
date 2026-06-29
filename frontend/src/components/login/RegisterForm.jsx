@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { register } from '@/services/authApi';
 import { storeAuthSession } from '@/services/authStorage';
+import GoogleSignInButton from '@/components/login/GoogleSignInButton';
 import styles from '@/styles/LoginForm.module.css';
 
 export default function RegisterForm() {
@@ -85,7 +86,7 @@ export default function RegisterForm() {
                 id="register-full-name"
                 className={styles.input}
                 type="text"
-                placeholder="Nguyen Van A"
+                placeholder="Nguyễn Văn A"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 autoComplete="name"
@@ -141,6 +142,11 @@ export default function RegisterForm() {
             </span>
           </button>
         </form>
+
+        <GoogleSignInButton
+          onSuccess={() => router.push('/dashboard')}
+          onError={(message) => setError(message)}
+        />
 
         <p className={styles.footer}>
           {t('register.footer.text')}{' '}

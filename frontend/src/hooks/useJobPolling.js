@@ -35,13 +35,13 @@ export function useJobPolling(jobId) {
 
         if (data.status === JOB_STATUS.SUCCEEDED || data.status === JOB_STATUS.FAILED) {
           if (data.status === JOB_STATUS.FAILED) {
-            setError(data.error_message || 'Analysis failed.');
+            setError(data.error_message || 'Phân tích thất bại.');
           }
           stopPolling();
         }
       } catch (err) {
         const message =
-          err.response?.data?.message || err.message || 'Failed to check job status.';
+          err.response?.data?.message || err.message || 'Không thể kiểm tra trạng thái yêu cầu.';
         setError(message);
         stopPolling();
       }

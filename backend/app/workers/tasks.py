@@ -9,6 +9,7 @@ from app.db.init_db import init_db
 from app.services.parsing.cv_parser import parse_cv_to_text
 from app.services.parsing.jd_parser import parse_jd
 from app.services.scoring.result_v2 import build_result_v2
+from app.services.scoring.result_v3 import build_result_v3
 from app.services.scoring.scorer import score
 from app.services.storage import get_storage, save_report_file
 from app.services.reporting.report_docx import build_docx_report
@@ -31,7 +32,7 @@ def _safe_error_message(exc: Exception) -> str:
 
 
 @celery_app.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 2})
-def run_job(self, job_id: str):
+def run_job(self, job_id: str, language: str = "en"):
     try:
         init_db()
         _update_job(job_id, status="running", progress=5, error_message=None)
@@ -66,7 +67,9 @@ def run_job(self, job_id: str):
             cv_parsed=cv_parsed,
             jd_struct=jd_struct,
             job_id=job_id,
+            language=language,
         )
+        result_full = build_result_v3(result_full, language=language)
 
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
             out_docx = tmp.name

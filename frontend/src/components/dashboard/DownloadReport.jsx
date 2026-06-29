@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { downloadReport } from '@/services/jobApi';
 import { useLanguage } from '@/context/LanguageContext';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/DownloadReport.module.css';
 
 export default function DownloadReport({ jobId, accessToken }) {
@@ -13,6 +14,7 @@ export default function DownloadReport({ jobId, accessToken }) {
   const handleDownload = async () => {
     if (!jobId || !accessToken) return;
 
+    trackEvent(ANALYTICS_EVENTS.DOWNLOAD_REPORT_CLICK, { feature_name: 'cv_analysis' });
     setIsDownloading(true);
     setIsSuccess(false);
 

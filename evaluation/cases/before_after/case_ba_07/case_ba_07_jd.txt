@@ -1,0 +1,12 @@
+Full Stack Developer
+
+Requirements:
+- React frontend development
+- Node.js backend
+- PostgreSQL database
+- Docker deployment
+
+Responsibilities:
+- Build full stack web applications
+- Work with databases
+- Deploy applications

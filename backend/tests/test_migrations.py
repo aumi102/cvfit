@@ -36,6 +36,15 @@ def _load_current_checker_module():
     return module
 
 
+def _load_run_alembic_module():
+    module_path = BACKEND_ROOT.parent / "scripts" / "run_alembic.py"
+    spec = importlib.util.spec_from_file_location("run_alembic", module_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_alembic_config_exists():
     assert (BACKEND_ROOT / "alembic.ini").is_file()
     assert (BACKEND_ROOT / "alembic" / "env.py").is_file()
@@ -74,6 +83,9 @@ def test_schema_checker_script_tracks_baseline_schema():
     assert '"analysis_jobs"' in text
     assert '"user_id"' in text
     assert '"access_token_hash"' in text
+    assert '"parent_job_id"' in text
+    assert '"analysis_group_id"' in text
+    assert '"revision_number"' in text
     assert "alembic_version" in text
 
 
@@ -90,6 +102,21 @@ def test_auth_foundation_migration_exists_and_mentions_schema_changes():
     assert '"user_id"' in text
     assert "fk_analysis_jobs_user_id_users" in text
     assert "ix_analysis_jobs_user_id" in text
+
+
+def test_analysis_revision_migration_exists_and_mentions_schema_changes():
+    migration = BACKEND_ROOT / "alembic" / "versions" / "20260606_0001_add_analysis_revisions.py"
+
+    text = migration.read_text(encoding="utf-8")
+
+    assert 'revision = "20260606_0001"' in text
+    assert 'down_revision = "20260531_0001"' in text
+    assert '"parent_job_id"' in text
+    assert '"analysis_group_id"' in text
+    assert '"revision_number"' in text
+    assert "fk_analysis_jobs_parent_job_id_analysis_jobs" in text
+    assert "ix_analysis_jobs_parent_job_id" in text
+    assert "ix_analysis_jobs_analysis_group_id" in text
 
 
 def test_adoption_logic_refuses_schema_mismatch():
@@ -144,6 +171,55 @@ def test_adoption_script_requires_database_url_without_printing_secret(monkeypat
     captured = capsys.readouterr()
     assert "DATABASE_URL is required" in captured.err
     assert "://" not in captured.err
+
+
+def test_run_alembic_script_requires_database_url_without_printing_secret(monkeypatch, capsys):
+    module = _load_run_alembic_module()
+
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.setattr(sys, "argv", ["run_alembic.py", "current"])
+
+    assert module.main() == 2
+    captured = capsys.readouterr()
+    assert "DATABASE_URL is required" in captured.err
+    assert "://" not in captured.err
+
+
+def test_run_alembic_script_locates_project_config():
+    module = _load_run_alembic_module()
+
+    assert module.ALEMBIC_INI == BACKEND_ROOT / "alembic.ini"
+    assert module.ALEMBIC_INI.is_file()
+
+
+def test_run_alembic_parser_accepts_supported_commands():
+    module = _load_run_alembic_module()
+
+    assert module.parse_command(["current"]) == ("current", [])
+    assert module.parse_command(["heads"]) == ("heads", [])
+    assert module.parse_command(["history"]) == ("history", [])
+    assert module.parse_command(["upgrade", "head"]) == ("upgrade", ["head"])
+
+
+def test_run_alembic_parser_rejects_incomplete_upgrade():
+    module = _load_run_alembic_module()
+
+    with pytest.raises(SystemExit):
+        module.parse_command(["upgrade"])
+
+
+def test_run_alembic_parser_rejects_empty_argv():
+    module = _load_run_alembic_module()
+
+    with pytest.raises(SystemExit):
+        module.parse_command([])
+
+
+def test_run_alembic_parser_rejects_unsupported_command():
+    module = _load_run_alembic_module()
+
+    with pytest.raises(SystemExit):
+        module.parse_command(["stamp", "head"])
 
 
 def _sqlite_engine_with_runtime_schema(

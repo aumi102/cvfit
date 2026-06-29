@@ -1,0 +1,16 @@
+Name: Hoang Van E
+Email: hoangvane@email.com
+Phone: 0905-678-901
+
+Summary
+Mid-level backend developer.
+
+Experience
+
+Project: Microservices API
+- Built a FastAPI API for order processing
+- Used PostgreSQL and Redis
+- Deployed with Docker
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git

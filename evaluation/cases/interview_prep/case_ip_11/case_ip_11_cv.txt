@@ -1,0 +1,14 @@
+Name: Ha Van K
+Email: havank@email.com
+Phone: 0911-234-567
+
+Summary
+Backend developer with Python experience.
+
+Experience
+
+Project: Simple API
+- Built a simple API
+
+Skills
+Python

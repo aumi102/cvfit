@@ -1,0 +1,17 @@
+Backend Developer
+
+Requirements:
+- Python backend development
+- FastAPI framework
+- PostgreSQL database
+- Redis caching
+- Docker deployment
+
+Nice to Have:
+- Kubernetes
+- AWS
+
+Responsibilities:
+- Build backend services
+- Database design
+- Deploy applications

@@ -30,7 +30,7 @@ S3_PREFIX=
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_USE_IAM_ROLE=false
-CV_MAX_UPLOAD_MB=5
+CV_MAX_UPLOAD_MB=10
 ```
 
 Notes:
@@ -68,12 +68,45 @@ cd backend && celery -A app.workers.celery_app:celery_app worker --loglevel=INFO
 ```
 
 The API and worker do not run migrations at startup. Before starting or
-restarting services against a new/changed database, apply the reviewed Alembic
-migrations from a trusted operator environment. For an empty Render database,
-that means running `cd backend && alembic upgrade head` with the intended
-Render `DATABASE_URL` set in that operator shell. For an existing Render
+restarting services against a database after a PR with new Alembic migrations,
+apply the reviewed migrations from a trusted operator environment. For Render,
+prefer `scripts/run_alembic.py` through the deployed Python interpreter instead
+of relying on an `alembic` executable on `PATH`. For an existing Render
 database, take a backup and run the schema/adoption checks described in
 [database_migrations.md](database_migrations.md) before upgrading or stamping.
+
+## Render Database Migration Commands
+
+Run these from the Render Shell for the API service after deployment has built
+the new code and before starting or restarting API/worker against the new
+schema. Render service shells already have the service environment variables,
+including `DATABASE_URL`.
+
+```bash
+cd /opt/render/project/src
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py current
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py heads
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py upgrade head
+/opt/render/project/src/.venv/bin/python scripts/run_alembic.py current
+/opt/render/project/src/.venv/bin/python scripts/check_db_schema.py
+```
+
+If you must run the same migration from local Windows, use the Render External
+Database URL, not the Render Internal Database URL:
+
+```bat
+set "DATABASE_URL=<external-render-postgres-url>"
+python scripts\run_alembic.py current
+python scripts\run_alembic.py heads
+python scripts\run_alembic.py upgrade head
+python scripts\run_alembic.py current
+python scripts\check_db_schema.py
+set "DATABASE_URL="
+```
+
+Do not use a Render Internal Database URL from local; it is only reachable from
+Render's private network. Do not paste `DATABASE_URL` into logs, docs, PRs,
+screenshots, or chat. Rotate the database password if the URL was exposed.
 
 ## Pre-Deploy Checklist
 
@@ -96,10 +129,8 @@ Start the full local stack:
 ```bash
 docker compose down -v
 docker compose up --build -d postgres redis
-cd backend
 DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@localhost:5432/cvfit \
-alembic upgrade head
-cd ..
+python scripts/run_alembic.py upgrade head
 docker compose up --build -d
 ```
 
@@ -202,6 +233,45 @@ Do not set `DATABASE_URL` for smoke testing. Do not use real CVs or private
 personal data. The mutating smoke script creates a tiny synthetic DOCX upload,
 score job, result, and report. The current API has no cleanup endpoint, so the
 synthetic smoke job/report remains in app storage and database records.
+
+## Phase 4 Production Smoke Test
+
+Use `scripts/smoke_test_phase4.py` after the API and worker are deployed. If a
+PR includes migrations, run the documented Render migration commands first.
+Do not set `REQUIRE_RESULT_V2=1` for this smoke; Phase 4 expects Result JSON
+v3.
+
+Read-only mode checks deployed health only and explains the mutating flow:
+
+```bat
+cmd.exe /c "set API_BASE_URL=https://cvfit.onrender.com&& python scripts\smoke_test_phase4.py"
+```
+
+Mutating mode runs the full Phase 4 deployed flow:
+
+```bat
+cmd.exe /c "set API_BASE_URL=https://cvfit.onrender.com&& set SMOKE_ALLOW_MUTATING=1&& python scripts\smoke_test_phase4.py --mutating"
+```
+
+The mutating Phase 4 smoke:
+
+- Uploads an initial synthetic DOCX CV.
+- Creates an initial analysis job and waits for completion.
+- Verifies Result JSON v3 fields.
+- Downloads the DOCX report and verifies v3 report sections when DOCX text can
+  be parsed.
+- Reanalyzes the initial job with a revised synthetic CV.
+- Waits for the child job, fetches child Result JSON v3, and calls the
+  comparison endpoint.
+- Verifies comparison response shape and checks for sensitive internal fields.
+
+Tokens and token-bearing URLs are redacted from script output. Do not paste
+access tokens, `DATABASE_URL`, storage paths, or screenshots containing secrets
+into docs, tickets, PRs, or chat.
+
+The mutating smoke creates real test jobs, uploaded CV objects, and generated
+report objects in the deployed environment. The current API has no cleanup
+endpoint, so use synthetic content only.
 
 ## Health Check
 

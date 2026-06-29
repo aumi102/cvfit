@@ -1,0 +1,15 @@
+Name: Do Van M
+Email: dovanm@email.com
+Phone: 0912-345-678
+
+Summary
+Backend developer with Python and Flask.
+
+Experience
+
+Project: REST API
+- Built a Flask API
+- Used SQLite database
+
+Skills
+Python, Flask, SQLite, Git

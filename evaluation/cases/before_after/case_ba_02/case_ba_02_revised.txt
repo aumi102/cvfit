@@ -1,0 +1,21 @@
+Name: Tran Thi B
+Email: tranthib@email.com
+Phone: 0902-345-678
+
+Summary
+Backend engineer with 2 years of Python experience.
+
+Experience
+
+Project: Internal Dashboard
+- Used Python scripts to automate data processing
+- Stored data in a database
+
+Project: Production FastAPI Platform
+- Built a FastAPI REST API platform with PostgreSQL, Redis, and Celery for background tasks
+- Deployed the service using Docker and Kubernetes on AWS with auto-scaling and health checks
+- Implemented JWT authentication and role-based access control for the API
+- Optimized PostgreSQL queries and added Redis caching, reducing API latency by 35%
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS, Git, JWT

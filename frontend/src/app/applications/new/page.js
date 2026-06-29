@@ -1,0 +1,181 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import PageShell from '@/components/common/PageShell';
+import ErrorBanner from '@/components/common/ErrorBanner';
+import { createApplication } from '@/services/applicationsApi';
+import { extractApiError } from '@/utils/errorHelpers';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
+import styles from '@/styles/ApplicationDetail.module.css';
+
+const MAX_JD_CHARS = 8000;
+
+export default function NewApplicationPage() {
+  const { isAuthChecking } = useRequireAuth();
+  const router = useRouter();
+
+  const [form, setForm] = useState({
+    company_name: '',
+    job_title: '',
+    jd_text: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!form.company_name.trim() || !form.job_title.trim()) {
+      setError('Tên công ty và chức danh là bắt buộc.');
+      return;
+    }
+    if (!form.jd_text.trim()) {
+      setError('Mô tả công việc là bắt buộc.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const app = await createApplication({
+        company_name: form.company_name.trim(),
+        job_title: form.job_title.trim(),
+        jd_text: form.jd_text.trim(),
+      });
+      trackEvent(ANALYTICS_EVENTS.APPLICATION_CREATE_SUCCESS, {
+        feature_name: 'applications',
+        application_status: app?.status || 'draft',
+        has_analysis: Boolean(app?.best_analysis_job_id),
+      });
+      router.push(`/applications/${app.id}`);
+    } catch (err) {
+      const { message, hint } = extractApiError(err, 'Không thể tạo hồ sơ ứng tuyển. Vui lòng thử lại.');
+      setError(hint ? `${message} — ${hint}` : message);
+      setIsSubmitting(false);
+    }
+  }
+
+  const canSubmit = form.company_name.trim() && form.job_title.trim() && form.jd_text.trim() && !isSubmitting;
+
+  return (
+    <PageShell isAuthChecking={isAuthChecking} maxWidth="640px">
+      {/* Breadcrumb */}
+      <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+        <Link href="/applications">Hồ sơ ứng tuyển</Link>
+        <span className={styles.breadcrumbSep}>›</span>
+        <span>Tạo mới</span>
+      </nav>
+
+      <h1 className={styles.heroCompany} style={{ marginBottom: '0.5rem' }}>
+        Tạo hồ sơ ứng tuyển mới
+      </h1>
+      <p className={styles.heroRole} style={{ marginBottom: '2rem' }}>
+        Theo dõi công việc bạn đang ứng tuyển và tạo tài liệu hỗ trợ AI.
+      </p>
+
+      {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+
+      <div style={{ background: 'var(--color-primary-light)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: '0.875rem 1rem', marginBottom: '1.75rem', fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+        💡 Sau khi tạo hồ sơ, vào tab <strong>Tổng quan</strong> để đính kèm phân tích CV. Việc này sẽ mở khóa câu hỏi phỏng vấn, thư xin việc cá nhân hóa và bộ hồ sơ.
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+        id="new-application-form"
+      >
+        <div>
+          <label htmlFor="company_name" className={styles.infoItem}>
+            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.375rem' }}>
+              Tên công ty <span style={{ color: 'var(--color-danger)' }}>*</span>
+            </span>
+          </label>
+          <input
+            id="company_name"
+            name="company_name"
+            type="text"
+            required
+            value={form.company_name}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            placeholder="Ví dụ: Google, FPT, VNG"
+            style={{ width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '1rem', background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', transition: 'border-color 150ms' }}
+            onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
+            onBlur={(e) => { e.target.style.borderColor = 'var(--color-border)'; }}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="job_title">
+            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.375rem' }}>
+              Chức danh <span style={{ color: 'var(--color-danger)' }}>*</span>
+            </span>
+          </label>
+          <input
+            id="job_title"
+            name="job_title"
+            type="text"
+            required
+            value={form.job_title}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            placeholder="Ví dụ: Kỹ sư Frontend Senior"
+            style={{ width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '1rem', background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', transition: 'border-color 150ms' }}
+            onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
+            onBlur={(e) => { e.target.style.borderColor = 'var(--color-border)'; }}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="jd_text">
+            <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.375rem' }}>
+              Mô tả công việc <span style={{ color: 'var(--color-danger)' }}>*</span>
+            </span>
+          </label>
+          <textarea
+            id="jd_text"
+            name="jd_text"
+            value={form.jd_text}
+            onChange={handleChange}
+            disabled={isSubmitting}
+            maxLength={MAX_JD_CHARS}
+            placeholder="Dán mô tả công việc vào đây…"
+            style={{ width: '100%', minHeight: '200px', padding: '0.75rem 1rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', fontSize: '0.9375rem', fontFamily: 'var(--font-family)', lineHeight: '1.6', background: 'var(--color-bg)', color: 'var(--color-text)', outline: 'none', resize: 'vertical', transition: 'border-color 150ms' }}
+            onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
+            onBlur={(e) => { e.target.style.borderColor = 'var(--color-border)'; }}
+          />
+          <div style={{ textAlign: 'right', fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
+            {form.jd_text.length}/{MAX_JD_CHARS}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', paddingTop: '0.5rem' }}>
+          <Link href="/applications" className={styles.btnSecondary}>
+            Hủy bỏ
+          </Link>
+          <button
+            type="submit"
+            className={styles.btnPrimary}
+            disabled={!canSubmit}
+            id="submit-application-btn"
+          >
+            {isSubmitting ? (
+              <>
+                <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
+                Đang tạo…
+              </>
+            ) : 'Tạo hồ sơ ứng tuyển'}
+          </button>
+        </div>
+      </form>
+    </PageShell>
+  );
+}

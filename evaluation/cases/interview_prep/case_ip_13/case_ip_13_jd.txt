@@ -1,0 +1,15 @@
+Backend Engineer
+
+Requirements:
+- Python backend with FastAPI
+- PostgreSQL database
+- Redis caching
+- Docker deployment
+- Background task processing
+- API authentication
+
+Responsibilities:
+- Build and maintain backend services
+- Database design
+- Containerized deployment
+- System reliability

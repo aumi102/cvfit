@@ -2,12 +2,14 @@
 
 import { useState, useCallback } from 'react';
 import { uploadCV } from '@/services/cvApi';
+import { extractApiError } from '@/utils/errorHelpers';
 
 export function useUploadCV() {
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [errorHint, setErrorHint] = useState(null);
   const [cvFileId, setCvFileId] = useState(null);
 
   const resetUpload = useCallback(() => {
@@ -15,18 +17,21 @@ export function useUploadCV() {
     setProgress(0);
     setIsUploading(false);
     setError(null);
+    setErrorHint(null);
     setCvFileId(null);
   }, []);
 
   const upload = useCallback(async (fileToUpload) => {
     const targetFile = fileToUpload || file;
     if (!targetFile) {
-      setError('No file selected');
+      setError('Chưa chọn tệp');
+      setErrorHint(null);
       return null;
     }
 
     setIsUploading(true);
     setError(null);
+    setErrorHint(null);
     setProgress(0);
 
     try {
@@ -42,9 +47,9 @@ export function useUploadCV() {
       setProgress(100);
       return data.cv_file_id;
     } catch (err) {
-      const message =
-        err.response?.data?.message || err.message || 'Upload failed. Please try again.';
+      const { message, hint } = extractApiError(err, 'Tải lên thất bại. Vui lòng thử lại.');
       setError(message);
+      setErrorHint(hint);
       setIsUploading(false);
       setProgress(0);
       return null;
@@ -58,6 +63,7 @@ export function useUploadCV() {
     progress,
     isUploading,
     error,
+    errorHint,
     cvFileId,
     resetUpload,
   };

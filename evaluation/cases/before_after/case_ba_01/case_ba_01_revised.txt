@@ -1,0 +1,20 @@
+Name: Nguyen Van A
+Email: nguyenvana@email.com
+Phone: 0901-234-567
+
+Summary
+Junior backend developer with 1 year of experience in Python.
+
+Experience
+
+Project: E-Commerce Product API
+- Built a FastAPI REST API for product catalog with 500+ endpoints
+- Implemented CRUD operations using PostgreSQL with proper indexing and query optimization
+- Integrated Redis for caching frequently accessed product data, reducing response time by 40%
+- Containerized the service with Docker and deployed with health checks and graceful shutdown
+
+Project: Simple Blog API
+- Built a simple API using Python
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git
