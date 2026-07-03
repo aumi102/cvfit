@@ -10,7 +10,7 @@ import styles from '@/styles/PageShell.module.css';
  */
 export default function LoadingSpinner({
   size = 'md',
-  label = 'Loading…',
+  label = 'Đang tải…',
   fullPage = false,
 }) {
   const spinner = (

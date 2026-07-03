@@ -227,7 +227,7 @@ function DashboardContent() {
     setWorkflowError(null);
     setJdText('');
     setTargetRole('');
-    setLanguage('en');
+    setLanguage('vi');
     setStrictness('balanced');
     resetUpload();
     resetPolling();
