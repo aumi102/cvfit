@@ -1,6 +1,7 @@
 # Phase 7 Payment-Ready Closeout
 
 > Status: **PHASE7_PAYMENT_READY_BLOCKED_BY_PAYOS_CREDENTIALS**
+> **QA sign-off:** Đạt ✅ signed 2026-07-07
 > Phase 7A is complete. Payment infrastructure is integrated. Real checkout is blocked by an external provider credential issue, not a code defect.
 
 ---
@@ -150,7 +151,41 @@ Once the payOS credentials are obtained from the payOS merchant dashboard, follo
 
 ---
 
-## 8. Final Verdict
+## 8. QA Verification Summary (Đạt, 2026-07-07)
+
+### Phase 7A — Demo Integrity Verification
+
+| Check | Result | Evidence |
+|-------|--------|----------|
+| Fake marketing metrics removed from `LandingPage.jsx` | ✅ PASS | `10,000+`, `98%`, `4.9★`, `30s` replaced with honest product labels |
+| Honest product labels in stats bar | ✅ PASS | `Phân tích CV theo JD`, `Gợi ý cải thiện có kiểm soát`, `Lộ trình học tập cá nhân hoá`, `Thanh toán đang thử nghiệm` |
+| Learning status optimistic update in code | ✅ PASS | `learning/[id]/page.js` lines 79-111: clear error → optimistic update → rollback on failure |
+| Auth readiness gate before PATCH | ✅ PASS | `if (isAuthChecking) return;` before firing update |
+| Error fallback strengthened | ✅ PASS | `'Không thể cập nhật trạng thái. Vui lòng thử lại.'` — not generic anymore |
+| GA4 events: `LEARNING_TASK_STARTED` / `LEARNING_TASK_COMPLETED` | ✅ PASS | Only `feature_name` + `task_type` — no free text |
+| Phase 6 backend smoke (deployed) | ✅ PASS | 6/6 against `https://cvfit.onrender.com` (2026-07-07) |
+| Backend compile check | ✅ PASS | `python -m compileall backend/app` — 0 errors |
+
+### Phase 6 — Privacy Verification (code audit)
+
+| Check | Result | Evidence |
+|-------|--------|----------|
+| `interview_answer_submitted` event: no `answer_text` | ✅ PASS | `frontend/src/app/interview/sessions/[id]/page.js` line 124: only `feature_name` + `question_type` + `difficulty` |
+| `help_assistant_prompt_clicked` event: no answer text | ✅ PASS | `frontend/src/app/help/assistant/page.js` line 92: only `feature_name` + `prompt_chip` |
+| `share_link_opened` event: no token | ✅ PASS | `frontend/src/app/share/[token]/page.js` line 28: only `feature_name` + `status` |
+| GA4 allow-list sanitization | ✅ PASS | `analytics.js` `sanitizeAnalyticsParams()` — allow-list of 21 safe keys only |
+| `scoreBucket()` used for fit scores | ✅ PASS | `analytics.js` line 80 — coarse buckets only (`0_20` through `80_100`), never exact score |
+| Share links: SHA-256 hash only in DB | ✅ PASS | `backend/app/services/share/links.py` line 35 — `hash_share_token()` |
+| Share links: raw token returned once on create | ✅ PASS | `share_links.py` line 137: `share_token=raw_token` only in POST response |
+| Share links: `token_hash` never in API responses | ✅ PASS | `share_links.py` line 123: `token_hash` only in DB write, not in response |
+| Share public view: `hide_raw_cv=True`, `hide_raw_jd=True` | ✅ PASS | `share/links.py` lines 24-25 — `DEFAULT_VISIBILITY` |
+| Smoke script: no raw token printed | ✅ PASS | `smoke_phase6_e2e.py` line 42: `token_hash` in internal-fields block list |
+| Privacy grep: no raw CV/JD text in analytics | ✅ PASS | `rg "jd_text\|cv_text\|raw_cv\|raw_jd"` in `analytics.js` — only in API payload calls, not event params |
+| Privacy grep: no `access_token`/`share_token` in analytics | ✅ PASS | No matches in `analytics.js` for any of these strings |
+
+---
+
+## 9. Final Verdict
 
 **PHASE7_PAYMENT_READY_BLOCKED_BY_PAYOS_CREDENTIALS**
 
@@ -160,5 +195,6 @@ Once the payOS credentials are obtained from the payOS merchant dashboard, follo
 - The only remaining blocker is an external provider setup issue, not a code defect.
 - No fake results, no fake credits, no fabricated payment success.
 - Production is in a safe, stable state.
+- **QA sign-off:** Đạt ✅ signed 2026-07-07 — Phase 7A demo integrity verified, Phase 6 privacy confirmed, backend smoke 6/6 PASS.
 - The team can proceed with non-payment product and demo work while the payOS credential setup is completed.
 - Resume checklist (Section 7) provides the exact path to complete Phase 7B once credentials are available.
