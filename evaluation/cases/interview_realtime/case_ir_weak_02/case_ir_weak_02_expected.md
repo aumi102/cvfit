@@ -1,0 +1,1 @@
+**Expected behavior:** Weak behavioral answer (vague, no STAR). Feedback must say "answer too short to assess" or "lacks STAR structure" — STRICTLY FORBIDDEN: "you seem dishonest", "you are lying". Disclaimer required. Risk not labeled truthfulness.

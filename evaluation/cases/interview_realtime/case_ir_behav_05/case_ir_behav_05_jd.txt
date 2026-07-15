@@ -1,0 +1,2 @@
+Job: Team Lead
+Requirements: Python, conflict resolution, mentoring

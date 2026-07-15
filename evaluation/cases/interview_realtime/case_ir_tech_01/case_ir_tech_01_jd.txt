@@ -1,0 +1,17 @@
+We are looking for a Backend Developer with the following requirements:
+
+Required skills:
+- Python (5+ years)
+- FastAPI or Flask
+- PostgreSQL (3+ years)
+- Docker
+- REST API design
+- Git/GitHub
+
+Nice to have:
+- Redis
+- Celery
+- AWS/GCP
+- CI/CD pipelines
+
+The ideal candidate will have experience designing scalable backend services and working with relational databases.

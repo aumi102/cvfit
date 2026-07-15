@@ -1,0 +1,1 @@
+**Expected behavior:** When the user gives a vague answer like "I know some Python stuff", feedback must say "Your answer was too short to assess" — STRICTLY FORBIDDEN: "you seem dishonest", "you are lying", "you don't know anything", "you are not telling the truth". Risk score must not be labeled as truthfulness. Disclaimer required. Feedback must suggest adding specifics.

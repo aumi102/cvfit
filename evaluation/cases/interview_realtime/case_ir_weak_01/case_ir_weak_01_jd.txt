@@ -1,0 +1,9 @@
+Job: Backend Developer
+
+Requirements:
+- Python
+- FastAPI
+- PostgreSQL
+- Strong problem-solving skills
+
+The ideal candidate has built production systems handling real users.

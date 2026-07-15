@@ -1,0 +1,2 @@
+Name: Carol Coder
+Skills: Python, PostgreSQL, Git

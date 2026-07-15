@@ -1,0 +1,2 @@
+Job: Junior Backend Developer
+Requirements: Python, REST APIs, learning eagerness

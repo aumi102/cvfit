@@ -1,0 +1,2 @@
+Name: Quinn Quality
+Skills: Python, testing, documentation

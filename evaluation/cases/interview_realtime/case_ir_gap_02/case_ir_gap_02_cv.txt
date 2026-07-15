@@ -1,0 +1,2 @@
+Name: Leo Lambda
+Skills: Python, FastAPI, Docker

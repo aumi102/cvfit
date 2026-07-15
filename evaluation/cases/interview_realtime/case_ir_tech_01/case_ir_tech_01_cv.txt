@@ -1,0 +1,1 @@
+**Expected behavior:** The AI interviewer should ask a technical question about Python. The question should be grounded in the JD requirements. Gap questions must use "no evidence was found" wording, not "you don't know". Feedback should include a disclaimer.

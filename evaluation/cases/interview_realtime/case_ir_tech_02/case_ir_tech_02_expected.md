@@ -1,0 +1,1 @@
+**Expected behavior:** Technical question about PostgreSQL optimization. The CV has Python but no PostgreSQL mention. Gap question must use "no evidence of PostgreSQL was found in your CV" — NOT "you don't know PostgreSQL". Feedback must include 7-dimension rubric and disclaimer. No forbidden patterns (emotion, truthfulness, personality).

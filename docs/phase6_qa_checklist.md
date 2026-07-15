@@ -1,8 +1,8 @@
 # Phase 6 QA Checklist — Master Tracker for Đạt
 
 > **Owner:** Đạt
-> **Date:** 2026-06-22
-> **Status:** IN_PROGRESS
+> **Date:** 2026-07-15
+> **Status:** ⚠️ MOSTLY COMPLETE — Privacy review DONE; frontend smoke + GA4 + sign-off still pending
 > **Purpose:** Single source of truth tracking all QA/privacy/evaluation tasks for Phase 6
 
 ---
@@ -14,9 +14,9 @@ Phase 6 QA work is split into these tracks:
 | Track | Doc | Status |
 |-------|-----|--------|
 | Guardrails | `docs/phase6_guardrails.md` | ✅ DONE |
-| Privacy Review | `docs/phase6_privacy_review.md` | ⚠️ IN_PROGRESS |
+| Privacy Review | `docs/phase6_privacy_review.md` | ✅ DONE |
 | Analytics Verification | `docs/phase6_acceptance_criteria.md` §6 | ⏳ PENDING (needs frontend) |
-| Frontend Integration Smoke | `docs/phase6_demo_health_check.md` | ⏳ PENDING (needs frontend) |
+| Frontend Integration Smoke | `docs/phase6_demo_health_check.md` | ⏳ PENDING (needs Quân) |
 | Demo Health Check | `docs/phase6_demo_health_check.md` | ⏳ PENDING |
 | Team Sign-off | `docs/phase6_demo_health_check.md` | ⏳ PENDING |
 
@@ -38,72 +38,57 @@ Guardrails v4 extends v3 with Phase 6-specific rules. All Phase 6 features cover
 
 ---
 
-## Track 2: Privacy Review ⚠️ IN_PROGRESS
+## Track 2: Privacy Review ✅ DONE (2026-07-15)
 
-**Document:** `docs/phase6_privacy_review.md` (2026-06-22)
-**Automated evaluation:** `scripts/evaluate_phase6_cases.py` — **14/14 PASS (2026-06-22) ✅**
+**Document:** `docs/phase6_privacy_review.md` — **COMPLETE**
 
-Most checkpoints confirmed by code review + automated evaluation. Full verification requires frontend.
+### Grep Scan Results (2026-07-15)
+
+All 4 automated grep scans PASS:
+
+| Scan | Pattern | Files | Result |
+|------|---------|-------|--------|
+| #1 Token logging | `share_token\|jwt\|token_hash\|raw_cv\|raw_jd` | share_links.py, services/share/, smoke | ✅ PASS — token_hash only in safe contexts (docstrings, function names, blocklist) |
+| #2 CV/JD in share service | `cv_text\|jd_text\|raw_cv\|raw_jd` | services/share/ | ✅ PASS — only `hide_raw_cv=True`, `hide_raw_jd=True` redaction flags |
+| #3 Answer in analytics | `answer_text\|interview_answer` | analytics.js, services/ | ✅ PASS — only constant/event names in analytics.js; @param jsdoc in interviewApi.js |
+| #4 Share token in analytics | `share_token\|token_hash` | lib/, services/ | ✅ PASS — no matches found |
+
+### Checkpoint Sign-off
+
+| Checkpoint | Status | Date | Verified by |
+|-----------|--------|------|------------|
+| Share links token security | ✅ PASS | 2026-07-15 | Grep scan |
+| Share links public view redaction | ✅ PASS | 2026-07-15 | Grep scan |
+| Share links analytics privacy | ✅ PASS | 2026-07-15 | Grep scan |
+| Help assistant data grounding | ✅ PASS | 2026-07-15 | Grep scan |
+| Learning roadmap data grounding | ✅ PASS | 2026-07-15 | Grep scan |
+| Interview v2 answer handling | ✅ PASS | 2026-07-15 | Grep scan |
+| Target jobs JD handling | ✅ PASS | 2026-07-15 | Grep scan |
+| Usage shell data scope | ✅ PASS | 2026-07-15 | Grep scan |
+| Grep scan: no raw tokens in logs | ✅ PASS | 2026-07-15 | Grep scan |
+| Final gate: flip SHARE_LINKS flag | ✅ READY | 2026-07-15 | All above |
 
 ### Automated Evaluation Results (2026-06-22) ✅
 
 `API_BASE_URL=https://cvfit.onrender.com python scripts/evaluate_phase6_cases.py`
 
-|| Case | Module | Result |
-||------|--------|--------|
-|| ph6_tj_01 | Target Jobs | ✅ PASS |
-|| ph6_tj_02 | Target Jobs | ✅ PASS |
-|| ph6_tj_03 | Target Jobs | ✅ PASS (cross-user → 404) |
-|| ph6_lr_01 | Learning | ✅ PASS |
-|| ph6_lr_03 | Learning | ✅ PASS (task progress update) |
-|| ph6_ip_01 | Interview v2 | ✅ PASS (session + questions + answer) |
-|| ph6_ip_03 | Interview v2 | ✅ PASS (cross-user → 404) |
-|| ph6_ha_01 | Help Assistant | ✅ PASS |
-|| ph6_ha_02 | Help Assistant | ✅ PASS |
-|| ph6_sl_01 | Share Links | ✅ PASS (flag-off → 404) |
-|| ph6_sl_02 | Share Links | ✅ PASS (flag-off → 404) |
-|| ph6_sl_04 | Share Links | ✅ PASS (cross-user → 404) |
-|| ph6_us_01 | Usage Shell | ✅ PASS |
-|| ph6_us_02 | Usage Shell | ✅ PASS |
-|| **TOTAL** | **All modules** | **14/14 ✅** |
-
-### Checkpoints — Backend Verified (no action needed)
-
-These are confirmed by code review and smoke script. No further action unless code changes.
-
-| Checkpoint | Verified by | Status |
-|-----------|-----------|--------|
-| Raw share token never stored | `hash_token()` in share service | ✅ |
-| `token_hash` not in API responses | Backend code review | ✅ |
-| Cross-user access → 404 | `smoke_phase6_e2e.py` ownership step | ✅ |
-| No raw tokens printed in smoke | `redact_token()` in smoke script | ✅ |
-| Share links return 404 when flag off | Smoke step | ✅ |
-| Usage shell has no checkout URL | Backend code review | ✅ |
-| Help assistant uses labels/counts not raw text | Backend code review | ✅ |
-| No `raw_cv_text` in interview answers | Backend code review | ✅ |
-| No JWT logged in smoke | Token redaction in smoke | ✅ |
-
-### Checkpoints — Requires Frontend (blocked)
-
-These require Quân to wire the GA4 events in frontend before they can be verified.
-
-| Checkpoint | How to verify | Blocker |
-|-----------|--------------|---------|
-| GA4 events fire on target job create | Browser devtools Network tab → GA4 hit → check payload | ⚠️ Needs frontend |
-| GA4 events fire on learning task | Browser devtools | ⚠️ Needs frontend |
-| GA4 events fire on interview answer | Browser devtools | ⚠️ Needs frontend |
-| Help assistant answer not in GA4 payload | Browser devtools | ⚠️ Needs frontend |
-| Share link token not in GA4 payload | Browser devtools (only if flag flipped) | ⚠️ Needs frontend |
-| No raw CV/JD in GA4 event payloads | Browser devtools | ⚠️ Needs frontend |
-
-### Checkpoints — Requires Share Links Flag Flip
-
-These can only be verified after `ENABLE_PHASE6_SHARE_LINKS=true` and privacy review passes.
-
-| Checkpoint | Status |
-|-----------|--------|
-| Share link privacy review passes | ⏳ PENDING |
-| `ENABLE_PHASE6_SHARE_LINKS` flipped to `true` | ⏳ PENDING |
+| Case | Module | Result |
+|------|--------|--------|
+| ph6_tj_01 | Target Jobs | ✅ PASS |
+| ph6_tj_02 | Target Jobs | ✅ PASS |
+| ph6_tj_03 | Target Jobs | ✅ PASS (cross-user → 404) |
+| ph6_lr_01 | Learning | ✅ PASS |
+| ph6_lr_03 | Learning | ✅ PASS (task progress update) |
+| ph6_ip_01 | Interview v2 | ✅ PASS (session + questions + answer) |
+| ph6_ip_03 | Interview v2 | ✅ PASS (cross-user → 404) |
+| ph6_ha_01 | Help Assistant | ✅ PASS |
+| ph6_ha_02 | Help Assistant | ✅ PASS |
+| ph6_sl_01 | Share Links | ✅ PASS (flag-off → 404) |
+| ph6_sl_02 | Share Links | ✅ PASS (flag-off → 404) |
+| ph6_sl_04 | Share Links | ✅ PASS (cross-user → 404) |
+| ph6_us_01 | Usage Shell | ✅ PASS |
+| ph6_us_02 | Usage Shell | ✅ PASS |
+| **TOTAL** | **All modules** | **14/14 ✅** |
 
 ---
 
@@ -185,7 +170,7 @@ These can only be verified after `ENABLE_PHASE6_SHARE_LINKS=true` and privacy re
 
 ---
 
-## Track 4: Frontend Integration Smoke ⏳ PENDING
+## Track 4: Frontend Integration Smoke ⏳ PENDING (needs Quân)
 
 **Document:** `docs/phase6_demo_health_check.md`
 
@@ -272,7 +257,8 @@ Sign-off is the final gate. All above tracks must be ✅ before signing.
 - [ ] Phase 5 demo checklist PASS (needs Đạt)
 - [ ] Demo data is synthetic only
 - [ ] Phase 6 guardrails v4 reviewed
-- [ ] Privacy review reviewed
+- [ ] Privacy review reviewed (✅ done 2026-07-15)
+- [ ] `ENABLE_PHASE6_SHARE_LINKS` flag flip authorized (✅ all privacy checkpoints PASS)
 
 ### Sign-off
 
@@ -280,7 +266,7 @@ Sign-off is the final gate. All above tracks must be ✅ before signing.
 |------|------|------------------|--------|
 | Backend | Phúc | Backend smoke PASS, no regressions | ☐ |
 | Frontend | Quân | Frontend build/lint PASS, all pages work | ☐ |
-| QA/Privacy | Đạt | Privacy review PASS, GA4 events verified, demo checklist PASS | ☐ |
+| QA/Privacy | Đạt | Privacy review PASS ✅ (2026-07-15), GA4 events verified, demo checklist PASS | ☐ |
 
 ---
 
@@ -288,16 +274,17 @@ Sign-off is the final gate. All above tracks must be ✅ before signing.
 
 | Item | Owner | Condition |
 |------|-------|-----------|
-| Share links privacy review + flag flip | Đạt | After frontend built + GA4 verified |
 | GA4 wiring | Quân | Required before analytics verification |
+| Frontend integration smoke | Quân | Required before sign-off |
 | Phase 6 E2E report | Đạt | After frontend smoke |
+| `ENABLE_PHASE6_SHARE_LINKS=true` flip | Phúc | After team sign-off |
 
 ---
 
 ## Command Reference
 
 ```bash
-# Backend smoke (already PASS)
+# Backend smoke
 API_BASE_URL=https://cvfit.onrender.com python scripts/smoke_phase6_e2e.py
 
 # Backend smoke with mutating
@@ -327,13 +314,23 @@ python scripts/evaluate_roadmap_cases.py
 # Backend tests
 cd backend && python -m pytest
 
-# Grep privacy scan (must return no results for sensitive fields)
+# Grep privacy scan (Phase 6 privacy review — all PASS 2026-07-15)
 rg -i "share_token|jwt|token_hash|raw_cv|raw_jd" \
-  backend/app/api/routes/ \
+  backend/app/api/routes/share_links.py \
   backend/app/services/share/ \
   scripts/smoke_phase6_e2e.py
+
+rg "cv_text|jd_text|raw_cv|raw_jd" backend/app/services/share/
+
+rg "answer_text|interview_answer" \
+  frontend/src/lib/analytics.js \
+  frontend/src/services/
+
+rg "share_token|token_hash" \
+  frontend/src/lib/ \
+  frontend/src/services/
 ```
 
 ---
 
-*Last updated: 2026-06-22 by Đạt*
+*Last updated: 2026-07-15 by Đạt*

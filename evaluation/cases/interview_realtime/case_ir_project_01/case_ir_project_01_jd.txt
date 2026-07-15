@@ -1,0 +1,9 @@
+Job: Backend Engineer
+
+Requirements:
+- Python, FastAPI
+- PostgreSQL, Docker
+- 3+ years backend development
+- Experience building production APIs
+
+The candidate will be responsible for building and maintaining our core API platform.

@@ -1,0 +1,1 @@
+**Expected behavior:** Weak/vague answer feedback. When answer is too short or generic, feedback should note it was too short to assess, not say "you seem dishonest" or "you are not telling the truth". Feedback should suggest adding specifics. Disclaimer required. Risk score must not be labeled truthfulness.

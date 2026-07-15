@@ -1,0 +1,1 @@
+**Expected behavior:** Strong answer feedback. When answer is detailed with specific examples and evidence, feedback should identify at least one strength and suggest one improvement. Disclaimer required. Rubric with 7 dimensions. No emotion/personality/truthfulness inference.

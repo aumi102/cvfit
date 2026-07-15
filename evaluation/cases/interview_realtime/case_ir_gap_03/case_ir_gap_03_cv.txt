@@ -1,0 +1,2 @@
+Name: Mia Modest
+Skills: Python, basic backend

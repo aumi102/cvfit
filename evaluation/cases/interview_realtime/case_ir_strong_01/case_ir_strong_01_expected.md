@@ -1,0 +1,1 @@
+**Expected behavior:** Strong technical answer gets positive feedback identifying at least one strength (e.g., "mentioned FastAPI with specific project example"). Must also suggest one improvement (e.g., "add more detail about scale/impact"). Disclaimer required. Rubric with 7 dimensions. overall_score should be in high range (70-90). No forbidden patterns.

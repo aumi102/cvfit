@@ -1,0 +1,13 @@
+Job: Senior Backend Engineer
+
+Requirements:
+- 5+ years Python
+- PostgreSQL expert
+- Experience with database optimization and query performance
+- REST API design experience
+- Docker containerization
+
+Preferred:
+- AWS experience
+- Redis experience
+- FastAPI framework

@@ -1,0 +1,1 @@
+**Expected behavior:** Strong behavioral answer with STAR format. Feedback identifies strength (clear STAR structure, specific example) and suggests improvement (add more measurable outcomes). Disclaimer required. High score (75-90). No forbidden patterns.

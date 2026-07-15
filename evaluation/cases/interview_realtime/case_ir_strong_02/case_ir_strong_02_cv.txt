@@ -1,0 +1,2 @@
+Name: Paula Pro
+Skills: Python, FastAPI, PostgreSQL, strong STAR stories

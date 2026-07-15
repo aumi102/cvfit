@@ -1,0 +1,9 @@
+Job: Backend Developer
+
+Requirements:
+- Python, FastAPI, PostgreSQL
+- Strong communication skills
+- Team collaboration experience
+- Problem-solving ability
+
+The role involves working closely with frontend engineers and product managers.

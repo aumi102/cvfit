@@ -1,0 +1,2 @@
+Name: Jack Junior
+Skills: Python, REST APIs

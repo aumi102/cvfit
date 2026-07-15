@@ -1,0 +1,2 @@
+Job: Fullstack Developer
+Requirements: Python, REST APIs, database design

@@ -1,0 +1,1 @@
+**Expected behavior:** Behavioral question about a team challenge. If the answer lacks STAR structure, feedback should suggest using STAR. Feedback must not infer personality traits. Disclaimer required. Rubric must include structure dimension.

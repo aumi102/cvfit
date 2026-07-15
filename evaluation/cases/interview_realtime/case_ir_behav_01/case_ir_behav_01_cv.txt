@@ -1,0 +1,1 @@
+**Expected behavior:** Behavioral question using STAR format. Question should be about teamwork or challenge. Feedback must suggest STAR structure if answer is weak. No personality inference. Disclaimer required.

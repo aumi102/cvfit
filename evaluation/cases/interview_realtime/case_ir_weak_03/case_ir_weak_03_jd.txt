@@ -1,0 +1,2 @@
+Job: Senior Backend Engineer
+Requirements: Python, FastAPI, PostgreSQL, architecture

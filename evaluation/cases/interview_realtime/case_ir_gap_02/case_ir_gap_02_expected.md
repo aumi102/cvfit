@@ -1,0 +1,1 @@
+**Expected behavior:** AWS gap question. CV has no AWS. Gap question MUST use "no evidence of AWS was found in your CV" — NOT "you don't know AWS". Disclaimer required. Risk score not labeled truthfulness.

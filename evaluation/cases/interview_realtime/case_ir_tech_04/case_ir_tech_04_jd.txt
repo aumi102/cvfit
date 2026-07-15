@@ -1,0 +1,2 @@
+Job: Senior Python Engineer
+Requirements: Python, FastAPI, PostgreSQL, Docker

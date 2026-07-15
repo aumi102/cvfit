@@ -1,0 +1,2 @@
+Job: Backend Developer
+Requirements: Python, communication skills, teamwork

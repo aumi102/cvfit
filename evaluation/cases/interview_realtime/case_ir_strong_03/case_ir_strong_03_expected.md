@@ -1,0 +1,1 @@
+**Expected behavior:** Strong technical answer with testing details. Feedback identifies strength (mentioned TDD, specific tools) and suggests improvement (add coverage metrics). Disclaimer required. No forbidden patterns.

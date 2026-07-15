@@ -1,0 +1,2 @@
+Job: Backend Developer
+Requirements: Python, CI/CD, Docker, GitHub Actions

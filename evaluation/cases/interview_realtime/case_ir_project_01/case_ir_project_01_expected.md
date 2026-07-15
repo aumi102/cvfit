@@ -1,0 +1,1 @@
+**Expected behavior:** Project deep-dive question referencing FastAPI project from CV. Question should probe architecture, tradeoffs, and impact. Feedback must assess specificity and evidence. "No evidence of FastAPI was found in your CV" for gap answers. Disclaimer required. Rubric must assess technical_depth and evidence.

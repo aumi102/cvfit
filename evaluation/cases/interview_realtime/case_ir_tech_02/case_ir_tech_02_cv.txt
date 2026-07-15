@@ -1,0 +1,1 @@
+**Expected behavior:** The AI interviewer should ask about PostgreSQL query optimization. Question must reference the JD requirement, not raw JD text. If gap_probe, must use "no evidence was found" wording. Feedback must include disclaimer and rubric with 7 dimensions. No emotion/personality/truthfulness inference.

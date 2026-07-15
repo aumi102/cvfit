@@ -1,0 +1,1 @@
+**Expected behavior:** AI interviewer asks a technical question about FastAPI. Question should reference the JD requirement, not embed raw JD text. If the candidate's CV does not mention FastAPI, the gap question must use "no evidence of FastAPI was found in your CV" wording, not "you don't know FastAPI". Feedback must include a disclaimer.

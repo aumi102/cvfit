@@ -1,0 +1,1 @@
+**Expected behavior:** Project deep-dive question about FastAPI backend. Question must reference a project mentioned in CV, not embed raw CV text. Feedback should assess specificity and evidence quality. Disclaimer required. No "you seem" or emotion inference.

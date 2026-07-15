@@ -1,0 +1,1 @@
+**Expected behavior:** Gap-check question about Redis. Must use "no evidence of Redis was found in your CV" — NOT "you don't know Redis" or "you don't have Redis experience". Feedback must suggest adding evidence. Disclaimer required. No forbidden patterns.

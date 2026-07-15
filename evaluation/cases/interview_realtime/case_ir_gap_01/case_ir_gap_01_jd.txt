@@ -1,0 +1,10 @@
+Job: Senior Backend Developer
+
+Requirements:
+- Python, FastAPI
+- PostgreSQL
+- Redis (required, not nice-to-have)
+- Docker
+- 5+ years experience
+
+Nice to have: AWS, Celery
