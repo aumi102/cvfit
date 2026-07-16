@@ -188,7 +188,7 @@ def test_insufficient_credits_error_shape():
 # ---------------------------------------------------------------------------
 
 def test_expected_alembic_head_advanced():
-    assert init_db.EXPECTED_ALEMBIC_HEAD == "20260623_0001"
+    assert init_db.EXPECTED_ALEMBIC_HEAD == "20260716_0001"
 
 
 def test_migration_file_revision_chain_and_tables():

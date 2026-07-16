@@ -9,7 +9,17 @@ except ImportError:
     def Vector(dim):
         return JSON
 
-from sqlalchemy import Boolean, String, Text, DateTime, Integer, Enum, ForeignKey, true
+from sqlalchemy import (
+    Boolean,
+    String,
+    Text,
+    DateTime,
+    Integer,
+    Enum,
+    ForeignKey,
+    UniqueConstraint,
+    true,
+)
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -472,3 +482,167 @@ class PaymentWebhookEvent(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     processed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+# ---------------------------------------------------------------------------
+# Phase 8 — Realtime AI Interview Simulator
+#
+# These tables are intentionally separate from the Phase 5 typed-answer and
+# Phase 6 interview-practice tables. Constrained values stay as plain strings
+# and are validated by the Phase 8 Pydantic/service layer.
+# ---------------------------------------------------------------------------
+
+REALTIME_INTERVIEW_MODE = ("realtime_voice", "audio_fallback")
+REALTIME_INTERVIEW_STATUS = ("setup", "ready", "active", "completed", "aborted", "failed")
+REALTIME_INTERVIEW_TYPE = ("technical", "behavioral", "project_deep_dive", "hr", "mixed")
+REALTIME_INTERVIEW_DIFFICULTY = ("easy", "medium", "hard")
+
+
+class InterviewRealtimeSession(Base):
+    __tablename__ = "interview_realtime_sessions"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
+    target_job_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id"), nullable=True, index=True
+    )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id"), nullable=True, index=True
+    )
+    analysis_job_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("analysis_jobs.id"), nullable=True, index=True
+    )
+    mode: Mapped[str] = mapped_column(String(30), nullable=False, default="realtime_voice")
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="setup", server_default="setup", index=True
+    )
+    interview_type: Mapped[str] = mapped_column(String(30), nullable=False, default="mixed")
+    difficulty: Mapped[str] = mapped_column(String(20), nullable=False, default="medium")
+    question_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=5)
+    consent_audio: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    consent_camera: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    consent_recording: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    failure_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    user = relationship("User", foreign_keys=[user_id])
+    target_job = relationship("Application", foreign_keys=[target_job_id])
+    application = relationship("Application", foreign_keys=[application_id])
+    analysis_job = relationship("AnalysisJob", foreign_keys=[analysis_job_id])
+    turns = relationship(
+        "InterviewRealtimeTurn",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        order_by="InterviewRealtimeTurn.turn_index",
+    )
+    events = relationship(
+        "InterviewRealtimeEvent",
+        back_populates="session",
+        cascade="all, delete-orphan",
+    )
+    summary = relationship(
+        "InterviewRealtimeSummary",
+        back_populates="session",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+
+
+class InterviewRealtimeTurn(Base):
+    __tablename__ = "interview_realtime_turns"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "turn_index",
+            name="uq_interview_realtime_turns_session_turn",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("interview_realtime_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    turn_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    question_text: Mapped[str] = mapped_column(Text, nullable=False)
+    question_type: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    answer_transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
+    ai_followup_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    score_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    feedback_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    session = relationship("InterviewRealtimeSession", back_populates="turns")
+
+
+class InterviewRealtimeEvent(Base):
+    __tablename__ = "interview_realtime_events"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "event_sequence",
+            name="uq_interview_realtime_events_session_sequence",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("interview_realtime_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    event_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    redacted_payload_json: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    payload_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    session = relationship("InterviewRealtimeSession", back_populates="events")
+
+
+class InterviewRealtimeSummary(Base):
+    __tablename__ = "interview_realtime_summaries"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("interview_realtime_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    overall_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    rubric_json: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    strengths_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    weaknesses_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    suggested_improvements_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    next_questions_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    learning_tasks_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    limitations_json: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    session = relationship("InterviewRealtimeSession", back_populates="summary")
