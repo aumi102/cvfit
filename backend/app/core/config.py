@@ -73,8 +73,11 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     OPENAI_REALTIME_MODEL: str = ""
     OPENAI_REALTIME_VOICE: str = ""
+    OPENAI_REALTIME_TRANSCRIPTION_MODEL: str = "gpt-4o-mini-transcribe"
     OPENAI_REALTIME_SESSION_MAX_MINUTES: int = 15
     OPENAI_REALTIME_MAX_QUESTIONS: int = 5
+    OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS: int = 60
+    OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS: int = 30
 
     class Config:
         env_file = ("../.env", ".env")
@@ -109,6 +112,14 @@ def validate_runtime_config() -> None:
         )
     if not 1 <= settings.OPENAI_REALTIME_MAX_QUESTIONS <= 20:
         raise RuntimeError("OPENAI_REALTIME_MAX_QUESTIONS must be between 1 and 20.")
+    if not 30 <= settings.OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS <= 600:
+        raise RuntimeError(
+            "OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS must be between 30 and 600."
+        )
+    if not 5 <= settings.OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS <= 300:
+        raise RuntimeError(
+            "OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS must be between 5 and 300."
+        )
     if settings.CORS_ALLOW_CREDENTIALS and "*" in _split_csv(settings.CORS_ALLOWED_ORIGINS):
         raise RuntimeError("CORS_ALLOW_CREDENTIALS cannot be true when CORS_ALLOWED_ORIGINS contains '*'.")
 

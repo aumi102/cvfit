@@ -57,6 +57,13 @@ from app.services.interview_realtime.session_service import (
     prepare_session_for_client_secret,
     record_realtime_event,
 )
+from app.services.interview_realtime.summary_service import (
+    SUMMARY_DISCLAIMER,
+    RUBRIC_VERSION,
+    summary_failure_code,
+    summary_rubric_version,
+    summary_status,
+)
 
 
 def require_realtime_interview_enabled() -> None:
@@ -154,6 +161,9 @@ def create_client_secret(
             db,
             session,
             max_minutes=settings.OPENAI_REALTIME_SESSION_MAX_MINUTES,
+            min_interval_seconds=(
+                settings.OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS
+            ),
         )
         sources = load_owned_context_sources(
             db,
@@ -186,6 +196,7 @@ def create_client_secret(
         provider_session_id=credential.provider_session_id,
         model=credential.model,
         voice=credential.voice,
+        configuration_version=credential.configuration_version,
     )
 
 
@@ -207,7 +218,13 @@ def ingest_event(
             body.payload,
             question_limit=session.question_limit,
         )
-        event = record_realtime_event(db, session, body, redacted)
+        event, replayed = record_realtime_event(
+            db,
+            session,
+            body,
+            redacted,
+            max_minutes=settings.OPENAI_REALTIME_SESSION_MAX_MINUTES,
+        )
     except IntegrityError:
         db.rollback()
         raise HTTPException(
@@ -222,6 +239,7 @@ def ingest_event(
         interview_session_id=session.id,
         event_type=event.event_type,
         event_sequence=event.event_sequence,
+        replayed=replayed,
         created_at=event.created_at,
     )
 
@@ -238,10 +256,11 @@ def complete_session(
 ) -> RealtimeSessionCompleteResponse:
     try:
         session = get_owned_session(db, current_user.id, session_id)
-        completed_turns, summary_ready = complete_realtime_session(
+        completed_turns, generated_summary_status = complete_realtime_session(
             db,
             session,
             body,
+            max_minutes=settings.OPENAI_REALTIME_SESSION_MAX_MINUTES,
         )
     except _DOMAIN_ERRORS as exc:
         _raise_http_error(exc)
@@ -250,7 +269,7 @@ def complete_session(
         interview_session_id=session.id,
         status=session.status,
         completed_turns=completed_turns,
-        summary_status="ready" if summary_ready else "pending",
+        summary_status=generated_summary_status,
         ended_at=session.ended_at,
     )
 
@@ -281,22 +300,33 @@ def get_summary(
         return RealtimeInterviewSummaryResponse(
             interview_session_id=session.id,
             status="pending",
+            rubric_version=RUBRIC_VERSION,
             limitations=[
-                "Summary is not ready. Completed turns are persisted, but no trusted rubric evaluation is available yet."
+                "Summary is not ready because no completed interview turn is available yet."
             ],
+            disclaimer=SUMMARY_DISCLAIMER,
         )
 
+    persisted_status = summary_status(summary)
+    rubric_payload = summary.rubric_json if isinstance(summary.rubric_json, dict) else {}
     return RealtimeInterviewSummaryResponse(
         interview_session_id=session.id,
-        status="ready",
+        status=persisted_status,
+        rubric_version=summary_rubric_version(summary),
         overall_score=summary.overall_score,
-        rubric=summary.rubric_json or {},
+        rubric=(
+            rubric_payload.get("dimensions", {})
+            if persisted_status == "ready"
+            else {}
+        ),
         strengths=summary.strengths_json or [],
         weaknesses=summary.weaknesses_json or [],
         suggested_improvements=summary.suggested_improvements_json or [],
         next_practice_questions=summary.next_questions_json or [],
         learning_tasks_to_create=summary.learning_tasks_json or [],
         limitations=summary.limitations_json or [],
+        failure_code=summary_failure_code(summary),
+        disclaimer=SUMMARY_DISCLAIMER,
         created_at=summary.created_at,
         updated_at=summary.updated_at,
     )

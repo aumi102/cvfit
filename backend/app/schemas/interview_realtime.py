@@ -16,6 +16,9 @@ RealtimeInterviewStatus = Literal[
 RealtimeInterviewType = Literal[
     "technical", "behavioral", "project_deep_dive", "hr", "mixed"
 ]
+RealtimeQuestionType = Literal[
+    "technical", "behavioral", "project_deep_dive", "hr"
+]
 RealtimeInterviewDifficulty = Literal["easy", "medium", "hard"]
 RealtimeEventType = Literal[
     "session_connected",
@@ -111,11 +114,12 @@ class RealtimeClientSecretResponse(_StrictModel):
     provider_session_id: str | None = None
     model: str
     voice: str
+    configuration_version: str
 
 
 class RealtimeEventCreate(_StrictModel):
     event_type: RealtimeEventType
-    event_sequence: int | None = Field(default=None, ge=0)
+    event_sequence: int = Field(ge=0)
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -125,13 +129,14 @@ class RealtimeEventResponse(_StrictModel):
     event_type: str
     event_sequence: int | None = None
     accepted: bool = True
+    replayed: bool = False
     created_at: datetime
 
 
 class RealtimeCompletedTurn(_StrictModel):
     turn_index: int = Field(ge=0, le=19)
     question_text: str = Field(min_length=1, max_length=4000)
-    question_type: RealtimeInterviewType | None = None
+    question_type: RealtimeQuestionType | None = None
     answer_transcript: str | None = Field(default=None, max_length=12000)
     ai_followup_text: str | None = Field(default=None, max_length=4000)
     started_at: datetime | None = None
@@ -154,20 +159,25 @@ class RealtimeSessionCompleteResponse(_StrictModel):
     interview_session_id: uuid.UUID
     status: str
     completed_turns: int
-    summary_status: Literal["ready", "pending"]
+    summary_status: Literal["ready", "pending", "failed"]
     ended_at: datetime
 
 
 class RealtimeInterviewSummaryResponse(_StrictModel):
     interview_session_id: uuid.UUID
-    status: Literal["ready", "pending"]
+    status: Literal["ready", "pending", "failed"]
+    rubric_version: str | None = None
     overall_score: int | None = None
-    rubric: dict[str, float] = Field(default_factory=dict)
+    rubric: dict[str, Any] = Field(default_factory=dict)
     strengths: list[str] = Field(default_factory=list)
     weaknesses: list[str] = Field(default_factory=list)
     suggested_improvements: list[str] = Field(default_factory=list)
     next_practice_questions: list[str] = Field(default_factory=list)
     learning_tasks_to_create: list[dict[str, Any]] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
+    failure_code: str | None = None
+    disclaimer: str = (
+        "AI interview feedback is for practice only and does not predict hiring outcomes."
+    )
     created_at: datetime | None = None
     updated_at: datetime | None = None
