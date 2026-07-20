@@ -45,6 +45,17 @@ jobs:
       - name: Compile backend
         run: python -m compileall backend/app
 
+      - name: Collect Phase 8 backend tests
+        working-directory: backend
+        run: >-
+          python -m pytest
+          tests/test_interview_realtime.py
+          tests/test_interview_realtime_postgres.py
+          tests/test_phase8_env_contract.py
+          --collect-only
+          --basetemp pytest-cache-files-local
+          -p no:cacheprovider
+
       - name: Run backend tests
         working-directory: backend
         run: python -m pytest --basetemp pytest-cache-files-local -p no:cacheprovider
@@ -123,9 +134,20 @@ jobs:
                   time.sleep(2)
           PY
 
-      - name: Run Alembic migrations on disposable PostgreSQL
+      - name: Exercise Phase 8 migration cycle on disposable PostgreSQL
         working-directory: backend
-        run: alembic upgrade head
+        run: |
+          alembic upgrade head
+          alembic downgrade 20260623_0001
+          alembic upgrade head
+
+      - name: Validate Phase 8 PostgreSQL contract
+        working-directory: backend
+        run: >-
+          python -m pytest
+          tests/test_interview_realtime_postgres.py
+          --basetemp pytest-cache-files-local
+          -p no:cacheprovider
 
       - name: Check Alembic current revision
         working-directory: backend
