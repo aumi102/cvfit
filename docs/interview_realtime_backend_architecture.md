@@ -1,6 +1,6 @@
 # Realtime Interview Backend Architecture — Phase 8
 
-**Date:** 2026-07-16
+**Date:** 2026-07-21
 **Owner:** Phúc
 **Scope:** Backend architecture, persistence, provider integration, contracts,
 configuration, and deployment readiness only
@@ -46,7 +46,7 @@ and OpenAI; this backend never accepts or persists them.
 | `instruction_builder.py` | Server-owned interviewer rules and prompt-injection boundary |
 | `realtime_client_service.py` | Direct HTTP client-secret request with timeout and safe errors |
 | `event_redaction.py` | Event and field allowlists, size limits, credential/media rejection, minimization, hashing |
-| `summary_service.py` | Deterministic seven-dimension aggregation when trusted scores exist |
+| `summary_service.py` | Versioned deterministic practice evaluation over validated client-reported turns |
 | `app/db/models.py` | Four additive SQLAlchemy models |
 | Alembic `20260716_0001` | Four additive tables and single-head migration |
 
@@ -80,23 +80,27 @@ The backend request configures:
 - backend-generated instructions
 - audio output
 - near-field input noise reduction
-- `gpt-4o-mini-transcribe` input transcription
+- operator-configured input transcription model
 - server VAD with bounded timing
 - maximum 512 output tokens per response
 - no tools and `tool_choice=none`
-- 60-second client-secret creation TTL
+- bounded, operator-configured client-secret creation TTL
+- persisted per-session minimum issuance interval
 
-The 60-second TTL limits when a new provider session may be created; it is not
+The client-secret TTL limits when a new provider session may be created; it is not
 the interview duration. The configured interview duration is enforced in
 instructions and by rejecting reconnect/client-secret requests after the
 backend active-session window. Quân's browser must also disconnect at the time
 limit.
 
 The provider API documents that client-secret session configuration may be
-overridden by the client connection. This backend never accepts frontend
-instructions and Quân's integration must not send instruction/model/tool
-overrides. Cryptographic enforcement of immutable instructions would require a
-future server-proxied/unified-interface or server-side-control design.
+overridden by the client connection. The server-side builder is authoritative
+inside CV Fit: no backend schema accepts arbitrary provider JSON, and Quân's
+frontend contract forbids `session.update` overrides for model, instructions,
+tools, voice, duration, retention, recording, rubric, or internal metadata.
+This is a policy boundary, not cryptographic immutability. Achieving the latter
+would require a separately reviewed provider control/proxy design; the current
+direct-WebRTC/no-SDP-proxy architecture intentionally does not claim it.
 
 ## Database design
 
@@ -123,14 +127,17 @@ evaluation, not accepted from the frontend.
 
 ### `interview_realtime_events`
 
-Stores an allowlisted event type, optional per-session unique sequence,
-minimized metadata, SHA-256 payload hash, and creation time. It never stores raw
+Stores an allowlisted event type, required strictly ordered per-session client
+sequence, minimized metadata, SHA-256 payload hash, and creation time. Exact
+sequence/type/hash replays are idempotent; conflicts and gaps are rejected. It
+never stores raw
 provider payloads, question/transcript text copies, headers, credentials, SDP,
 or media.
 
 ### `interview_realtime_summaries`
 
-One row per session via a unique session index. Stores overall score, rubric,
+One row per session via a unique session index. Stores evaluation status,
+rubric/evaluator versions, transcript provenance, overall score, rubric,
 strengths, weaknesses, improvement recommendations, next practice questions,
 proposed learning tasks, limitations, and timestamps.
 
@@ -209,11 +216,14 @@ communication_clarity
 risk
 ```
 
-When every completed turn contains a trusted backend score for every dimension,
-the service deterministically averages dimensions, combines positive dimensions
-with inverse risk into a 0–100 overall score, and creates bounded templated
-recommendations. If any trusted score is missing, it persists turns, creates no
-fake evaluation, and returns summary `202/pending`.
+For each persisted turn, the service accepts only a score marked as coming from
+a server evaluator; otherwise it computes a bounded deterministic practice
+score from the validated transcript. It averages dimensions, combines positive
+dimensions with inverse risk into a 0–100 overall score, and creates bounded
+templated recommendations. Rubric version `realtime_practice_v1`, evaluator
+version, evidence turn IDs, and `client_reported_validated` provenance are
+persisted. A safe evaluation failure retains turns and records a retryable
+`failed` summary.
 
 The frontend cannot submit score or feedback fields. Emotion, face-derived
 confidence, personality, truthfulness, and hiring probability are excluded.
@@ -229,8 +239,9 @@ confidence, personality, truthfulness, and hiring probability are excluded.
 | Missing consent | `422` |
 | Invalid/terminal status | `409` |
 | Oversized/sensitive event | `422`, nothing persisted |
-| Duplicate event sequence | `409` |
-| Missing trusted rubric | Turns complete; summary remains `202/pending` |
+| Exact duplicate event | `201` with `replayed=true`; no duplicate write |
+| Conflicting/gapped event sequence | `409` |
+| Summary evaluator failure | Turns retained; versioned `failed` summary |
 
 Provider exceptions are converted to fixed messages. The server API key and
 ephemeral value are never interpolated into exceptions.
@@ -244,8 +255,11 @@ ENABLE_REALTIME_INTERVIEW=false
 OPENAI_API_KEY=
 OPENAI_REALTIME_MODEL=
 OPENAI_REALTIME_VOICE=
+OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
 OPENAI_REALTIME_SESSION_MAX_MINUTES=15
 OPENAI_REALTIME_MAX_QUESTIONS=5
+OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS=60
+OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS=30
 ```
 
 Rules:
@@ -255,6 +269,7 @@ Rules:
 - Never put a real key in `.env.example`, source control, logs, frontend config,
   or client responses.
 - Session minutes must be `1..60`; maximum questions must be `1..20`.
+- Client-secret TTL must be `30..600` seconds and issuance interval `5..300`.
 - Missing provider configuration does not block app startup and does not affect
   payment/payOS routes. It fails closed only at the Phase 8 contract.
 - Apply Alembic `20260716_0001` through the established backup/review/operator

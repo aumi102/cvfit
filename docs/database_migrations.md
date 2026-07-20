@@ -5,13 +5,15 @@ Phase 1C added an Alembic baseline so schema changes can be reviewed and applied
 Current Alembic head:
 
 ```text
-20260606_0001
+20260716_0001
 ```
 
 Revision chain:
 
 ```text
-20260522_0001 -> 20260531_0001 -> 20260606_0001
+20260522_0001 -> 20260531_0001 -> 20260606_0001 -> 20260610_0001
+-> 20260610_0002 -> 20260610_0003 -> 20260618_0001 -> 20260619_0001
+-> 20260620_0001 -> 20260622_0001 -> 20260623_0001 -> 20260716_0001
 ```
 
 `20260531_0001` is the Phase 2 auth foundation migration. It creates the
@@ -25,6 +27,14 @@ Guest mode still creates analysis jobs without an account.
 `20260606_0001` is the Phase 4 analysis revision migration. It adds
 `analysis_jobs.parent_job_id`, `analysis_jobs.analysis_group_id`, and
 `analysis_jobs.revision_number`.
+
+The later linear revisions add Application Workspace, application artifacts,
+typed interview answers, Target Jobs, Learning/Interview Practice, share links,
+Google-auth fields, and disabled-by-default billing models.
+
+`20260716_0001` is the Phase 8 Realtime Interview migration. It follows
+`20260623_0001` and adds exactly four tables: realtime sessions, turns, bounded
+events, and summaries. It does not add a media-artifact table.
 
 ## Why Alembic Was Added
 
@@ -70,19 +80,21 @@ To validate a disposable/local PostgreSQL database after upgrading:
 python scripts/check_db_schema.py
 ```
 
-The checker reads `DATABASE_URL`, reports required tables/columns, confirms
-auth-era schema items such as `users` and `analysis_jobs.user_id`, reports
-whether `alembic_version` exists, and checks the PostgreSQL `vector` extension.
-It does not print the database URL or secret values.
+The checker reads `DATABASE_URL`, imports the authoritative runtime schema from
+`app.db.init_db`, reports required tables/columns, verifies the expected
+Alembic head, reports whether `alembic_version` exists, and checks the
+PostgreSQL `vector` extension. It does not print the database URL or secret
+values.
 
 CI has two database-related paths:
 
 - The backend hygiene/test job uses SQLite in memory for tests and Alembic
   metadata checks.
 - The PostgreSQL migration job starts a disposable `pgvector/pgvector:pg16`
-  service, runs `alembic upgrade head`, verifies `alembic current` matches
-  `alembic heads`, and runs the schema checker against that disposable CI
-  database.
+  service, upgrades to head, downgrades Phase 8 to `20260623_0001`, upgrades to
+  head again, inspects Phase 8 PostgreSQL foreign keys/unique constraints/index,
+  verifies `alembic current` matches `alembic heads`, and runs the runtime
+  schema checker against that disposable CI database.
 
 The PostgreSQL CI job does not use Render `DATABASE_URL`, real secrets, Render
 APIs, deploy commands, or adoption/stamp helpers. Production and Render
@@ -157,7 +169,7 @@ Optional local-only downgrade/re-upgrade validation on a disposable database:
 ```bat
 set "DATABASE_URL=postgresql+psycopg2://cvfit:cvfit@localhost:55432/cvfit"
 set "REDIS_URL=redis://localhost:6379/0"
-alembic downgrade 20260522_0001
+alembic downgrade 20260623_0001
 python scripts\run_alembic.py current
 python scripts\run_alembic.py upgrade head
 python scripts\run_alembic.py current
@@ -165,7 +177,7 @@ python scripts/check_db_schema.py
 ```
 
 Do not run downgrade on production without explicit data-loss approval. The
-auth downgrade removes the `users` table and `analysis_jobs.user_id`.
+Phase 8 downgrade removes all four realtime-interview tables and their data.
 
 ## Create A New Migration
 

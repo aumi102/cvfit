@@ -187,8 +187,12 @@ Expected success criteria:
 
 ## Current Limitations
 
-- Current app still has no full auth.
-- Job status polling remains UUID-based; result, report metadata, and report download use MVP access-token protection.
+- JWT account authentication and owner-scoped product routes coexist with
+  legacy guest job access-token protection.
+- Some legacy guest job status/result/report flows remain UUID plus per-job
+  access-token based.
+- Phase 8 Realtime Interview remains disabled by default and is not live-smoke
+  verified by this checklist.
 - S3 lifecycle cleanup is still needed.
 - API and worker startup require the database schema to be at Alembic head.
 - First scoring run may be slower if the embedding model has to download at runtime.
