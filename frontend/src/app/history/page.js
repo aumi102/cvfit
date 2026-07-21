@@ -34,6 +34,7 @@ export default function HistoryPage() {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (isAuthChecking) {
@@ -62,7 +63,7 @@ export default function HistoryPage() {
     return () => {
       active = false;
     };
-  }, [isAuthChecking]);
+  }, [isAuthChecking, reloadKey]);
 
   if (isAuthChecking) {
     return (
@@ -92,7 +93,10 @@ export default function HistoryPage() {
 
         {!isLoading && error && (
           <div className={styles.errorCard} role="alert">
-            {error}
+            <p>{error}</p>
+            <button type="button" onClick={() => setReloadKey((value) => value + 1)}>
+              Thử lại
+            </button>
           </div>
         )}
 
@@ -150,7 +154,7 @@ export default function HistoryPage() {
                           <div className={styles.actionRow}>
                             {item.status === 'succeeded' && (
                               <Link 
-                                href={`/dashboard?job_id=${item.job_id}`}
+                                href={`/history/${item.job_id}`}
                                 className={styles.viewResultBtn}
                               >
                                 Xem kết quả
@@ -158,7 +162,7 @@ export default function HistoryPage() {
                             )}
                             {canCompare && (
                               <Link 
-                                href={`/dashboard?job_id=${item.job_id}&compare_with=${prevItem.job_id}`}
+                                href={`/history/${item.job_id}?compare_with=${prevItem.job_id}`}
                                 className={styles.compareBtn}
                               >
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">

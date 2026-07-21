@@ -17,7 +17,7 @@ import { extractApiError } from '@/utils/errorHelpers';
 import { useUploadCV } from '@/hooks/useUploadCV';
 import { useJobPolling } from '@/hooks/useJobPolling';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { createScoreJob, getJobResult, getJobStatus } from '@/services/jobApi';
+import { createScoreJob, getJobResult, getJobStatus, getStoredAccessToken } from '@/services/jobApi';
 import { useLanguage } from '@/context/LanguageContext';
 import { trackEvent, ANALYTICS_EVENTS, scoreBucket } from '@/lib/analytics';
 import {
@@ -86,7 +86,7 @@ function DashboardContent() {
 
   /* ──── Fetch result when job succeeds ──── */
   useEffect(() => {
-    if (jobStatus === JOB_STATUS.SUCCEEDED && jobId && accessToken && workflowStep !== WORKFLOW_STEPS.RESULT) {
+    if (jobStatus === JOB_STATUS.SUCCEEDED && jobId && workflowStep !== WORKFLOW_STEPS.RESULT) {
       (async () => {
         try {
           const data = await getJobResult(jobId, accessToken);
@@ -119,7 +119,7 @@ function DashboardContent() {
     if (urlJobId && !isAuthChecking) {
       setWorkflowStep(WORKFLOW_STEPS.POLLING);
       setJobId(urlJobId);
-      if (urlToken) setAccessToken(urlToken);
+      setAccessToken(urlToken || getStoredAccessToken(urlJobId));
       
       // If comparing, fetch the previous result immediately
       if (compareWithJobId) {
