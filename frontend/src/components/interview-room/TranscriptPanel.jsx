@@ -14,7 +14,7 @@ export default function TranscriptPanel({ transcript = [] }) {
   }, [transcript]);
 
   const formatTime = (timestamp) => {
-    // Simple mock timestamp formatter
+    // Transcript timestamps are local display metadata, not recorded audio.
     const d = new Date(timestamp);
     if (isNaN(d.getTime())) return '';
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
@@ -48,7 +48,7 @@ export default function TranscriptPanel({ transcript = [] }) {
               </div>
               <div className={styles.transcriptBubble}>
                 <div className={styles.transcriptSpeaker}>
-                  {entry.speaker === 'ai' ? 'AI Interviewer' : 'Bạn'}
+                  {entry.speaker === 'ai' ? 'Nhà tuyển dụng AI' : 'Bạn'}
                 </div>
                 <div className={styles.transcriptText}>
                   {entry.text}

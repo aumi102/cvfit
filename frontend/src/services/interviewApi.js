@@ -11,7 +11,9 @@ import apiClient from './apiClient';
  * @returns {Promise<{ questions: Array }>}
  */
 export async function getInterviewQuestions(appId) {
-  const response = await apiClient.get(`/v1/applications/${appId}/interview/questions`);
+  const response = await apiClient.get(`/v1/applications/${appId}/interview/questions`, {
+    params: { language: 'vi' },
+  });
   return response.data;
 }
 
@@ -22,7 +24,10 @@ export async function getInterviewQuestions(appId) {
  * @returns {Promise<Object>} feedback object
  */
 export async function submitAnswer(appId, payload) {
-  const response = await apiClient.post(`/v1/applications/${appId}/interview/answers`, payload);
+  const response = await apiClient.post(`/v1/applications/${appId}/interview/answers`, {
+    ...payload,
+    language: 'vi',
+  });
   return response.data;
 }
 

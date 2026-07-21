@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
@@ -517,6 +517,7 @@ def get_interview_questions(
     application_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
+    language: Literal["vi", "en"] = Query(default="vi"),
 ) -> InterviewQuestionsResponse:
     app = _get_owned_application(application_id, current_user, db)
 
@@ -529,12 +530,22 @@ def get_interview_questions(
         job = candidate
 
     profile_items = _get_profile_items(db, current_user.id)
-    questions = generate_interview_questions(app, job, profile_items)
+    questions = generate_interview_questions(
+        app,
+        job,
+        profile_items,
+        language=language,
+    )
 
     return InterviewQuestionsResponse(
         application_id=str(app.id),
         questions=questions,
-        disclaimer=QUESTIONS_DISCLAIMER,
+        disclaimer=(
+            "Câu hỏi được tạo từ CV, mô tả công việc và kết quả phân tích của bạn. "
+            "Đây chỉ là nội dung luyện tập; nhà tuyển dụng thực tế có thể đặt câu hỏi khác."
+            if language == "vi"
+            else QUESTIONS_DISCLAIMER
+        ),
     )
 
 
@@ -560,7 +571,14 @@ def submit_interview_answer(
     ensure_credit_available(db, current_user.id, "interview")
 
     profile_items = _get_profile_items(db, current_user.id)
-    rubric, feedback = score_answer(body.question, body.answer_text, app, job, profile_items)
+    rubric, feedback = score_answer(
+        body.question,
+        body.answer_text,
+        app,
+        job,
+        profile_items,
+        language=body.language,
+    )
 
     answer = InterviewAnswer(
         id=uuid.uuid4(),

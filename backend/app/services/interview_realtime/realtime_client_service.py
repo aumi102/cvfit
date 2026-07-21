@@ -20,7 +20,7 @@ from app.services.interview_realtime.errors import (
 OPENAI_REALTIME_CLIENT_SECRETS_URL = (
     "https://api.openai.com/v1/realtime/client_secrets"
 )
-PROVIDER_CONFIGURATION_VERSION = "realtime_session_v1"
+PROVIDER_CONFIGURATION_VERSION = "realtime_session_vi_v2"
 _PROVIDER_IDENTIFIER = re.compile(r"^[A-Za-z0-9._:-]+$")
 
 
@@ -135,7 +135,10 @@ def build_realtime_provider_session_config(
         "audio": {
             "input": {
                 "noise_reduction": {"type": "near_field"},
-                "transcription": {"model": transcription_model},
+                "transcription": {
+                    "model": transcription_model,
+                    "language": "vi",
+                },
                 "turn_detection": {
                     "type": "server_vad",
                     "create_response": True,

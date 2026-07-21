@@ -12,7 +12,7 @@ export default function DownloadReport({ jobId, accessToken }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleDownload = async () => {
-    if (!jobId || !accessToken) return;
+    if (!jobId) return;
 
     trackEvent(ANALYTICS_EVENTS.DOWNLOAD_REPORT_CLICK, { feature_name: 'cv_analysis' });
     setIsDownloading(true);
@@ -45,7 +45,7 @@ export default function DownloadReport({ jobId, accessToken }) {
     <button
       className={buttonClass}
       onClick={handleDownload}
-      disabled={isDownloading || !jobId || !accessToken}
+      disabled={isDownloading || !jobId}
       id="download-report-button"
     >
       {isDownloading ? (

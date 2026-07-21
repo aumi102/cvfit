@@ -1,130 +1,73 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useMediaDevices } from '@/hooks/useMediaDevices';
 import PageShell from '@/components/common/PageShell';
-import { createSession } from '@/services/interviewSessionsApi';
-import { extractApiError } from '@/utils/errorHelpers';
-import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
+import InterviewSetupForm from '@/components/interview-room/InterviewSetupForm';
+import { createRealtimeInterviewSession } from '@/services/interviewRealtimeApi';
 import styles from '@/styles/InterviewRoom.module.css';
 
-import InterviewSetupForm from '@/components/interview-room/InterviewSetupForm';
-import DevicePermissionCheck from '@/components/interview-room/DevicePermissionCheck';
+function createErrorMessage(error) {
+  if (error?.response?.status === 503) {
+    return 'Phỏng vấn bằng giọng nói hiện chưa được cấu hình.';
+  }
+  if (error?.response?.status === 422) {
+    return 'Cấu hình phiên chưa hợp lệ. Vui lòng kiểm tra lại lựa chọn.';
+  }
+  return 'Không thể tạo phiên phỏng vấn bằng giọng nói. Vui lòng thử lại.';
+}
 
-const STEPS = {
-  SETUP: 0,
-  PERMISSIONS: 1,
-};
-
-export default function NewSessionPage() {
+function NewSessionContent() {
   const { isAuthChecking } = useRequireAuth();
   const router = useRouter();
-  const { micStatus, camStatus, requestMic, requestCam, stopAll } = useMediaDevices();
-
-  const [currentStep, setCurrentStep] = useState(STEPS.SETUP);
-  const [setupData, setSetupData] = useState({});
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleSetupComplete = (data) => {
-    setSetupData(data);
-    setCurrentStep(STEPS.PERMISSIONS);
-  };
-
-  const handlePermissionsComplete = async () => {
+  const handleCreate = async (setup) => {
     setIsSubmitting(true);
     setError(null);
-
     try {
-      // 1. Create the session on the backend
-      const session = await createSession({ 
-        question_type: setupData.question_type, 
-        difficulty: setupData.difficulty,
-        target_job_id: setupData.target_job_id,
-        application_id: setupData.application_id,
+      const applicationId = searchParams.get('application_id') || setup.application_id;
+      const session = await createRealtimeInterviewSession({
+        interview_type:
+          setup.question_type === 'project' ? 'project_deep_dive' :
+          setup.question_type === 'HR' ? 'hr' : setup.question_type,
+        difficulty: setup.difficulty,
+        question_limit: setup.question_count,
+        target_job_id: setup.target_job_id || undefined,
+        application_id: applicationId || undefined,
+        consent_audio: setup.consent_audio,
       });
-
-      trackEvent(ANALYTICS_EVENTS.INTERVIEW_SESSION_CREATED, {
-        feature_name: 'interview_sessions',
-        question_type: setupData.question_type,
-        difficulty: setupData.difficulty,
-      });
-
-      // 2. We need to pass the question_count to the room since it's used during question generation.
-      // We'll store it in sessionStorage for the room page to pick up.
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(`session_config_${session.id}`, JSON.stringify({
-          question_count: setupData.question_count
-        }));
-      }
-
-      // Stop local streams before navigating to the room (the room will request its own or reuse)
-      stopAll();
-
-      // 3. Navigate to the new interview room route
       router.push(`/interview/sessions/${session.id}/room`);
-    } catch (err) {
-      const { message } = extractApiError(err, 'Không thể bắt đầu phiên. Vui lòng thử lại.');
-      setError(message);
+    } catch (cause) {
+      setError(createErrorMessage(cause));
       setIsSubmitting(false);
     }
   };
 
   return (
     <PageShell isAuthChecking={isAuthChecking} maxWidth="800px">
-      <div style={{ paddingTop: '2rem' }}>
-        {/* Wizard Steps Indicator */}
-        <div className={styles.wizardSteps}>
-          <div className={styles.wizardStep}>
-            <div className={`${styles.wizardStepDot} ${currentStep === STEPS.SETUP ? styles['wizardStepDot--active'] : styles['wizardStepDot--done']}`}>
-              {currentStep > STEPS.SETUP ? '✓' : '1'}
-            </div>
-            <span className={`${styles.wizardStepLabel} ${currentStep === STEPS.SETUP ? styles['wizardStepLabel--active'] : ''}`}>Cấu hình</span>
-          </div>
-          <div className={`${styles.wizardConnector} ${currentStep > STEPS.SETUP ? styles['wizardConnector--done'] : ''}`} />
-          <div className={styles.wizardStep}>
-            <div className={`${styles.wizardStepDot} ${currentStep === STEPS.PERMISSIONS ? styles['wizardStepDot--active'] : ''}`}>
-              2
-            </div>
-            <span className={`${styles.wizardStepLabel} ${currentStep === STEPS.PERMISSIONS ? styles['wizardStepLabel--active'] : ''}`}>Thiết bị</span>
-          </div>
-        </div>
-
-        {error && (
-          <div style={{ marginBottom: '1rem' }}>
-            <div className={styles.interviewError}>
-              <div className={styles.interviewErrorText}>{error}</div>
-            </div>
-          </div>
-        )}
-
-        {currentStep === STEPS.SETUP && (
-          <InterviewSetupForm 
-            initialData={setupData}
-            onNext={handleSetupComplete}
-            onCancel={() => router.push('/interview/sessions')}
-          />
-        )}
-
-        {currentStep === STEPS.PERMISSIONS && (
-          <DevicePermissionCheck
-            micStatus={micStatus}
-            camStatus={camStatus}
-            onRequestMic={requestMic}
-            onRequestCam={requestCam}
-            onNext={handlePermissionsComplete}
-            onCancel={() => setCurrentStep(STEPS.SETUP)}
-          />
-        )}
-
-        {isSubmitting && (
-          <div style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--color-text-muted)' }}>
-            Đang khởi tạo phòng phỏng vấn...
-          </div>
-        )}
+      <div className={styles.voiceModeIntro}>
+        <span>Phỏng vấn bằng giọng nói</span>
+        <p>Phiên mới mặc định sử dụng tiếng Việt.</p>
       </div>
+      {error && <div className={styles.voiceError} role="alert">{error}</div>}
+      <InterviewSetupForm
+        initialData={{ application_id: searchParams.get('application_id') || '' }}
+        onNext={handleCreate}
+        onCancel={() => router.back()}
+      />
+      {isSubmitting && <p aria-live="polite">Đang tạo phiên an toàn…</p>}
     </PageShell>
+  );
+}
+
+export default function NewSessionPage() {
+  return (
+    <Suspense fallback={<p>Đang tải cấu hình phỏng vấn…</p>}>
+      <NewSessionContent />
+    </Suspense>
   );
 }

@@ -27,6 +27,8 @@ export function useMediaDevices() {
 
   const analyserRef = useRef(null);
   const rafRef = useRef(null);
+  const micStreamRef = useRef(null);
+  const camStreamRef = useRef(null);
 
   // Check initial permission status on mount
   useEffect(() => {
@@ -71,6 +73,7 @@ export function useMediaDevices() {
   const requestMic = useCallback(async () => {
     const result = await requestMicrophonePermission();
     if (result.granted && result.stream) {
+      micStreamRef.current = result.stream;
       setMicStream(result.stream);
       setMicStatus('granted');
     } else {
@@ -82,6 +85,7 @@ export function useMediaDevices() {
   const requestCam = useCallback(async () => {
     const result = await requestCameraPermission();
     if (result.granted && result.stream) {
+      camStreamRef.current = result.stream;
       setCamStream(result.stream);
       setCamStatus('granted');
     } else {
@@ -116,12 +120,16 @@ export function useMediaDevices() {
       analyserRef.current.cleanup();
       analyserRef.current = null;
     }
-    stopStream(micStream);
-    stopStream(camStream);
+    stopStream(micStreamRef.current);
+    stopStream(camStreamRef.current);
+    micStreamRef.current = null;
+    camStreamRef.current = null;
     setMicStream(null);
     setCamStream(null);
     setAudioLevel(0);
-  }, [micStream, camStream]);
+    setIsMuted(false);
+    setIsCameraOff(false);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {

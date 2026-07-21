@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -382,7 +382,7 @@ def get_summary(
     session_id: uuid.UUID,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Session = Depends(get_db),
-    language: Optional[str] = Query(default=None),
+    language: Literal["vi", "en"] = Query(default="vi"),
 ) -> SessionSummaryResponse:
     session = _get_owned_session(session_id, current_user, db)
     lang = resolve_language(language)

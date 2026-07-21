@@ -302,7 +302,7 @@ def get_summary(
             status="pending",
             rubric_version=RUBRIC_VERSION,
             limitations=[
-                "Summary is not ready because no completed interview turn is available yet."
+                "Đánh giá chưa sẵn sàng vì phiên chưa có lượt phỏng vấn hoàn tất."
             ],
             disclaimer=SUMMARY_DISCLAIMER,
         )

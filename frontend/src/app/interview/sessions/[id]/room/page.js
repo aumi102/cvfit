@@ -1,142 +1,142 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useMediaDevices } from '@/hooks/useMediaDevices';
 import { useInterviewSession } from '@/hooks/useInterviewSession';
-import { getSession, generateSessionQuestions, endSession } from '@/services/interviewSessionsApi';
-import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
+import {
+  completeRealtimeInterviewSession,
+  getRealtimeInterviewSession,
+} from '@/services/interviewRealtimeApi';
 import { CONNECTION_STATUS } from '@/lib/interviewTypes';
 import styles from '@/styles/InterviewRoom.module.css';
 
-// Components
 import PageShell from '@/components/common/PageShell';
 import LoadingOverlay from '@/components/interview-room/LoadingOverlay';
 import InterviewSkeleton from '@/components/interview-room/InterviewSkeleton';
-import InterviewErrorBanner from '@/components/interview-room/InterviewErrorBanner';
 import PermissionDeniedFallback from '@/components/interview-room/PermissionDeniedFallback';
-import CameraPreview from '@/components/interview-room/CameraPreview';
 import MicrophoneMeter from '@/components/interview-room/MicrophoneMeter';
 import RealtimeConnectionStatus from '@/components/interview-room/RealtimeConnectionStatus';
 import AIInterviewerPanel from '@/components/interview-room/AIInterviewerPanel';
 import TranscriptPanel from '@/components/interview-room/TranscriptPanel';
 import QuestionProgress from '@/components/interview-room/QuestionProgress';
 import AnswerTimer from '@/components/interview-room/AnswerTimer';
-import SessionControls from '@/components/interview-room/SessionControls';
+
+function featureMessage(error) {
+  if (error?.response?.status === 503) {
+    return 'Phỏng vấn bằng giọng nói hiện chưa được cấu hình.';
+  }
+  if (error?.response?.status === 404) {
+    return 'Không tìm thấy phiên phỏng vấn hoặc bạn không có quyền truy cập.';
+  }
+  return 'Không thể tải thông tin phiên phỏng vấn.';
+}
 
 export default function InterviewRoomPage() {
   const { isAuthChecking } = useRequireAuth();
   const { id } = useParams();
   const router = useRouter();
-
-  // Local state
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [questionsGenerated, setQuestionsGenerated] = useState(false);
+  const [pageError, setPageError] = useState(null);
+  const [startRequested, setStartRequested] = useState(false);
+  const [isEnding, setIsEnding] = useState(false);
 
-  // Hooks
-  const { 
-    micStatus, camStatus, micStream, camStream, audioLevel,
-    isMuted, isCameraOff, toggleMute, toggleCamera, requestMic, requestCam, stopAll 
+  const {
+    micStatus,
+    micStream,
+    audioLevel,
+    isMuted,
+    toggleMute,
+    requestMic,
+    stopAll,
   } = useMediaDevices();
 
   const {
-    status: connectionStatus, currentQuestionIndex, totalQuestions, currentQuestion,
-    isAISpeaking, transcript, elapsedTime, connect, disconnect, setUserSpeaking
-  } = useInterviewSession(id, { questions: sessionData?.questions || [] });
+    status: connectionStatus,
+    isAISpeaking,
+    isUserSpeaking,
+    isProcessing,
+    transcript,
+    turns,
+    error: connectionError,
+    elapsedTime,
+    connect,
+    disconnect,
+    reconnect,
+  } = useInterviewSession(id, {
+    mediaStream: micStream,
+    questionLimit: sessionData?.question_limit || 5,
+  });
 
-  // Load session data and request permissions
   useEffect(() => {
-    if (isAuthChecking) return;
+    if (isAuthChecking) return undefined;
     let active = true;
-
-    async function init() {
-      try {
-        // 1. Get session details
-        let data = await getSession(id);
-        
-        // 2. Read config from session storage (if coming from setup wizard)
-        let count = 5;
-        try {
-          const configStr = sessionStorage.getItem(`session_config_${id}`);
-          if (configStr) {
-            const config = JSON.parse(configStr);
-            if (config.question_count) count = config.question_count;
-          }
-        } catch(e) {}
-
-        // 3. Generate questions if new session
-        if (!data.questions || data.questions.length === 0) {
-          await generateSessionQuestions(id, {
-            question_type: data.question_type,
-            difficulty: data.difficulty,
-            count: count,
-          });
-          data = await getSession(id);
-        }
-        
+    setIsLoading(true);
+    getRealtimeInterviewSession(id)
+      .then((data) => {
         if (!active) return;
         setSessionData(data);
-        setQuestionsGenerated(true);
-
-        // 4. Ensure we have mic permission
-        if (micStatus === 'prompt') {
-          await requestMic();
-        }
-
-      } catch (err) {
+      })
+      .catch((error) => {
         if (!active) return;
-        console.error(err);
-        setError("Không thể tải thông tin phiên phỏng vấn.");
-      } finally {
+        setPageError(featureMessage(error));
+      })
+      .finally(() => {
         if (active) setIsLoading(false);
-      }
-    }
-
-    init();
-
-    return () => { active = false; };
-  }, [isAuthChecking, id, requestMic, micStatus]);
-
-  // Auto connect when ready
-  useEffect(() => {
-    if (questionsGenerated && micStatus === 'granted' && connectionStatus === CONNECTION_STATUS.IDLE) {
-      connect();
-    }
-  }, [questionsGenerated, micStatus, connectionStatus, connect]);
-
-  // Voice activity detection (VAD) - mock integration
-  // Automatically updates the AI panel's user speaking indicator based on audio level
-  useEffect(() => {
-    const isSpeaking = audioLevel > 0.05 && !isMuted;
-    setUserSpeaking(isSpeaking);
-  }, [audioLevel, isMuted, setUserSpeaking]);
-
-  // Clean up streams on unmount
-  useEffect(() => {
+      });
     return () => {
-      stopAll();
-      disconnect();
+      active = false;
     };
-  }, [stopAll, disconnect]);
+  }, [id, isAuthChecking]);
 
-  const handleEndSession = async () => {
-    disconnect();
-    stopAll();
-    try {
-      await endSession(id);
-    } catch(e) {
-      console.error("End session failed:", e);
+  useEffect(() => {
+    if (!startRequested || !micStream || connectionStatus !== CONNECTION_STATUS.IDLE) {
+      return;
     }
-    router.replace(`/interview/sessions/${id}/summary`);
-  };
+    void connect().catch(() => undefined);
+  }, [startRequested, micStream, connectionStatus, connect]);
 
-  const handleRetryMic = async () => {
-    setError(null);
-    await requestMic();
-  };
+  const handleStart = useCallback(async () => {
+    setPageError(null);
+    setStartRequested(true);
+    const permission = await requestMic();
+    if (!permission.granted) {
+      setPageError(permission.error || 'Không thể sử dụng microphone.');
+    }
+  }, [requestMic]);
+
+  const handleEndSession = useCallback(async () => {
+    if (isEnding) return;
+    setIsEnding(true);
+    setPageError(null);
+    try {
+      await disconnect('user_ended');
+      stopAll();
+      await completeRealtimeInterviewSession(id, {
+        completion_reason: 'user_ended',
+        turns: turns.map((turn) => ({
+          turn_index: turn.turn_index,
+          question_text: turn.question_text,
+          ...(turn.question_type ? { question_type: turn.question_type } : {}),
+          ...(turn.answer_transcript ? { answer_transcript: turn.answer_transcript } : {}),
+          ...(turn.ai_followup_text ? { ai_followup_text: turn.ai_followup_text } : {}),
+          ...(turn.started_at ? { started_at: turn.started_at } : {}),
+          ...(turn.ended_at ? { ended_at: turn.ended_at } : {}),
+        })),
+      });
+      router.replace(`/interview/sessions/${id}/summary`);
+    } catch {
+      setPageError('Không thể kết thúc phiên an toàn. Vui lòng thử lại.');
+      setIsEnding(false);
+    }
+  }, [disconnect, id, isEnding, router, stopAll, turns]);
+
+  const currentQuestion = useMemo(() => {
+    const turn = turns[turns.length - 1];
+    return turn ? { id: turn.turn_index, text: turn.question_text } : null;
+  }, [turns]);
 
   if (isAuthChecking || isLoading) {
     return (
@@ -146,31 +146,26 @@ export default function InterviewRoomPage() {
     );
   }
 
-  // Handle permission denied state
-  if (micStatus === 'denied') {
+  if (micStatus === 'denied' && startRequested) {
     return (
       <PageShell isAuthChecking={false} maxWidth="100%">
-        <PermissionDeniedFallback 
-          onRetry={handleRetryMic} 
-          fallbackUrl={`/interview/sessions/${id}`} 
-        />
+        <PermissionDeniedFallback onRetry={handleStart} fallbackUrl={`/applications/${sessionData?.application_id || ''}/interview`} />
       </PageShell>
     );
   }
 
-  const showLoadingOverlay = connectionStatus === CONNECTION_STATUS.CONNECTING || connectionStatus === CONNECTION_STATUS.IDLE;
+  const hasStarted = connectionStatus !== CONNECTION_STATUS.IDLE;
+  const showLoadingOverlay = connectionStatus === CONNECTION_STATUS.CONNECTING;
+  const visibleError = pageError || connectionError?.message;
 
   return (
     <PageShell isAuthChecking={false} maxWidth="1400px">
       {showLoadingOverlay && <LoadingOverlay />}
-      
-      {/* Top Header Bar */}
-      <div className={styles.roomHeader} style={{ marginBottom: '1rem' }}>
+
+      <div className={styles.roomHeader}>
         <div className={styles.roomHeaderLeft}>
-          <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>AI Interview Room</span>
-          <span style={{ padding: '2px 8px', background: 'var(--color-bg-alt)', borderRadius: 'var(--radius-full)', fontSize: 'var(--font-size-xs)', color: 'var(--color-primary)', fontWeight: 600 }}>
-            {sessionData?.question_type?.toUpperCase()}
-          </span>
+          <strong>Phỏng vấn bằng giọng nói</strong>
+          <span className={styles.voiceLanguageBadge}>Tiếng Việt</span>
         </div>
         <div className={styles.roomHeaderRight}>
           <RealtimeConnectionStatus status={connectionStatus} />
@@ -178,51 +173,92 @@ export default function InterviewRoomPage() {
         </div>
       </div>
 
-      {error && <InterviewErrorBanner message={error} onRetry={() => setError(null)} />}
-
-      <div className={styles.roomContainer}>
-        {/* Left Column: Video & Audio */}
-        <div className={styles.roomLeft}>
-          <CameraPreview 
-            stream={camStream} 
-            isOff={isCameraOff} 
-            isMuted={isMuted} 
-          />
-          <MicrophoneMeter 
-            level={audioLevel} 
-            isMuted={isMuted} 
-          />
+      {visibleError && (
+        <div className={styles.voiceError} role="alert">
+          <span>{visibleError}</span>
+          {connectionError?.retryable && micStream && (
+            <button type="button" onClick={() => void reconnect()}>
+              Kết nối lại
+            </button>
+          )}
         </div>
+      )}
 
-        {/* Center Column: AI Interviewer & Question */}
-        <div className={styles.roomCenter}>
-          <AIInterviewerPanel 
-            currentQuestion={currentQuestion}
-            isAISpeaking={isAISpeaking}
-            isUserSpeaking={audioLevel > 0.05 && !isMuted}
-          />
-          <QuestionProgress 
-            currentIndex={currentQuestionIndex} 
-            total={totalQuestions} 
-          />
-        </div>
+      {!hasStarted && (
+        <section className={styles.voiceStartCard} aria-labelledby="voice-start-title">
+          <div className={styles.voiceStartIcon} aria-hidden="true">🎙️</div>
+          <h1 id="voice-start-title">Phỏng vấn bằng giọng nói</h1>
+          <p>
+            AI sẽ đặt từng câu hỏi bằng tiếng Việt và lắng nghe câu trả lời qua microphone.
+          </p>
+          <ul>
+            <li>Âm thanh được truyền trực tiếp bằng WebRTC.</li>
+            <li>CVFit không ghi âm và không lưu dữ liệu audio hoặc SDP.</li>
+            <li>Bạn có thể tắt microphone hoặc kết thúc phiên bất cứ lúc nào.</li>
+          </ul>
+          <button
+            type="button"
+            className={styles.btnPrimary}
+            onClick={handleStart}
+            disabled={Boolean(pageError && !sessionData) || startRequested}
+            aria-label="Bắt đầu phỏng vấn bằng giọng nói và cho phép microphone"
+          >
+            {startRequested ? 'Đang chuẩn bị microphone…' : 'Bắt đầu phỏng vấn'}
+          </button>
+        </section>
+      )}
 
-        {/* Right Column: Transcript */}
-        <div className={styles.roomRight}>
-          <TranscriptPanel transcript={transcript} />
-        </div>
+      {hasStarted && (
+        <div className={styles.voiceRoomContainer}>
+          <div className={styles.voiceStatusPanel} aria-live="polite">
+            <h2>Trạng thái phiên</h2>
+            <MicrophoneMeter level={audioLevel} isMuted={isMuted} />
+            <p>
+              {isAISpeaking
+                ? 'AI đang nói'
+                : isUserSpeaking
+                  ? 'Đang nghe bạn trả lời'
+                  : isProcessing
+                    ? 'Đang xử lý'
+                    : connectionStatus === CONNECTION_STATUS.CONNECTED
+                      ? 'Đã kết nối — sẵn sàng lắng nghe'
+                      : 'Mất kết nối'}
+            </p>
+          </div>
 
-        {/* Bottom Controls */}
-        <div className={styles.roomControls}>
-          <SessionControls 
-            isMuted={isMuted}
-            isCameraOff={isCameraOff}
-            onToggleMute={toggleMute}
-            onToggleCamera={toggleCamera}
-            onEndSession={handleEndSession}
-          />
+          <div className={styles.voiceQuestionPanel}>
+            <AIInterviewerPanel
+              currentQuestion={currentQuestion}
+              isAISpeaking={isAISpeaking}
+              isUserSpeaking={isUserSpeaking}
+            />
+            <QuestionProgress currentIndex={Math.max(0, turns.length - 1)} total={sessionData?.question_limit || 5} />
+          </div>
+
+          <div className={styles.voiceTranscriptPanel}>
+            <TranscriptPanel transcript={transcript} />
+          </div>
+
+          <div className={styles.voiceControlsBar}>
+            <button
+              type="button"
+              className={styles.controlBtn}
+              onClick={toggleMute}
+              aria-label={isMuted ? 'Bật microphone' : 'Tắt microphone'}
+            >
+              {isMuted ? 'Bật microphone' : 'Tắt microphone'}
+            </button>
+            <button
+              type="button"
+              className={`${styles.controlBtn} ${styles['controlBtn--danger']}`}
+              onClick={handleEndSession}
+              disabled={isEnding}
+            >
+              {isEnding ? 'Đang kết thúc…' : 'Kết thúc phiên'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </PageShell>
   );
 }

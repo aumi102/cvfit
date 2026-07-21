@@ -189,6 +189,7 @@ class InterviewAnswerCreate(BaseModel):
     question_id: str = Field(min_length=1, max_length=100)
     question: str = Field(min_length=1, max_length=1000)
     answer_text: str = Field(min_length=1, max_length=8000)
+    language: Literal["vi", "en"] = "vi"
 
 
 class InterviewAnswerResponse(BaseModel):

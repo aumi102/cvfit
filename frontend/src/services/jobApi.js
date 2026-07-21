@@ -62,9 +62,12 @@ export async function getJobHistory() {
  * @param {string} accessToken
  * @returns {Promise<Object>}
  */
-export async function getJobResult(jobId, accessToken) {
+export async function getJobResult(jobId, accessToken, options = {}) {
   const params = accessToken ? { access_token: accessToken } : {};
-  const response = await apiClient.get(`/v1/jobs/${jobId}/result`, { params });
+  const response = await apiClient.get(`/v1/jobs/${jobId}/result`, {
+    params,
+    ...(options.signal ? { signal: options.signal } : {}),
+  });
   return response.data;
 }
 
@@ -88,7 +91,7 @@ export async function getReportMetadata(jobId, accessToken) {
  */
 export async function downloadReport(jobId, accessToken) {
   const response = await apiClient.get(`/v1/jobs/${jobId}/report/download`, {
-    params: { access_token: accessToken },
+    params: accessToken ? { access_token: accessToken } : {},
     responseType: 'blob',
   });
   return response.data;

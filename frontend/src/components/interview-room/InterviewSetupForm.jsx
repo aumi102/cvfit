@@ -14,6 +14,7 @@ export default function InterviewSetupForm({ initialData = {}, onNext, onCancel 
     target_job_id: initialData.target_job_id || '',
     application_id: initialData.application_id || '',
     question_count: initialData.question_count || 5,
+    consent_audio: initialData.consent_audio || false,
   });
 
   const [targetJobs, setTargetJobs] = useState([]);
@@ -149,7 +150,7 @@ export default function InterviewSetupForm({ initialData = {}, onNext, onCancel 
               type="range" 
               className={styles.rangeInput}
               min="3" 
-              max="15" 
+              max="5"
               step="1"
               value={formData.question_count}
               onChange={(e) => handleChange('question_count', parseInt(e.target.value, 10))}
@@ -161,14 +162,33 @@ export default function InterviewSetupForm({ initialData = {}, onNext, onCancel 
           </p>
         </div>
 
+        <div className={styles.fieldGroup}>
+          <label className={styles.voiceConsentLabel}>
+            <input
+              type="checkbox"
+              checked={formData.consent_audio}
+              onChange={(event) => handleChange('consent_audio', event.target.checked)}
+            />
+            <span>
+              Tôi đồng ý cho trình duyệt sử dụng microphone trong phiên này. CVFit không ghi âm
+              và không lưu audio, video hoặc SDP.
+            </span>
+          </label>
+        </div>
+
         <div className={styles.formActions}>
           {onCancel && (
             <button type="button" className={styles.btnSecondary} onClick={onCancel}>
               Hủy
             </button>
           )}
-          <button type="submit" className={styles.btnPrimary} id="next-step-btn">
-            Tiếp tục
+          <button
+            type="submit"
+            className={styles.btnPrimary}
+            id="next-step-btn"
+            disabled={!formData.consent_audio}
+          >
+            Tạo phiên giọng nói
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
               <path d="M5 12h14" />
               <path d="m12 5 7 7-7 7" />
