@@ -24,6 +24,7 @@ export const STRICTNESS_OPTIONS = [
 ];
 
 export const LANGUAGE_OPTIONS = [
+  { value: 'vi', label: 'Tiếng Việt' },
   { value: 'en', label: 'Tiếng Anh' },
   { value: 'id', label: 'Tiếng Indonesia' },
   { value: 'es', label: 'Tiếng Tây Ban Nha' },

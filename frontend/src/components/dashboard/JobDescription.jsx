@@ -47,7 +47,7 @@ export default function JobDescription({ value, onChange, disabled }) {
           placeholder={t('jd.placeholder')}
           disabled={disabled}
           rows={8}
-          aria-label="Job description text"
+          aria-label="Nội dung mô tả công việc"
         />
         <div className={counterClass}>
           <span>{charCount.toLocaleString()} / {MAX_JD_CHARACTERS.toLocaleString()} {t('jd.chars')}</span>

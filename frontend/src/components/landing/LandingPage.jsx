@@ -168,7 +168,7 @@ export default function LandingPage() {
           </div>
           <div className={styles.statDivider}></div>
           <div className={styles.statItem}>
-            <div className={styles.statLabel}>Thanh toán đang thử nghiệm</div>
+            <div className={styles.statLabel}>Luyện phỏng vấn AI</div>
           </div>
         </div>
       </div>
