@@ -29,7 +29,7 @@ const dictionary = {
     'landing.how3.title': 'Get AI Insights',
     'landing.how3.desc': 'Receive your match score, skills analysis, and exportable report.',
     'landing.bottomCta.title': 'Ready to optimize your CV?',
-    'landing.bottomCta.desc': 'Join thousands of job seekers landing their dream roles with AI insights.',
+    'landing.bottomCta.desc': 'Optimize your CV now with cutting-edge AI technology.',
     'landing.bottomCta.btn': 'Get Started for Free',
     'landing.footer': '© 2026 CV Fit Analyzer. All rights reserved.',
 
@@ -304,7 +304,7 @@ const dictionary = {
     'landing.how3.title': 'Nhận phân tích từ AI',
     'landing.how3.desc': 'Nhận điểm phù hợp, phân tích kỹ năng và xuất báo cáo.',
     'landing.bottomCta.title': 'Sẵn sàng tối ưu hóa CV của bạn?',
-    'landing.bottomCta.desc': 'Tham gia cùng hàng ngàn ứng viên đang chinh phục công việc mơ ước với công nghệ AI.',
+    'landing.bottomCta.desc': 'Tối ưu hoá CV của bạn ngay bây giờ với công nghệ AI hiện đại.',
     'landing.bottomCta.btn': 'Bắt đầu ngay hoàn toàn miễn phí',
     'landing.footer': '© 2026 CV Fit Analyzer. Đã đăng ký bản quyền.',
 

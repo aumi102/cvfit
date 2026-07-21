@@ -100,7 +100,7 @@ export default function UploadCV({ file, onFileSelect, progress, isUploading, er
         onClick={handleClick}
         role="button"
         tabIndex={0}
-        aria-label="Upload CV file"
+        aria-label="Tải lên file CV"
         id="cv-dropzone"
       >
         <input
@@ -143,7 +143,7 @@ export default function UploadCV({ file, onFileSelect, progress, isUploading, er
                 e.stopPropagation();
                 onRemove();
               }}
-              aria-label="Remove file"
+              aria-label="Xóa file"
               id="remove-file-button"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -180,7 +180,7 @@ export default function UploadCV({ file, onFileSelect, progress, isUploading, er
           <div>
             <span>{error}</span>
             {errorHint && (
-              <span className={styles.errorHint}>Hint: {errorHint}</span>
+              <span className={styles.errorHint}>Gợi ý: {errorHint}</span>
             )}
           </div>
         </div>

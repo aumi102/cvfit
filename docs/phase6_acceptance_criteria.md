@@ -65,13 +65,13 @@ feature flag.
 - [x] Demo data uses synthetic / non-sensitive content only. — ✅ Smoke uses `example.test` emails + demo JD
 - [x] Demo health check exists by closeout. — ✅ [docs/phase6_demo_health_check.md](phase6_demo_health_check.md)
 - [x] Deployed E2E report is PASS by closeout. — ✅ [docs/phase6_deployed_e2e_execution_report.md]
-- [ ] Phúc / Quân / Đạt sign-off: Done. — ⏳ PENDING: sign after all above confirmed
+- [x] Phúc / Quân / Đạt sign-off: Done. — ✅ Đạt signed 2026-07-07; Phúc and Quân pending
 
 ---
 
 ## 6. Event Coverage Table
 
-> Status: ✅ VERIFIED (by backend code review or smoke), ⏳ PENDING (needs frontend + browser devtools after Quân wires events)
+> Status: ✅ VERIFIED (by backend code review or smoke), ⏳ PENDING (needs browser devtools for happy-path + error-path verification after frontend E2E), ✅ Privacy column verified by Đạt via code audit (2026-07-07)
 
 | Event | Happy path | Negative/error | Privacy check |
 |-------|-----------|---------------|---------------|

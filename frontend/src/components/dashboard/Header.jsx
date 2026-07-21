@@ -89,7 +89,7 @@ export default function Header() {
       </div>
 
       <div className={styles.right}>
-        <nav className={styles.navLinks} aria-label="Dashboard navigation">
+        <nav className={styles.navLinks} aria-label="Điều hướng chính">
           <Link href="/dashboard" className={`${styles.navLink} ${pathname === '/dashboard' ? styles['navLink--active'] : ''}`}>
             {t('nav.dashboard')}
           </Link>

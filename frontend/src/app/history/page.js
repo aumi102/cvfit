@@ -9,18 +9,18 @@ import styles from '@/styles/History.module.css';
 
 function formatDate(value) {
   if (!value) {
-    return 'N/A';
+    return 'Không có';
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return 'N/A';
+    return 'Không có';
   }
   return date.toLocaleString('vi-VN');
 }
 
 function formatScore(value) {
   if (value === null || value === undefined) {
-    return 'N/A';
+    return 'Không có';
   }
   return `${value}`;
 }
@@ -123,9 +123,9 @@ export default function HistoryPage() {
                         <article key={item.job_id} className={styles.historyItem}>
                           <div className={styles.itemHeader}>
                             <div>
-                              <div className={styles.jobId}>Công việc {item.job_id}</div>
+                              <div className={styles.jobId}>Phân tích — {formatDate(item.created_at)}</div>
                             </div>
-                            <span className={styles.statusBadge}>{item.status || 'không rõ'}</span>
+                  <span className={styles.statusBadge}>{item.status || 'không rõ'}</span>
                           </div>
 
                           <div className={styles.metaGrid}>

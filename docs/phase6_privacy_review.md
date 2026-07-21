@@ -4,6 +4,8 @@
 **Owner:** Đạt
 **Status:** ✅ COMPLETE — All checkpoints PASS (2026-07-15)
 **Gates:** All PASS — `ENABLE_PHASE6_SHARE_LINKS=true` can be flipped
+**Status:** IN_PROGRESS — code audit complete (Đạt, 2026-07-07); browser devtools verification pending
+**Gates:** Must pass before flipping `ENABLE_PHASE6_SHARE_LINKS=true`
 
 ---
 
@@ -241,6 +243,23 @@ VERDICT: ✅ No share tokens in frontend analytics
 | Backend Lead | Phúc | — | ☐ PENDING |
 | Frontend Owner | Quân | — | ☐ PENDING |
 | QA/Privacy | Đạt | 2026-07-15 | ✅ DONE |
+=======
+> **Date:** 2026-07-07
+> **Note:** Đạt completes code audit of all privacy items. Browser devtools verification remains pending (requires frontend E2E smoke in browser).
+
+| Checkpoint | Owner | Status | Date | Evidence |
+|-----------|-------|--------|------|---------|
+| Share links token security | Đạt | ✅ | 2026-07-07 | SHA-256 hash only; `token_hash` never in API responses; smoke script never prints raw token |
+| Share links public view redaction | Đạt | ✅ | 2026-07-07 | `DEFAULT_VISIBILITY`: `hide_raw_cv=True`, `hide_raw_jd=True`; `build_public_view()` has no raw CV/JD inclusion |
+| Share links analytics privacy | Đạt | ✅ | 2026-07-07 | `share_link_opened` sends `feature_name` + `status` only (no token); `share_link_created` sends `target_type` only |
+| Help assistant data grounding | Đạt | ✅ | 2026-07-07 | `HELP_ASSISTANT_PROMPT_CLICKED` sends only `feature_name` + `prompt_chip`; `answer_text` never in analytics |
+| Learning roadmap data grounding | Đạt | ✅ | 2026-07-07 | `learning_task_started/completed` send only `task_type` + `priority`; `scoreBucket()` prevents exact score leakage |
+| Interview v2 answer handling | Đạt | ✅ | 2026-07-07 | `interview_answer_submitted` sends only `question_type` + `difficulty`; `answer_text` is API payload, not analytics param |
+| Target jobs JD handling | Đạt | ✅ | 2026-07-07 | `jd_text` only in API payloads (create/update); no JD text in any analytics event |
+| Usage shell data scope | Đạt | ✅ | 2026-07-07 | `usage_page_viewed` sends only `plan_id`; no raw content in analytics |
+| Grep scan: no raw tokens in logs | Đạt | ✅ | 2026-07-07 | `rg` on `analytics.js`: no `access_token`, `share_token`, `token_hash` in event params |
+| GA4 allow-list sanitization | Đạt | ✅ | 2026-07-07 | `analytics.js` `sanitizeAnalyticsParams()`: 21-key allow-list; all forbidden fields blocked |
+| Final gate: flip `ENABLE_PHASE6_SHARE_LINKS=true` | Đạt + Phúc | ⏳ | — | Pending Phúc sign-off + browser devtools verification |
 
 ---
 
