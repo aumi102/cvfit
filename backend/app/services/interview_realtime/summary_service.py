@@ -20,7 +20,7 @@ RUBRIC_VERSION = "realtime_practice_v1"
 EVALUATOR_VERSION = "deterministic_transcript_v1"
 TRANSCRIPT_PROVENANCE = "client_reported_validated"
 SUMMARY_DISCLAIMER = (
-    "AI interview feedback is for practice only and does not predict hiring outcomes."
+    "Phản hồi phỏng vấn AI chỉ phục vụ luyện tập và không dự đoán kết quả tuyển dụng."
 )
 
 RUBRIC_DIMENSIONS = (
@@ -35,13 +35,13 @@ RUBRIC_DIMENSIONS = (
 POSITIVE_DIMENSIONS = RUBRIC_DIMENSIONS[:-1]
 
 _DIMENSION_LABELS = {
-    "relevance": "job relevance",
-    "specificity": "specific detail",
-    "evidence": "evidence grounding",
-    "structure": "answer structure",
-    "technical_depth": "technical depth",
-    "communication_clarity": "communication clarity",
-    "risk": "unsupported-claim risk",
+    "relevance": "mức độ liên quan đến công việc",
+    "specificity": "chi tiết cụ thể",
+    "evidence": "bằng chứng thực tế",
+    "structure": "cấu trúc câu trả lời",
+    "technical_depth": "chiều sâu kỹ thuật",
+    "communication_clarity": "độ rõ ràng khi giao tiếp",
+    "risk": "rủi ro từ tuyên bố thiếu căn cứ",
 }
 _TECHNICAL_TERMS = {
     "api",
@@ -71,6 +71,14 @@ _ACTION_TERMS = {
     "optimized",
     "resolved",
     "tested",
+    "xây",
+    "thiết kế",
+    "triển khai",
+    "cải thiện",
+    "dẫn dắt",
+    "tối ưu",
+    "giải quyết",
+    "kiểm thử",
 }
 _RESULT_TERMS = {
     "delivered",
@@ -80,8 +88,16 @@ _RESULT_TERMS = {
     "result",
     "saved",
     "success",
+    "kết quả",
+    "thành công",
+    "giảm",
+    "tăng",
+    "tiết kiệm",
 }
-_STRUCTURE_TERMS = {"situation", "task", "action", "result", "first", "then", "finally"}
+_STRUCTURE_TERMS = {
+    "situation", "task", "action", "result", "first", "then", "finally",
+    "tình huống", "nhiệm vụ", "hành động", "kết quả", "đầu tiên", "sau đó", "cuối cùng",
+}
 _UNSUPPORTED_CLAIM_TERMS = {
     "always",
     "best",
@@ -168,7 +184,7 @@ def _trusted_or_deterministic_score(turn: InterviewRealtimeTurn) -> dict[str, fl
         "transcript_provenance": TRANSCRIPT_PROVENANCE,
         "recommendations": _turn_recommendations(score),
         "limitations": [
-            "The transcript was reported by the browser and was not cryptographically verified by the provider.",
+            "Bản ghi lời thoại do trình duyệt báo cáo và không được nhà cung cấp xác minh bằng mật mã.",
             SUMMARY_DISCLAIMER,
         ],
     }
@@ -248,23 +264,23 @@ def _persist_ready_summary(
     overall_score = max(0, min(100, overall_score))
 
     strengths = [
-        f"Consistent {_DIMENSION_LABELS[dimension]}."
+        f"Thể hiện ổn định về {_DIMENSION_LABELS[dimension]}."
         for dimension in POSITIVE_DIMENSIONS
         if averages[dimension] >= 3.5
     ]
     weaknesses = [
-        f"Needs more {_DIMENSION_LABELS[dimension]}."
+        f"Cần cải thiện thêm về {_DIMENSION_LABELS[dimension]}."
         for dimension in POSITIVE_DIMENSIONS
         if averages[dimension] < 2.5
     ]
     if averages["risk"] >= 2.5:
-        weaknesses.append("Some answers contain unsupported-claim risk signals.")
+        weaknesses.append("Một số câu trả lời có dấu hiệu chứa tuyên bố thiếu căn cứ.")
 
     weakest_dimensions = sorted(POSITIVE_DIMENSIONS, key=averages.get)[:2]
     improvements = [_improvement_for(dimension) for dimension in weakest_dimensions]
     if averages["risk"] >= 2.5:
         improvements.append(
-            "Separate verified experience from skills still being learned and avoid absolute claims."
+            "Phân biệt rõ kinh nghiệm đã được kiểm chứng với kỹ năng đang học và tránh khẳng định tuyệt đối."
         )
 
     evidence_ids = [str(turn.id) for turn in turns]
@@ -286,7 +302,7 @@ def _persist_ready_summary(
         {
             "task_type": "interview_prep",
             "priority": "high" if averages[dimension] < 2 else "medium",
-            "title": f"Improve {_DIMENSION_LABELS[dimension]}",
+            "title": f"Cải thiện {_DIMENSION_LABELS[dimension]}",
             "description": _improvement_for(dimension),
             "source": "realtime_interview_summary",
             "rubric_version": RUBRIC_VERSION,
@@ -294,9 +310,9 @@ def _persist_ready_summary(
         for dimension in weakest_dimensions
     ]
     limitations = [
-        "The transcript was reported by the browser and was not cryptographically verified by the provider.",
-        "This deterministic practice rubric uses bounded text heuristics and requires independent quality evaluation.",
-        "It does not evaluate emotion, facial expression, personality, truthfulness, protected attributes, or hiring probability.",
+        "Bản ghi lời thoại do trình duyệt báo cáo và không được nhà cung cấp xác minh bằng mật mã.",
+        "Rubric luyện tập xác định này dùng heuristic văn bản có giới hạn và vẫn cần đánh giá chất lượng độc lập.",
+        "Hệ thống không đánh giá cảm xúc, biểu cảm khuôn mặt, tính cách, độ trung thực, thuộc tính được bảo vệ hoặc xác suất tuyển dụng.",
         SUMMARY_DISCLAIMER,
     ]
 
@@ -310,7 +326,7 @@ def _persist_ready_summary(
     summary.weaknesses_json = weaknesses
     summary.suggested_improvements_json = improvements
     summary.next_questions_json = [
-        f"Practice one job-relevant answer focused on {_DIMENSION_LABELS[dimension]}."
+        f"Luyện thêm một câu trả lời liên quan công việc, tập trung vào {_DIMENSION_LABELS[dimension]}."
         for dimension in weakest_dimensions
     ]
     summary.learning_tasks_json = learning_tasks
@@ -342,7 +358,7 @@ def _persist_failed_summary(
     summary.next_questions_json = []
     summary.learning_tasks_json = []
     summary.limitations_json = [
-        "Summary generation failed safely; persisted transcript turns were retained for retry.",
+        "Việc tạo đánh giá đã thất bại an toàn; các lượt lời đã lưu được giữ lại để thử lại.",
         SUMMARY_DISCLAIMER,
     ]
     summary.updated_at = datetime.utcnow()
@@ -399,18 +415,18 @@ def _turn_recommendations(score: dict[str, float]) -> list[str]:
     weakest = sorted(POSITIVE_DIMENSIONS, key=score.get)[:2]
     output = [_improvement_for(dimension) for dimension in weakest]
     if score["risk"] >= 2.5:
-        output.append("Replace absolute or unsupported claims with verifiable evidence.")
+        output.append("Thay các khẳng định tuyệt đối hoặc thiếu căn cứ bằng bằng chứng có thể kiểm chứng.")
     return output
 
 
 def _improvement_for(dimension: str) -> str:
     guidance = {
-        "relevance": "Answer the exact question first, then connect the example to the target role.",
-        "specificity": "Add concrete tools, scope, decisions, and outcomes that you can verify.",
-        "evidence": "Ground the answer in a real project or profile example without inventing facts.",
-        "structure": "Use a concise Situation-Task-Action-Result sequence.",
-        "technical_depth": "Explain the technical choice, tradeoff, implementation, and result in more depth.",
-        "communication_clarity": "Use shorter sentences and a clear beginning, middle, and conclusion.",
+        "relevance": "Trả lời trực tiếp câu hỏi trước, sau đó liên hệ ví dụ với vị trí mục tiêu.",
+        "specificity": "Bổ sung công cụ, phạm vi, quyết định và kết quả cụ thể có thể kiểm chứng.",
+        "evidence": "Dựa câu trả lời trên dự án hoặc ví dụ hồ sơ có thật, không bịa dữ kiện.",
+        "structure": "Dùng trình tự ngắn gọn Tình huống-Nhiệm vụ-Hành động-Kết quả.",
+        "technical_depth": "Giải thích sâu hơn lựa chọn kỹ thuật, đánh đổi, cách triển khai và kết quả.",
+        "communication_clarity": "Dùng câu ngắn hơn với phần mở đầu, nội dung và kết luận rõ ràng.",
     }
     return guidance[dimension]
 

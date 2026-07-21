@@ -66,9 +66,7 @@ class QuestionsGenerateRequest(BaseModel):
     question_type: Optional[QuestionType] = None
     difficulty: Optional[Difficulty] = None
     count: int = Field(default=5, ge=1, le=15)
-    # Optional UI language ("vi" / "en"). Defaults to English generation so
-    # existing clients are unaffected; the Vietnamese-first frontend sends "vi".
-    language: Optional[str] = None
+    language: Literal["vi", "en"] = "vi"
 
 
 class QuestionsGenerateResponse(BaseModel):
@@ -81,8 +79,7 @@ class QuestionsGenerateResponse(BaseModel):
 class AnswerCreateRequest(BaseModel):
     question_id: str
     answer_text: str = Field(min_length=1, max_length=8000)
-    # Optional UI language ("vi" / "en") for the generated feedback prose.
-    language: Optional[str] = None
+    language: Literal["vi", "en"] = "vi"
 
 
 class AnswerResponse(BaseModel):

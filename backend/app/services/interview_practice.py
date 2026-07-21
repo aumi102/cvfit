@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from app.services.i18n import resolve_language
+
 QUESTIONS_DISCLAIMER = (
     "Questions are generated from your CV, JD, and analysis result. "
     "They are practice aids only — real interviewers may ask different questions."
@@ -25,8 +27,11 @@ def generate_interview_questions(
     application: Any,
     job: Optional[Any],
     profile_items: list,
+    *,
+    language: str = "vi",
 ) -> list[dict]:
     """Return up to MAX_QUESTIONS interview question dicts."""
+    lang = resolve_language(language)
     result: dict = job.result_json if (job and job.result_json) else {}
 
     matched_skills = _extract_skill_list(result.get("matched_skills"))
@@ -36,7 +41,10 @@ def generate_interview_questions(
     questions: list[dict] = []
 
     # 1. Pull existing interview_prep questions from result_json first (max 3)
-    existing = _extract_existing_prep(result)
+    # Historical prep can contain arbitrary English prose. Keep it readable via
+    # historical APIs, but do not reuse it as a newly generated Vietnamese
+    # question because deterministic translation is not available here.
+    existing = [] if lang == "vi" else _extract_existing_prep(result)
     for i, q in enumerate(existing[:3]):
         skill = q.get("related_skill") or ""
         questions.append({
@@ -45,7 +53,19 @@ def generate_interview_questions(
             "type": q.get("type", "technical"),
             "related_jd_requirement": _find_jd_requirement(skill, jd_requirements),
             "related_cv_evidence": _find_cv_evidence(skill, profile_items),
-            "why_this_question": q.get("why", f"{skill} appears in the analysis result.") if skill else "Sourced from your prior analysis.",
+            "why_this_question": (
+                q.get("why_this_question")
+                or q.get("why")
+                or (
+                    f"{skill} xuất hiện trong kết quả phân tích."
+                    if lang == "vi" and skill
+                    else "Câu hỏi được xây dựng từ kết quả phân tích trước đó."
+                    if lang == "vi"
+                    else f"{skill} appears in the analysis result."
+                    if skill
+                    else "Sourced from your prior analysis."
+                )
+            ),
         })
 
     # 2. project_deep_dive for profile items that match a matched skill
@@ -65,14 +85,18 @@ def generate_interview_questions(
         questions.append({
             "question_id": f"q_{len(questions) + 1}",
             "question": (
-                f"Describe your work on '{title}'. "
-                f"What challenges did you face and how does it relate to {skill_ref}?"
+                f"Hãy mô tả công việc của bạn trong '{title}'. Bạn đã gặp những thách thức nào "
+                f"và kinh nghiệm đó liên quan đến {skill_ref} ra sao?"
+                if lang == "vi"
+                else f"Describe your work on '{title}'. What challenges did you face and how does it relate to {skill_ref}?"
             ),
             "type": "project_deep_dive",
             "related_jd_requirement": _find_jd_requirement(skill_ref, jd_requirements),
             "related_cv_evidence": [title] + ([desc[:80]] if desc else []),
             "why_this_question": (
-                f"{skill_ref} appears in both the JD and your career profile item '{title}'."
+                f"{skill_ref} xuất hiện trong cả mô tả công việc và mục hồ sơ nghề nghiệp '{title}'."
+                if lang == "vi"
+                else f"{skill_ref} appears in both the JD and your career profile item '{title}'."
             ),
         })
 
@@ -87,13 +111,19 @@ def generate_interview_questions(
         questions.append({
             "question_id": f"q_{len(questions) + 1}",
             "question": (
-                f"The JD requires {skill}. Can you describe a situation where you applied {skill} "
-                "in a project or professional context?"
+                f"Mô tả công việc yêu cầu {skill}. Bạn có thể chia sẻ một tình huống thực tế "
+                f"mà bạn đã áp dụng {skill} trong dự án hoặc công việc không?"
+                if lang == "vi"
+                else f"The JD requires {skill}. Can you describe a situation where you applied {skill} in a project or professional context?"
             ),
             "type": "technical",
             "related_jd_requirement": _find_jd_requirement(skill, jd_requirements),
             "related_cv_evidence": evidence,
-            "why_this_question": f"{skill} is a matched skill from your CV and JD.",
+            "why_this_question": (
+                f"{skill} là kỹ năng khớp giữa CV và mô tả công việc của bạn."
+                if lang == "vi"
+                else f"{skill} is a matched skill from your CV and JD."
+            ),
         })
 
     # 4. gap_probe for must-have missing skills (prioritised first)
@@ -107,14 +137,18 @@ def generate_interview_questions(
             questions.append({
                 "question_id": f"q_{len(questions) + 1}",
                 "question": (
-                    f"The JD requires {skill} experience. "
-                    f"How would you approach learning and applying {skill} for this role?"
+                    f"Mô tả công việc yêu cầu kinh nghiệm về {skill}. Bạn sẽ học và áp dụng "
+                    f"{skill} cho vị trí này như thế nào?"
+                    if lang == "vi"
+                    else f"The JD requires {skill} experience. How would you approach learning and applying {skill} for this role?"
                 ),
                 "type": "gap_probe",
                 "related_jd_requirement": f"{skill} ({req_type})",
                 "related_cv_evidence": [],
                 "why_this_question": (
-                    f"{skill} evidence was not found in the parsed CV. This is a must-have JD requirement."
+                    f"Không tìm thấy bằng chứng về {skill} trong CV đã phân tích; đây là yêu cầu bắt buộc."
+                    if lang == "vi"
+                    else f"{skill} evidence was not found in the parsed CV. This is a must-have JD requirement."
                 ),
             })
 
@@ -134,40 +168,51 @@ def generate_interview_questions(
                 questions.append({
                     "question_id": f"q_{len(questions) + 1}",
                     "question": (
-                        f"The JD mentions {skill}. Do you have any experience with {skill}? "
-                        "If not, how would you plan to develop this skill?"
+                        f"Mô tả công việc có đề cập đến {skill}. Bạn đã có kinh nghiệm nào với "
+                        f"{skill} chưa? Nếu chưa, bạn dự định phát triển kỹ năng này như thế nào?"
+                        if lang == "vi"
+                        else f"The JD mentions {skill}. Do you have any experience with {skill}? If not, how would you plan to develop this skill?"
                     ),
                     "type": "gap_probe",
                     "related_jd_requirement": f"{skill} ({req_type})",
                     "related_cv_evidence": [],
                     "why_this_question": (
-                        f"{skill} was listed as a nice-to-have JD requirement not found in your CV."
+                        f"{skill} là yêu cầu ưu tiên trong mô tả công việc nhưng chưa được tìm thấy trong CV."
+                        if lang == "vi"
+                        else f"{skill} was listed as a nice-to-have JD requirement not found in your CV."
                     ),
                 })
 
     # 6. Fallback: generic behavioral questions when no analysis produced any questions
     if not questions:
-        job_title = getattr(application, "job_title", "this role") or "this role"
+        job_title = getattr(application, "job_title", None) or (
+            "vị trí này" if lang == "vi" else "this role"
+        )
         questions.extend([
             {
                 "question_id": "q_1",
                 "question": (
-                    f"Why are you interested in the {job_title} role? "
-                    "What about this opportunity aligns with your professional goals?"
+                    f"Vì sao bạn quan tâm đến vị trí {job_title}? Cơ hội này phù hợp với mục tiêu "
+                    "nghề nghiệp của bạn ở điểm nào?"
+                    if lang == "vi"
+                    else f"Why are you interested in the {job_title} role? What about this opportunity aligns with your professional goals?"
                 ),
                 "type": "behavioral",
                 "related_jd_requirement": job_title,
                 "related_cv_evidence": [],
                 "why_this_question": (
-                    "No analysis result is attached yet. "
-                    "This is a general readiness question to help you prepare."
+                    "Chưa có kết quả phân tích được đính kèm; đây là câu hỏi tổng quát để bạn chuẩn bị."
+                    if lang == "vi"
+                    else "No analysis result is attached yet. This is a general readiness question to help you prepare."
                 ),
             },
             {
                 "question_id": "q_2",
                 "question": (
-                    "Describe a challenging project you have worked on. "
-                    "What was your role and what did you learn from the experience?"
+                    "Hãy mô tả một dự án thử thách mà bạn đã thực hiện. Vai trò của bạn là gì "
+                    "và bạn học được điều gì từ trải nghiệm đó?"
+                    if lang == "vi"
+                    else "Describe a challenging project you have worked on. What was your role and what did you learn from the experience?"
                 ),
                 "type": "behavioral",
                 "related_jd_requirement": job_title,
@@ -177,8 +222,9 @@ def generate_interview_questions(
                     if getattr(item, "item_type", "") in ("project", "experience")
                 ][:2],
                 "why_this_question": (
-                    "This behavioral question helps assess relevant background "
-                    "regardless of a specific JD analysis."
+                    "Câu hỏi hành vi này giúp bạn luyện trình bày kinh nghiệm liên quan khi chưa có phân tích JD cụ thể."
+                    if lang == "vi"
+                    else "This behavioral question helps assess relevant background regardless of a specific JD analysis."
                 ),
             },
         ])
@@ -196,6 +242,8 @@ def score_answer(
     application: Any,
     job: Optional[Any],
     profile_items: list,
+    *,
+    language: str = "vi",
 ) -> tuple[dict, dict]:
     """Return (rubric_dict, feedback_dict)."""
     result: dict = job.result_json if (job and job.result_json) else {}
@@ -244,6 +292,7 @@ def score_answer(
         missing_skills=missing_skills,
         matched_evidence=matched_evidence,
         profile_items=profile_items,
+        language=language,
     )
 
     return rubric, feedback
@@ -469,7 +518,9 @@ def _build_feedback(
     missing_skills: list[str],
     matched_evidence: list[str],
     profile_items: list,
+    language: str,
 ) -> dict:
+    lang = resolve_language(language)
     strengths: list[str] = []
     missing_evidence: list[str] = []
     suggested_improvements: list[str] = []
@@ -481,53 +532,89 @@ def _build_feedback(
     # Strengths
     if matched_evidence:
         ev_names = ", ".join(matched_evidence[:2])
-        strengths.append(f"Answer references evidence from your profile or CV: {ev_names}.")
+        strengths.append(
+            f"Câu trả lời có dẫn chứng từ hồ sơ hoặc CV: {ev_names}."
+            if lang == "vi"
+            else f"Answer references evidence from your profile or CV: {ev_names}."
+        )
     if rubric["specificity"] >= 3:
-        strengths.append("Answer includes specific details such as tools, outcomes, or context.")
+        strengths.append(
+            "Câu trả lời có chi tiết cụ thể về công cụ, kết quả hoặc bối cảnh."
+            if lang == "vi"
+            else "Answer includes specific details such as tools, outcomes, or context."
+        )
     if rubric["structure"] >= 3:
-        strengths.append("Answer demonstrates a structured approach (STAR-like flow detected).")
+        strengths.append(
+            "Câu trả lời có cấu trúc rõ ràng theo hướng STAR."
+            if lang == "vi"
+            else "Answer demonstrates a structured approach (STAR-like flow detected)."
+        )
     if rubric["relevance"] >= 3:
-        strengths.append("Answer is relevant to the question topic.")
+        strengths.append(
+            "Câu trả lời bám sát chủ đề câu hỏi."
+            if lang == "vi"
+            else "Answer is relevant to the question topic."
+        )
     if not strengths:
-        strengths.append("You attempted to answer the question — that's a good start.")
+        strengths.append(
+            "Bạn đã bắt đầu trả lời đúng trọng tâm; hãy phát triển thêm bằng chứng cụ thể."
+            if lang == "vi"
+            else "You attempted to answer the question — that's a good start."
+        )
 
     # Missing evidence
     question_lower = question.lower()
     for skill in matched_skills:
         if skill.lower() in question_lower and skill.lower() not in answer_lower:
             missing_evidence.append(
-                f"The question references {skill}, which is in your CV — consider referencing it explicitly."
+                f"Câu hỏi đề cập đến {skill}, kỹ năng có trong CV; hãy dẫn chứng kỹ năng này rõ hơn."
+                if lang == "vi"
+                else f"The question references {skill}, which is in your CV — consider referencing it explicitly."
             )
     for skill in missing_skills:
         if skill.lower() in question_lower:
             missing_evidence.append(
-                f"{skill} is a JD requirement not found in your CV. Be honest about your current level."
+                f"{skill} là yêu cầu trong JD chưa được tìm thấy trong CV. Hãy trình bày trung thực về mức độ hiện tại."
+                if lang == "vi"
+                else f"{skill} is a JD requirement not found in your CV. Be honest about your current level."
             )
     if rubric["evidence"] <= 2 and not missing_evidence:
         missing_evidence.append(
-            "No specific CV or profile evidence was referenced. Try to anchor your answer in real experience."
+            "Chưa có bằng chứng cụ thể từ CV hoặc hồ sơ; hãy gắn câu trả lời với trải nghiệm thực tế."
+            if lang == "vi"
+            else "No specific CV or profile evidence was referenced. Try to anchor your answer in real experience."
         )
 
     # Suggested improvements
     if rubric["specificity"] <= 2:
         suggested_improvements.append(
-            "Add specific details: tool names, scale, measurable outcomes, or concrete challenges."
+            "Bổ sung tên công cụ, quy mô, kết quả đo lường được hoặc thách thức cụ thể."
+            if lang == "vi"
+            else "Add specific details: tool names, scale, measurable outcomes, or concrete challenges."
         )
     if rubric["structure"] <= 2:
         suggested_improvements.append(
-            "Try a STAR structure: Situation → Task → Action → Result."
+            "Thử cấu trúc STAR: Tình huống → Nhiệm vụ → Hành động → Kết quả."
+            if lang == "vi"
+            else "Try a STAR structure: Situation → Task → Action → Result."
         )
     if rubric["relevance"] <= 2:
         suggested_improvements.append(
-            "Make sure your answer directly addresses what the question is asking."
+            "Hãy trả lời trực tiếp điều câu hỏi đang yêu cầu."
+            if lang == "vi"
+            else "Make sure your answer directly addresses what the question is asking."
         )
     if rubric["evidence"] <= 2:
         suggested_improvements.append(
-            "Reference a specific project or experience from your career profile to ground your answer."
+            "Dẫn một dự án hoặc trải nghiệm cụ thể trong hồ sơ nghề nghiệp để làm căn cứ."
+            if lang == "vi"
+            else "Reference a specific project or experience from your career profile to ground your answer."
         )
     if not suggested_improvements:
         suggested_improvements.append(
-            "Consider adding a measurable outcome (e.g., impact on performance, delivery timeline, or team size) if true."
+            "Nếu đúng sự thật, hãy bổ sung kết quả đo lường được như hiệu năng, tiến độ hoặc quy mô nhóm."
+            if lang == "vi"
+            else "Consider adding a measurable outcome (e.g., impact on performance, delivery timeline, or team size) if true."
         )
 
     # Sample outline — use the user's own context only
@@ -535,34 +622,54 @@ def _build_feedback(
         (getattr(item, "title", "") for item in profile_items if getattr(item, "item_type", "") in ("project", "experience")),
         None,
     )
-    situation_ref = f"project: {profile_project}" if profile_project else "a relevant experience from your background"
-    sample_outline = [
-        f"Situation: {situation_ref}",
-        "Task: describe the specific goal or challenge you faced",
-        "Action: explain the steps you took, tools you used, and decisions you made",
-        "Result: describe a real, verifiable outcome — do not fabricate metrics",
-    ]
+    if lang == "vi":
+        situation_ref = (
+            f"dự án: {profile_project}"
+            if profile_project
+            else "một trải nghiệm liên quan trong hồ sơ của bạn"
+        )
+        sample_outline = [
+            f"Tình huống: {situation_ref}",
+            "Nhiệm vụ: mô tả mục tiêu hoặc thách thức cụ thể",
+            "Hành động: giải thích các bước, công cụ và quyết định của bạn",
+            "Kết quả: nêu kết quả thực tế có thể kiểm chứng; không bịa số liệu",
+        ]
+    else:
+        situation_ref = f"project: {profile_project}" if profile_project else "a relevant experience from your background"
+        sample_outline = [
+            f"Situation: {situation_ref}",
+            "Task: describe the specific goal or challenge you faced",
+            "Action: explain the steps you took, tools you used, and decisions you made",
+            "Result: describe a real, verifiable outcome — do not fabricate metrics",
+        ]
 
     # Risk notes
     if rubric["risk_gap"] >= 3:
         gap_skills = [s for s in missing_skills if s.lower() in question_lower]
         if gap_skills:
             risk_notes.append(
-                f"If a real interviewer presses on {gap_skills[0]}, you will need to be honest about your current level. "
-                "Practice explaining your learning plan clearly."
+                f"Nếu nhà tuyển dụng hỏi sâu về {gap_skills[0]}, hãy trung thực về mức độ hiện tại và "
+                "luyện giải thích kế hoạch học tập rõ ràng."
+                if lang == "vi"
+                else f"If a real interviewer presses on {gap_skills[0]}, you will need to be honest about your current level. Practice explaining your learning plan clearly."
             )
         else:
             risk_notes.append(
-                "This answer has areas that may be difficult to elaborate on in a real interview. "
-                "Prepare specific examples in advance."
+                "Một số phần của câu trả lời có thể khó giải thích sâu; hãy chuẩn bị ví dụ cụ thể trước."
+                if lang == "vi"
+                else "This answer has areas that may be difficult to elaborate on in a real interview. Prepare specific examples in advance."
             )
     if rubric["overall"] <= 2:
         risk_notes.append(
-            "This answer is currently weak. Revisit with more specific evidence before your actual interview."
+            "Câu trả lời hiện còn yếu; hãy bổ sung bằng chứng cụ thể trước buổi phỏng vấn thực tế."
+            if lang == "vi"
+            else "This answer is currently weak. Revisit with more specific evidence before your actual interview."
         )
     if not risk_notes:
         risk_notes.append(
-            "Ensure you can elaborate on any claim in this answer with a specific real example."
+            "Hãy bảo đảm mọi khẳng định đều có thể được giải thích bằng một ví dụ thực tế cụ thể."
+            if lang == "vi"
+            else "Ensure you can elaborate on any claim in this answer with a specific real example."
         )
 
     return {
@@ -571,5 +678,10 @@ def _build_feedback(
         "suggested_improvements": suggested_improvements,
         "sample_outline": sample_outline,
         "risk_notes": risk_notes,
-        "disclaimer": FEEDBACK_DISCLAIMER,
+        "disclaimer": (
+            "Phản hồi được tạo từ CV, mô tả công việc, hồ sơ ứng tuyển và câu trả lời của bạn. "
+            "Hãy xem lại trước khi sử dụng trong phỏng vấn thực tế."
+            if lang == "vi"
+            else FEEDBACK_DISCLAIMER
+        ),
     }

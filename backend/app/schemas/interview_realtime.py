@@ -20,6 +20,7 @@ RealtimeQuestionType = Literal[
     "technical", "behavioral", "project_deep_dive", "hr"
 ]
 RealtimeInterviewDifficulty = Literal["easy", "medium", "hard"]
+RealtimeInterviewLanguage = Literal["vi"]
 RealtimeEventType = Literal[
     "session_connected",
     "session_disconnected",
@@ -47,6 +48,7 @@ class RealtimeInterviewSessionCreate(_StrictModel):
     consent_audio: bool = False
     consent_camera: bool = False
     consent_recording: bool = False
+    language: RealtimeInterviewLanguage = "vi"
 
     @model_validator(mode="after")
     def validate_context_and_consent(self) -> "RealtimeInterviewSessionCreate":
@@ -91,6 +93,7 @@ class RealtimeInterviewSessionResponse(_StrictModel):
     consent_audio: bool
     consent_camera: bool
     consent_recording: bool
+    language: RealtimeInterviewLanguage = "vi"
     started_at: datetime | None = None
     ended_at: datetime | None = None
     failure_code: str | None = None
@@ -166,6 +169,7 @@ class RealtimeSessionCompleteResponse(_StrictModel):
 class RealtimeInterviewSummaryResponse(_StrictModel):
     interview_session_id: uuid.UUID
     status: Literal["ready", "pending", "failed"]
+    language: RealtimeInterviewLanguage = "vi"
     rubric_version: str | None = None
     overall_score: int | None = None
     rubric: dict[str, Any] = Field(default_factory=dict)
@@ -177,7 +181,7 @@ class RealtimeInterviewSummaryResponse(_StrictModel):
     limitations: list[str] = Field(default_factory=list)
     failure_code: str | None = None
     disclaimer: str = (
-        "AI interview feedback is for practice only and does not predict hiring outcomes."
+        "Phản hồi phỏng vấn AI chỉ phục vụ luyện tập và không dự đoán kết quả tuyển dụng."
     )
     created_at: datetime | None = None
     updated_at: datetime | None = None
