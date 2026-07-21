@@ -6,7 +6,17 @@ import sys
 from pathlib import Path
 
 
-SECRET_NAMES = {"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "DATABASE_URL", "REDIS_URL"}
+SECRET_NAMES = {
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "DATABASE_URL",
+    "JWT_SECRET_KEY",
+    "OPENAI_API_KEY",
+    "PAYOS_CLIENT_ID",
+    "PAYOS_API_KEY",
+    "PAYOS_CHECKSUM_KEY",
+    "REDIS_URL",
+}
 
 
 def load_env_file(path: Path) -> dict[str, str]:
@@ -98,7 +108,107 @@ def validate(mode: str, values: dict[str, str]) -> tuple[list[str], list[str]]:
             if is_missing(values, name):
                 warnings.append(f"{name} is empty; app defaults may still be used")
 
+    jwt_secret = values.get("JWT_SECRET_KEY", "").strip()
+    if mode == "render" and not jwt_secret:
+        errors.append("missing required production variable: JWT_SECRET_KEY")
+    elif not jwt_secret:
+        warnings.append(
+            "JWT_SECRET_KEY is unset; only the insecure local development default would apply"
+        )
+    if jwt_secret == "insecure-local-dev-secret-change-me":
+        message = "JWT_SECRET_KEY must not use the insecure development default"
+        (errors if mode == "render" else warnings).append(message)
+
+    if mode == "render" and is_missing(values, "CORS_ALLOWED_ORIGINS"):
+        errors.append("missing required production variable: CORS_ALLOWED_ORIGINS")
+    if is_true(values.get("CORS_ALLOW_CREDENTIALS", "false")):
+        origins = {
+            item.strip()
+            for item in values.get("CORS_ALLOWED_ORIGINS", "").split(",")
+            if item.strip()
+        }
+        if "*" in origins:
+            errors.append(
+                "CORS_ALLOW_CREDENTIALS cannot be true with wildcard CORS_ALLOWED_ORIGINS"
+            )
+
+    if is_true(values.get("ENABLE_REALTIME_INTERVIEW", "false")):
+        for name in [
+            "OPENAI_API_KEY",
+            "OPENAI_REALTIME_MODEL",
+            "OPENAI_REALTIME_VOICE",
+            "OPENAI_REALTIME_TRANSCRIPTION_MODEL",
+        ]:
+            if is_missing(values, name):
+                errors.append(
+                    f"missing variable required when Realtime Interview is enabled: {name}"
+                )
+        _validate_int_range(
+            values,
+            "OPENAI_REALTIME_SESSION_MAX_MINUTES",
+            1,
+            60,
+            errors,
+        )
+        _validate_int_range(
+            values,
+            "OPENAI_REALTIME_MAX_QUESTIONS",
+            1,
+            20,
+            errors,
+        )
+        _validate_int_range(
+            values,
+            "OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS",
+            30,
+            600,
+            errors,
+        )
+        _validate_int_range(
+            values,
+            "OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS",
+            5,
+            300,
+            errors,
+        )
+
+    billing_enabled = is_true(values.get("ENABLE_BILLING", "false"))
+    credit_gating_enabled = is_true(values.get("ENABLE_CREDIT_GATING", "false"))
+    if credit_gating_enabled and not billing_enabled:
+        errors.append("ENABLE_CREDIT_GATING requires ENABLE_BILLING=true")
+    if billing_enabled:
+        for name in [
+            "PAYOS_CLIENT_ID",
+            "PAYOS_API_KEY",
+            "PAYOS_CHECKSUM_KEY",
+            "PAYMENT_RETURN_URL",
+            "PAYMENT_CANCEL_URL",
+            "PAYOS_WEBHOOK_URL",
+        ]:
+            if is_missing(values, name):
+                errors.append(f"missing variable required when billing is enabled: {name}")
+
     return errors, warnings
+
+
+def _validate_int_range(
+    values: dict[str, str],
+    name: str,
+    minimum: int,
+    maximum: int,
+    errors: list[str],
+) -> None:
+    raw = values.get(name, "").strip()
+    if not raw:
+        errors.append(f"missing required integer variable: {name}")
+        return
+    try:
+        parsed = int(raw)
+    except ValueError:
+        errors.append(f"{name} must be an integer")
+        return
+    if not minimum <= parsed <= maximum:
+        errors.append(f"{name} must be between {minimum} and {maximum}")
 
 
 def print_present_summary(mode: str, values: dict[str, str]) -> None:
@@ -117,6 +227,25 @@ def print_present_summary(mode: str, values: dict[str, str]) -> None:
         "CV_MAX_UPLOAD_MB",
         "FRONTEND_TEMPLATES_DIR",
         "FRONTEND_STATIC_DIR",
+        "JWT_SECRET_KEY",
+        "JWT_ALGORITHM",
+        "JWT_ACCESS_TOKEN_EXPIRE_MINUTES",
+        "CORS_ALLOWED_ORIGINS",
+        "CORS_ALLOW_CREDENTIALS",
+        "ENABLE_BILLING",
+        "ENABLE_CREDIT_GATING",
+        "PAYOS_CLIENT_ID",
+        "PAYOS_API_KEY",
+        "PAYOS_CHECKSUM_KEY",
+        "ENABLE_REALTIME_INTERVIEW",
+        "OPENAI_API_KEY",
+        "OPENAI_REALTIME_MODEL",
+        "OPENAI_REALTIME_VOICE",
+        "OPENAI_REALTIME_TRANSCRIPTION_MODEL",
+        "OPENAI_REALTIME_SESSION_MAX_MINUTES",
+        "OPENAI_REALTIME_MAX_QUESTIONS",
+        "OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS",
+        "OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS",
     ]
     print(f"env contract mode={mode}")
     for name in names:

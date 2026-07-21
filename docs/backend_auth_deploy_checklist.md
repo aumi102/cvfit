@@ -36,14 +36,16 @@ set `CORS_ALLOW_CREDENTIALS=true` with `CORS_ALLOWED_ORIGINS=*`.
   complete.
 - Validate Alembic on a disposable/local Postgres database first.
 - Confirm `alembic heads` shows the expected single head before deployment.
-- Current expected head is `20260531_0001`.
+- The auth foundation revision is `20260531_0001`; the repository-wide current
+  expected head is `20260716_0001`. Use `database_migrations.md` and never treat
+  this Phase 2 checklist as the current full-chain migration plan.
 - Confirm `python scripts/check_db_schema.py` passes against the intended
   database after migration.
 - If Render is currently at old head `20260522_0001`, apply the auth migration
   only after backup and disposable/local validation.
-- Downgrading from `20260531_0001` removes `users` and
-  `analysis_jobs.user_id`; do not downgrade production without explicit
-  data-loss approval.
+- Downgrading the full current chain can remove later product/billing/realtime
+  data before reaching the auth revision. Do not downgrade production without
+  a reviewed target and explicit data-loss approval.
 
 ## Smoke Checklist
 
