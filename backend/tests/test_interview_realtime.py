@@ -705,13 +705,14 @@ class TestRealtimeApi:
             json={"turns": []},
         )
         assert complete.status_code == 200
+        assert complete.json()["completed_turns"] == 1
         assert complete.json()["summary_status"] == "ready"
         second_complete = client.post(
             f"/v1/interview/realtime/sessions/{session.id}/complete",
             json={"turns": []},
         )
         assert second_complete.status_code == 200
-        assert second_complete.json()["completed_turns"] == 1
+        assert second_complete.json() == complete.json()
 
         summary = client.get(
             f"/v1/interview/realtime/sessions/{session.id}/summary"

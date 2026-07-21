@@ -411,6 +411,11 @@ def complete_realtime_session(
         now=now,
     )
     db.flush()
+    completed_turns = (
+        db.query(InterviewRealtimeTurn)
+        .filter(InterviewRealtimeTurn.session_id == session.id)
+        .count()
+    )
     summary = generate_deterministic_summary_if_ready(db, session)
     generated_status = summary_status(summary)
     if generated_status in {"ready", "failed"}:
@@ -423,7 +428,7 @@ def complete_realtime_session(
         )
     db.commit()
     db.refresh(session)
-    return len(body.turns), generated_status
+    return completed_turns, generated_status
 
 
 def abort_realtime_session(
