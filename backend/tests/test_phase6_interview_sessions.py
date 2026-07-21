@@ -339,7 +339,7 @@ class TestSummary:
         assert body["average_score"] is not None
         assert body["best_dimension"]
         assert body["weakest_dimension"]
-        assert "guarantee" in body["disclaimer"].lower()
+        assert "không đảm bảo" in body["disclaimer"].lower()
 
     def test_summary_empty_session_is_safe(self):
         user = make_user()

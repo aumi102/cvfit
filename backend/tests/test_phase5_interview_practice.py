@@ -427,6 +427,21 @@ class TestInterviewQuestions:
         assert isinstance(body["questions"], list)
         assert len(body["questions"]) > 0
 
+    def test_default_fallback_questions_are_vietnamese(self):
+        user = make_user()
+        db = FakeDb()
+        app = make_application(user.id, best_analysis_job_id=None)
+        db.add(app)
+        client = build_app_client(db, user)
+
+        resp = client.get(f"/v1/applications/{app.id}/interview/questions")
+
+        assert resp.status_code == 200
+        question_text = " ".join(q["question"] for q in resp.json()["questions"])
+        assert "Vì sao bạn quan tâm" in question_text
+        assert "Why are you interested" not in question_text
+        assert "Describe a challenging project" not in question_text
+
     def test_questions_include_disclaimer(self):
         user = make_user()
         db = FakeDb()
@@ -441,7 +456,7 @@ class TestInterviewQuestions:
         assert resp.status_code == 200
         body = resp.json()
         assert "disclaimer" in body
-        assert "practice" in body["disclaimer"].lower()
+        assert "luyện tập" in body["disclaimer"].lower()
 
     def test_questions_have_required_fields(self):
         user = make_user()
@@ -501,7 +516,7 @@ class TestInterviewQuestions:
         kubernetes_q = next((q for q in gap_probes if "Kubernetes" in q["question"]), None)
         assert kubernetes_q is not None
         why = kubernetes_q["why_this_question"].lower()
-        assert "not found" in why or "not" in why
+        assert "không tìm thấy" in why
 
     def test_project_deep_dive_only_when_profile_evidence_exists(self):
         user = make_user()
@@ -551,7 +566,7 @@ class TestInterviewQuestions:
 
         assert len(resp.json()["questions"]) <= 8
 
-    def test_questions_include_existing_interview_prep_from_result(self):
+    def test_new_vietnamese_questions_do_not_reuse_english_historical_prep(self):
         user = make_user()
         db = FakeDb()
         job = make_job(
@@ -568,7 +583,27 @@ class TestInterviewQuestions:
         resp = client.get(f"/v1/applications/{app.id}/interview/questions")
 
         questions_text = [q["question"] for q in resp.json()["questions"]]
-        assert any("async" in q.lower() for q in questions_text)
+        assert all("How do you handle" not in q for q in questions_text)
+        assert any("Bạn" in q or "Mô tả" in q or "Hãy" in q for q in questions_text)
+
+    def test_explicit_english_mode_can_read_existing_prep(self):
+        user = make_user()
+        db = FakeDb()
+        job = make_job(
+            user.id,
+            interview_prep=[
+                {"question": "How do you handle async DB queries in FastAPI?", "type": "technical"},
+            ],
+        )
+        app = make_application(user.id, best_analysis_job_id=job.id)
+        db.add(app)
+        db.add(job)
+        client = build_app_client(db, user)
+
+        resp = client.get(f"/v1/applications/{app.id}/interview/questions?language=en")
+
+        assert resp.status_code == 200
+        assert any("async" in q["question"].lower() for q in resp.json()["questions"])
 
     def test_empty_profile_questions_use_jd_and_analysis_only(self):
         user = make_user()
@@ -710,7 +745,7 @@ class TestInterviewAnswerSubmit:
 
         feedback = resp.json()["feedback"]
         assert feedback["disclaimer"]
-        assert "review" in feedback["disclaimer"].lower()
+        assert "xem lại" in feedback["disclaimer"].lower()
 
     def test_weak_answer_produces_non_empty_missing_evidence_and_improvements(self):
         user = make_user()
@@ -956,6 +991,24 @@ class TestInterviewAnswerList:
         body = resp.json()
         assert body["total"] == 1
         assert len(body["answers"]) == 1
+
+    def test_existing_english_historical_answer_remains_readable(self):
+        user = make_user()
+        db = FakeDb()
+        app = make_application(user.id)
+        answer = make_answer(
+            user.id,
+            app.id,
+            question="Describe a challenging project you have worked on.",
+        )
+        db.add(app)
+        db.add(answer)
+        client = build_app_client(db, user)
+
+        resp = client.get(f"/v1/applications/{app.id}/interview/answers")
+
+        assert resp.status_code == 200
+        assert resp.json()["answers"][0]["question"] == answer.question
 
     def test_list_answer_summary_has_required_fields(self):
         user = make_user()
