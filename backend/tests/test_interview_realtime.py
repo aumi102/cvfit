@@ -399,7 +399,7 @@ class TestEventTrustBoundary:
         with pytest.raises(RealtimeInterviewValidationError, match="12000"):
             redact_realtime_event(
                 "user_transcript_completed",
-                {"turn_index": 0, "transcript": "word " * 3000},
+                {"turn_index": 0, "transcript": "word! " * 2100},
                 question_limit=3,
             )
 
