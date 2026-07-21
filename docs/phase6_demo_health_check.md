@@ -115,11 +115,20 @@ All items in the **Demo Data** section must be ✅ before any live demo.
 
 ## Sign-off
 
-| Role | Name | Status | Date |
-|------|------|--------|------|
-| Backend | Phúc | ☐ | — |
-| Frontend | Quân | ☐ | — |
-| QA/Privacy | Đạt | ☐ | — |
+> **Date:** 2026-07-07
+> **Note:** Đạt's sign-off covers Backend, Frontend (via smoke + code review), Privacy, and Demo Data sections. Quân and Phúc sign-off pending.
+
+| Role | Name | Status | Date | Notes |
+|------|------|--------|------|-------|
+| Backend | Phúc | ☐ | — | Pending |
+| Frontend | Quân | ☐ | — | Pending |
+| QA/Privacy | Đạt | ✅ | 2026-07-07 | Backend smoke ✅ 6/6, GA4 allow-list ✅, share links grep ✅, all phases 1-7 eval ✅ |
+
+**Đạt's sign-off basis:**
+- Backend smoke: `scripts/smoke_phase6_e2e.py` → 6/6 PASS against `https://cvfit.onrender.com` (2026-07-07)
+- GA4 privacy: `analytics.js` allow-list sanitizes all events; `interview_answer_submitted` sends `question_type`/`difficulty` only (no `answer_text`); `share_link_opened` sends `status` only (no token); `HELP_ASSISTANT_PROMPT_CLICKED` sends `prompt_chip` only (no answer text)
+- Share links privacy: `share_links.py` stores SHA-256 hash only; `build_public_view()` uses `DEFAULT_VISIBILITY` with `hide_raw_cv=True`, `hide_raw_jd=True`; smoke script never prints raw token
+- Compile check: `python -m compileall backend/app` → 0 syntax errors
 
 **Instructions:** Check off each role's section above, then fill in the sign-off table row.
 All three must sign before Phase 6 is declared complete.
