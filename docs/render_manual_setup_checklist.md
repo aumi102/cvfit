@@ -207,4 +207,5 @@ Expected success criteria:
 - Database errors mention vector support: confirm the database supports the `vector` extension or choose a compatible Postgres provider/plan.
 - Database errors mention missing schema or Alembic head: run the documented migration/adoption workflow after backup and schema checks; do not rely on app startup to create tables.
 - Smoke test cannot reach the API: confirm `API_BASE_URL` has the public Render Web Service URL and no trailing path.
-- Unexpected auth assumptions: this MVP does not include full auth yet; do not expose it as a production application.
+- Unexpected auth assumptions: JWT account auth coexists with legacy guest
+  access-token flows; verify the intended route's auth model before exposing it.

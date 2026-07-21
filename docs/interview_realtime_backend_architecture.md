@@ -291,18 +291,19 @@ disconnect behavior. None is implemented here.
 
 ### Đạt
 
-Đạt should later verify authentication/non-leak ownership, context ownership,
-consent, disabled/misconfigured `503`, provider error safety, event allowlists,
-payload bounds, credential/media rejection, duplicate sequences, lifecycle
-conflicts, completion bounds, and pending/ready summary states. No tests, QA
-documents, evaluation reports, privacy review, or closeout report are created
-here.
+Đạt should independently verify authentication/non-leak ownership, context
+ownership, consent, disabled/misconfigured `503`, provider error safety, event
+allowlists, payload bounds, credential/media rejection, duplicate sequences,
+lifecycle conflicts, completion bounds, and pending/ready/failed summary states.
+Automated backend and migration-contract tests plus a QA handoff are included;
+independent evaluation results, privacy approval, browser QA, and a team
+closeout report are not.
 
 ## Known backend limitations
 
-- A trusted transcript evaluator does not yet populate turn `score_json`; the
-  deterministic aggregator is ready but normal completion therefore returns
-  summary pending.
+- The deterministic transcript evaluator is a bounded practice heuristic over
+  validated client-reported text. Its quality and privacy still require
+  independent evaluation before the feature can be enabled.
 - Backend time limits prevent new/reconnect credentials after expiry but cannot
   forcibly close a direct browser-to-provider peer connection.
 - Provider session settings can be client-overridden under the ephemeral-token
