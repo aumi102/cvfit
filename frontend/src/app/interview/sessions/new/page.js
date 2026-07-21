@@ -1,143 +1,129 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useMediaDevices } from '@/hooks/useMediaDevices';
 import PageShell from '@/components/common/PageShell';
-import ErrorBanner from '@/components/common/ErrorBanner';
 import { createSession } from '@/services/interviewSessionsApi';
 import { extractApiError } from '@/utils/errorHelpers';
 import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
-import styles from '@/styles/InterviewSessions.module.css';
+import styles from '@/styles/InterviewRoom.module.css';
 
-const QUESTION_TYPES = [
-  { value: 'technical', label: 'Kỹ thuật', icon: '💻', desc: 'Code, hệ thống, giải quyết vấn đề' },
-  { value: 'behavioral', label: 'Hành vi', icon: '🤝', desc: 'Làm việc nhóm, lãnh đạo, kể chuyện STAR' },
-  { value: 'project', label: 'Dự án', icon: '📁', desc: 'Công việc cũ, thành tựu, mức độ ảnh hưởng' },
-  { value: 'HR', label: 'Nhân sự / Văn hóa', icon: '🌐', desc: 'Phù hợp văn hóa, lương, mục tiêu nghề nghiệp' },
-  { value: 'gap_check', label: 'Kiểm tra lỗ hổng', icon: '🔍', desc: 'Lỗ hổng kỹ năng từ phân tích CV' },
-];
+import InterviewSetupForm from '@/components/interview-room/InterviewSetupForm';
+import DevicePermissionCheck from '@/components/interview-room/DevicePermissionCheck';
 
-const DIFFICULTIES = [
-  { value: 'easy', label: 'Dễ', icon: '🟢', desc: 'Khởi động, cơ bản' },
-  { value: 'medium', label: 'Trung bình', icon: '🟡', desc: 'Mức phỏng vấn tiêu chuẩn' },
-  { value: 'hard', label: 'Khó', icon: '🔴', desc: 'Cao cấp / cạnh tranh' },
-];
+const STEPS = {
+  SETUP: 0,
+  PERMISSIONS: 1,
+};
 
 export default function NewSessionPage() {
   const { isAuthChecking } = useRequireAuth();
   const router = useRouter();
+  const { micStatus, camStatus, requestMic, requestCam, stopAll } = useMediaDevices();
 
-  const [questionType, setQuestionType] = useState('behavioral');
-  const [difficulty, setDifficulty] = useState('medium');
+  const [currentStep, setCurrentStep] = useState(STEPS.SETUP);
+  const [setupData, setSetupData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  async function handleStart(e) {
-    e.preventDefault();
+  const handleSetupComplete = (data) => {
+    setSetupData(data);
+    setCurrentStep(STEPS.PERMISSIONS);
+  };
+
+  const handlePermissionsComplete = async () => {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const session = await createSession({ question_type: questionType, difficulty });
+      // 1. Create the session on the backend
+      const session = await createSession({ 
+        question_type: setupData.question_type, 
+        difficulty: setupData.difficulty,
+        target_job_id: setupData.target_job_id,
+        application_id: setupData.application_id,
+      });
+
       trackEvent(ANALYTICS_EVENTS.INTERVIEW_SESSION_CREATED, {
         feature_name: 'interview_sessions',
-        question_type: questionType,
-        difficulty,
+        question_type: setupData.question_type,
+        difficulty: setupData.difficulty,
       });
-      router.push(`/interview/sessions/${session.id}`);
+
+      // 2. We need to pass the question_count to the room since it's used during question generation.
+      // We'll store it in sessionStorage for the room page to pick up.
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`session_config_${session.id}`, JSON.stringify({
+          question_count: setupData.question_count
+        }));
+      }
+
+      // Stop local streams before navigating to the room (the room will request its own or reuse)
+      stopAll();
+
+      // 3. Navigate to the new interview room route
+      router.push(`/interview/sessions/${session.id}/room`);
     } catch (err) {
       const { message } = extractApiError(err, 'Không thể bắt đầu phiên. Vui lòng thử lại.');
       setError(message);
       setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <PageShell isAuthChecking={isAuthChecking} maxWidth="700px">
-      {/* Breadcrumb */}
-      <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        <Link href="/interview/sessions">Luyện phỏng vấn</Link>
-        <span className={styles.breadcrumbSep}>›</span>
-        <span>Phiên mới</span>
-      </nav>
+    <PageShell isAuthChecking={isAuthChecking} maxWidth="800px">
+      <div style={{ paddingTop: '2rem' }}>
+        {/* Wizard Steps Indicator */}
+        <div className={styles.wizardSteps}>
+          <div className={styles.wizardStep}>
+            <div className={`${styles.wizardStepDot} ${currentStep === STEPS.SETUP ? styles['wizardStepDot--active'] : styles['wizardStepDot--done']}`}>
+              {currentStep > STEPS.SETUP ? '✓' : '1'}
+            </div>
+            <span className={`${styles.wizardStepLabel} ${currentStep === STEPS.SETUP ? styles['wizardStepLabel--active'] : ''}`}>Cấu hình</span>
+          </div>
+          <div className={`${styles.wizardConnector} ${currentStep > STEPS.SETUP ? styles['wizardConnector--done'] : ''}`} />
+          <div className={styles.wizardStep}>
+            <div className={`${styles.wizardStepDot} ${currentStep === STEPS.PERMISSIONS ? styles['wizardStepDot--active'] : ''}`}>
+              2
+            </div>
+            <span className={`${styles.wizardStepLabel} ${currentStep === STEPS.PERMISSIONS ? styles['wizardStepLabel--active'] : ''}`}>Thiết bị</span>
+          </div>
+        </div>
 
-      <div className={styles.formCard}>
-        <h1 className={styles.formTitle}>Bắt đầu phiên luyện tập</h1>
-        <p className={styles.formSubtitle}>
-          Chọn loại câu hỏi và độ khó. AI sẽ tạo các câu hỏi nhắm mục tiêu và cung cấp phản hồi theo tiêu chí cho câu trả lời của bạn.
-        </p>
-
-        {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-
-        <form onSubmit={handleStart} id="new-session-form">
-          {/* Question Type */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Loại câu hỏi</label>
-            <div className={styles.optionGrid}>
-              {QUESTION_TYPES.map((qt) => (
-                <button
-                  key={qt.value}
-                  type="button"
-                  className={`${styles.optionCard} ${questionType === qt.value ? styles['optionCard--selected'] : ''}`}
-                  onClick={() => setQuestionType(qt.value)}
-                  id={`qtype-${qt.value}`}
-                >
-                  <div className={styles.optionIcon}>{qt.icon}</div>
-                  <div className={styles.optionLabel}>{qt.label}</div>
-                  <div className={styles.optionDesc}>{qt.desc}</div>
-                </button>
-              ))}
+        {error && (
+          <div style={{ marginBottom: '1rem' }}>
+            <div className={styles.interviewError}>
+              <div className={styles.interviewErrorText}>{error}</div>
             </div>
           </div>
+        )}
 
-          {/* Difficulty */}
-          <div className={styles.fieldGroup}>
-            <label className={styles.fieldLabel}>Độ khó</label>
-            <div className={styles.optionGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-              {DIFFICULTIES.map((d) => (
-                <button
-                  key={d.value}
-                  type="button"
-                  className={`${styles.optionCard} ${difficulty === d.value ? styles['optionCard--selected'] : ''}`}
-                  onClick={() => setDifficulty(d.value)}
-                  id={`difficulty-${d.value}`}
-                >
-                  <div className={styles.optionIcon}>{d.icon}</div>
-                  <div className={styles.optionLabel}>{d.label}</div>
-                  <div className={styles.optionDesc}>{d.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
+        {currentStep === STEPS.SETUP && (
+          <InterviewSetupForm 
+            initialData={setupData}
+            onNext={handleSetupComplete}
+            onCancel={() => router.push('/interview/sessions')}
+          />
+        )}
 
-          <div className={styles.formActions}>
-            <Link href="/interview/sessions" className={styles.btnSecondary}>
-              Hủy
-            </Link>
-            <button
-              type="submit"
-              className={styles.btnPrimary}
-              disabled={isSubmitting}
-              id="start-session-btn"
-            >
-              {isSubmitting ? (
-                <>
-                  <span style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />
-                  Đang bắt đầu…
-                </>
-              ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  Bắt đầu phiên
-                </>
-              )}
-            </button>
+        {currentStep === STEPS.PERMISSIONS && (
+          <DevicePermissionCheck
+            micStatus={micStatus}
+            camStatus={camStatus}
+            onRequestMic={requestMic}
+            onRequestCam={requestCam}
+            onNext={handlePermissionsComplete}
+            onCancel={() => setCurrentStep(STEPS.SETUP)}
+          />
+        )}
+
+        {isSubmitting && (
+          <div style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--color-text-muted)' }}>
+            Đang khởi tạo phòng phỏng vấn...
           </div>
-        </form>
+        )}
       </div>
     </PageShell>
   );

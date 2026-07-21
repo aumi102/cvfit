@@ -128,3 +128,50 @@ export async function submitSessionAnswer(sessionId, payload, language = 'vi') {
   );
   return normalizeAnswerFeedback(response.data);
 }
+
+/**
+ * Get the post-interview summary for a completed session.
+ * Falls back to null if the endpoint is not yet implemented (Phase 8).
+ */
+export async function getSessionSummary(sessionId) {
+  try {
+    const response = await apiClient.get(`/v1/interview/sessions/${sessionId}/summary`);
+    return response.data;
+  } catch {
+    // Backend summary endpoint may not exist yet — return null so the
+    // page can fall back to mock data.
+    return null;
+  }
+}
+
+/**
+ * End an in-progress interview session.
+ * Falls back gracefully if the endpoint is not yet implemented (Phase 8).
+ */
+export async function endSession(sessionId) {
+  try {
+    const response = await apiClient.post(`/v1/interview/sessions/${sessionId}/end`);
+    return response.data;
+  } catch {
+    // Endpoint may not exist yet — return a default shape.
+    return { status: 'ended' };
+  }
+}
+
+/**
+ * Get a realtime token for WebRTC/WebSocket connection.
+ * Placeholder — returns a mock token until the backend implements this.
+ */
+export async function getRealtimeToken(sessionId) {
+  try {
+    const response = await apiClient.post(`/v1/interview/sessions/${sessionId}/realtime-token`);
+    return response.data;
+  } catch {
+    // Mock token for frontend development.
+    return {
+      token: `mock-token-${sessionId}-${Date.now()}`,
+      endpoint: null,
+      expires_at: new Date(Date.now() + 3600_000).toISOString(),
+    };
+  }
+}

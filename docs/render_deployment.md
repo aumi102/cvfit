@@ -31,6 +31,12 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_USE_IAM_ROLE=false
 CV_MAX_UPLOAD_MB=10
+JWT_SECRET_KEY=
+CORS_ALLOWED_ORIGINS=
+CORS_ALLOW_CREDENTIALS=false
+ENABLE_BILLING=false
+ENABLE_CREDIT_GATING=false
+ENABLE_REALTIME_INTERVIEW=false
 ```
 
 Notes:
@@ -44,6 +50,15 @@ Notes:
 - For future AWS deployments, prefer IAM roles and set `AWS_USE_IAM_ROLE=true`.
 - Keep `STORAGE_ROOT` defined even when using S3; it remains useful for temporary/local development paths.
 - Do not commit secrets to git, docs, tickets, or smoke-test logs.
+- Generate a high-entropy `JWT_SECRET_KEY`; never use the insecure local default
+  on Render. Set explicit frontend origins and never combine wildcard origins
+  with credentialed CORS.
+- Realtime Interview remains disabled for this handoff. Enabling it later also
+  requires backend-only OpenAI key/model/voice/transcription settings, bounded
+  session/question/client-secret timing settings, completed frontend and QA,
+  privacy approval, and controlled smoke approval.
+- Billing and credit gating remain disabled. This Phase 8 work does not activate
+  payOS or change the Phase 7 rollout decision.
 
 ## Suggested Render Commands
 
@@ -121,6 +136,10 @@ Before creating Render services:
 7. Set the required environment variables on both Render services.
 8. Confirm the Render database is initialized or safely adopted to Alembic head before starting API/worker runtime.
 9. Confirm uploaded CVs and reports are not committed to git.
+10. Run `python scripts/check_env_contract.py --mode render` in the intended
+    service environment; it reports presence only and hides known secrets.
+11. Keep `ENABLE_REALTIME_INTERVIEW=false` until the separate Phase 8 team gates
+    are approved.
 
 ## Local Docker Smoke Test
 
@@ -324,8 +343,12 @@ Troubleshooting:
 
 ## Known Limitations
 
-- Current app still has no full auth.
-- Job status polling remains UUID-based; result, report metadata, and report download use MVP access-token protection.
+- JWT account authentication and owner-scoped product routes coexist with
+  legacy guest job access-token protection.
+- Some legacy guest job status/result/report flows remain UUID plus per-job
+  access-token based.
+- Realtime Interview is disabled by default and has no production/live smoke
+  evidence in this handoff.
 - Render environment variables must be set for both the API and worker services.
 - S3 integration must be smoke-tested with a real private bucket before demo use.
 - S3 lifecycle cleanup is still needed for uploaded CVs and generated reports.
