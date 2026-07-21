@@ -1,0 +1,20 @@
+Name: Dao Thi F
+Email: daothif@email.com
+Phone: 0906-789-012
+
+Summary
+Backend developer with FastAPI, PostgreSQL, and Docker experience. I also have extensive leadership experience.
+
+Experience
+
+Project: Inventory Management API
+- Built FastAPI API with PostgreSQL
+- Deployed with Docker
+
+Project: Team Leadership Experience
+- Managed a team of 5 people
+- Led marketing campaigns
+- Organized company events
+
+Skills
+Python, FastAPI, PostgreSQL, Docker, Git, Leadership, Marketing, Event Planning, Team Management, Communication

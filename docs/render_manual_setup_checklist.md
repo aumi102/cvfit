@@ -96,7 +96,7 @@ S3_PREFIX=<render/test/prefix>
 AWS_ACCESS_KEY_ID=<secret>
 AWS_SECRET_ACCESS_KEY=<secret>
 AWS_USE_IAM_ROLE=false
-CV_MAX_UPLOAD_MB=5
+CV_MAX_UPLOAD_MB=10
 ```
 
 Notes:
@@ -120,7 +120,7 @@ S3_PREFIX=<render/test/prefix>
 AWS_ACCESS_KEY_ID=<secret>
 AWS_SECRET_ACCESS_KEY=<secret>
 AWS_USE_IAM_ROLE=false
-CV_MAX_UPLOAD_MB=5
+CV_MAX_UPLOAD_MB=10
 ```
 
 Render provides `PORT` for the Web Service start command.
@@ -139,7 +139,7 @@ S3_PREFIX=<same-as-api>
 AWS_ACCESS_KEY_ID=<secret>
 AWS_SECRET_ACCESS_KEY=<secret>
 AWS_USE_IAM_ROLE=false
-CV_MAX_UPLOAD_MB=5
+CV_MAX_UPLOAD_MB=10
 ```
 
 The worker does not need `PORT`.
@@ -187,8 +187,12 @@ Expected success criteria:
 
 ## Current Limitations
 
-- Current app still has no full auth.
-- Job status polling remains UUID-based; result, report metadata, and report download use MVP access-token protection.
+- JWT account authentication and owner-scoped product routes coexist with
+  legacy guest job access-token protection.
+- Some legacy guest job status/result/report flows remain UUID plus per-job
+  access-token based.
+- Phase 8 Realtime Interview remains disabled by default and is not live-smoke
+  verified by this checklist.
 - S3 lifecycle cleanup is still needed.
 - API and worker startup require the database schema to be at Alembic head.
 - First scoring run may be slower if the embedding model has to download at runtime.
@@ -203,4 +207,5 @@ Expected success criteria:
 - Database errors mention vector support: confirm the database supports the `vector` extension or choose a compatible Postgres provider/plan.
 - Database errors mention missing schema or Alembic head: run the documented migration/adoption workflow after backup and schema checks; do not rely on app startup to create tables.
 - Smoke test cannot reach the API: confirm `API_BASE_URL` has the public Render Web Service URL and no trailing path.
-- Unexpected auth assumptions: this MVP does not include full auth yet; do not expose it as a production application.
+- Unexpected auth assumptions: JWT account auth coexists with legacy guest
+  access-token flows; verify the intended route's auth model before exposing it.

@@ -1,0 +1,14 @@
+Name: Thai Van I
+Email: thaivani@email.com
+Phone: 0909-012-345
+
+Summary
+Backend developer.
+
+Experience
+
+Project: Small API
+- Built a Python API
+
+Skills
+Python

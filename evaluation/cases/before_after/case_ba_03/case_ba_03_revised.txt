@@ -1,0 +1,21 @@
+Name: Le Van C
+Email: levanc@email.com
+Phone: 0903-456-789
+
+Summary
+Full stack developer with JavaScript, React, and some Python scripting.
+
+Experience
+
+Project: Company Website
+- Built frontend with React
+- Wrote some automation scripts in Python
+
+Project: Backend Data Service
+- Built a FastAPI service to serve data to the React frontend
+- Connected to PostgreSQL database for persistent storage
+- Containerized the service with Docker for local development and deployment
+- Wrote pytest unit tests covering 80% of the API endpoints
+
+Skills
+JavaScript, React, Python, FastAPI, PostgreSQL, Docker, Node.js, HTML, CSS, Git

@@ -1,0 +1,15 @@
+Name: Vu Thi G
+Email: vuthig@email.com
+Phone: 0907-890-123
+
+Summary
+Backend developer.
+
+Experience
+
+Project: Web Service
+- Built APIs
+- Used some databases
+
+Skills
+Python, FastAPI, PostgreSQL

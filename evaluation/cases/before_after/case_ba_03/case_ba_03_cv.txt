@@ -1,0 +1,15 @@
+Name: Le Van C
+Email: levanc@email.com
+Phone: 0903-456-789
+
+Summary
+Full stack developer with JavaScript, React, and some Python scripting.
+
+Experience
+
+Project: Company Website
+- Built frontend with React
+- Wrote some automation scripts in Python
+
+Skills
+JavaScript, React, Python, Node.js, HTML, CSS

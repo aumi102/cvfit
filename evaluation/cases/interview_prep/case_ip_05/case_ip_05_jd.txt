@@ -1,0 +1,13 @@
+Backend Developer (Junior)
+
+Requirements:
+- Python programming
+- FastAPI or Flask framework
+- Basic PostgreSQL database usage
+- Docker basics
+- API testing
+
+Responsibilities:
+- Build simple backend APIs
+- Work with databases
+- Write tests

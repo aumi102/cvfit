@@ -1,0 +1,21 @@
+Name: Chu Thi N
+Email: chuthin@email.com
+Phone: 0913-456-789
+
+Summary
+Backend engineer with experience in Python.
+
+Experience
+
+Project: Data Processing Script
+- Processed data with Python scripts
+
+Project: Library Management System
+- Built a FastAPI REST API for a library management system
+- Designed PostgreSQL database schema with tables for books, members, and borrow records
+- Implemented CRUD endpoints with Pydantic request/response models and proper validation
+- Added Redis caching for frequently accessed book listings, reducing database queries by 60%
+- Deployed the application using Docker and Docker Compose
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git

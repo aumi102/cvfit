@@ -1,0 +1,15 @@
+Name: Ha Van M
+Email: havangm@email.com
+Phone: 0913-456-789
+
+Summary
+Backend developer with experience in Python and databases.
+
+Experience
+
+Project: Data Pipeline
+- Built Python data pipeline
+- Stored data in PostgreSQL
+
+Skills
+Python, PostgreSQL

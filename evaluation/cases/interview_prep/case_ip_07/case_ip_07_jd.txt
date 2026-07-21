@@ -1,0 +1,16 @@
+Senior Backend Engineer
+
+Requirements:
+- Python backend development with FastAPI
+- PostgreSQL database design and optimization
+- Redis caching integration
+- Docker and Kubernetes deployment
+- AWS cloud infrastructure
+- API security (JWT, OAuth2)
+- Automated testing
+
+Responsibilities:
+- Design and build scalable backend systems
+- Lead technical architecture decisions
+- Mentor team members
+- Ensure system reliability

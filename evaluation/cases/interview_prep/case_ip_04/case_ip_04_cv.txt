@@ -1,0 +1,16 @@
+Name: Hoang Van D
+Email: hoangvand@email.com
+Phone: 0904-567-890
+
+Summary
+Backend engineer.
+
+Experience
+
+Project: Backend Work
+- Built APIs
+- Used databases
+- Deployed with Docker
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker

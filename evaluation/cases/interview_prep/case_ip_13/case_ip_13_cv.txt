@@ -1,0 +1,16 @@
+Name: Pham Van M
+Email: phamvanm@email.com
+Phone: 0913-456-789
+
+Summary
+Backend developer with FastAPI, PostgreSQL, Redis, Docker experience.
+
+Experience
+
+Project: Production API
+- Built FastAPI API with PostgreSQL and Redis
+- Deployed with Docker
+- Implemented authentication and background tasks
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Celery, JWT, Git

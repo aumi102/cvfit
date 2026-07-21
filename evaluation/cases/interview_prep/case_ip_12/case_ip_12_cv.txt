@@ -1,0 +1,15 @@
+Name: Nguyen Thi L
+Email: nguyenthil@email.com
+Phone: 0912-345-678
+
+Summary
+Backend engineer with Python, FastAPI, PostgreSQL, Redis, Docker.
+
+Experience
+
+Project: API Service
+- Built FastAPI API with PostgreSQL, Redis, and Docker
+- Wrote tests
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git, pytest

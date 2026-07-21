@@ -1,0 +1,20 @@
+Name: Ly Thi L
+Email: lyThiL@email.com
+Phone: 0911-234-567
+
+Summary
+Junior developer with strong backend engineering background.
+
+Experience
+
+Project: Learning Project
+- Built a small Python script
+
+Project: Company Experience
+- Worked at Google as a senior software engineer for 5 years
+- Built systems that served 100 million users
+- Used FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS at Google scale
+- Led a team of 10 engineers and delivered a multi-million dollar project
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Kubernetes, AWS, Leadership, Team Management, System Design, Machine Learning, AI

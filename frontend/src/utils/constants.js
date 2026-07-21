@@ -3,6 +3,10 @@ export const API_BASE_URL =
     ? process.env.NEXT_PUBLIC_API_BASE_URL
     : 'http://localhost:8000';
 
+// Google Sign-In web client ID. Empty when unconfigured — the UI then hides the
+// Google button and falls back to email/password only. Never a secret.
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+
 export const COLORS = {
   primary: '#2563EB',
   secondary: '#60A5FA',
@@ -14,19 +18,19 @@ export const COLORS = {
 };
 
 export const STRICTNESS_OPTIONS = [
-  { value: 'lenient', label: 'Lenient', description: 'More forgiving analysis' },
-  { value: 'balanced', label: 'Balanced', description: 'Standard evaluation' },
-  { value: 'strict', label: 'Strict', description: 'Rigorous assessment' },
+  { value: 'lenient', label: 'Dễ tính', description: 'Phân tích nới lỏng' },
+  { value: 'balanced', label: 'Cân bằng', description: 'Đánh giá tiêu chuẩn' },
+  { value: 'strict', label: 'Khắt khe', description: 'Đánh giá nghiêm ngặt' },
 ];
 
 export const LANGUAGE_OPTIONS = [
-  { value: 'en', label: 'English' },
-  { value: 'id', label: 'Indonesian' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fr', label: 'French' },
-  { value: 'de', label: 'German' },
-  { value: 'zh', label: 'Chinese' },
-  { value: 'ja', label: 'Japanese' },
+  { value: 'en', label: 'Tiếng Anh' },
+  { value: 'id', label: 'Tiếng Indonesia' },
+  { value: 'es', label: 'Tiếng Tây Ban Nha' },
+  { value: 'fr', label: 'Tiếng Pháp' },
+  { value: 'de', label: 'Tiếng Đức' },
+  { value: 'zh', label: 'Tiếng Trung' },
+  { value: 'ja', label: 'Tiếng Nhật' },
 ];
 
 export const ACCEPTED_FILE_TYPES = {

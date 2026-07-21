@@ -1,0 +1,15 @@
+Name: Ha Van O
+Email: havano@email.com
+Phone: 0914-567-890
+
+Summary
+Backend developer with FastAPI, PostgreSQL, Docker experience.
+
+Experience
+
+Project: E-Commerce Backend
+- Built FastAPI API with PostgreSQL
+- Deployed with Docker
+
+Skills
+Python, FastAPI, PostgreSQL, Docker

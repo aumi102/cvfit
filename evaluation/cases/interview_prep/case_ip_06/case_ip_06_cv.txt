@@ -1,0 +1,15 @@
+Name: Le Van F
+Email: levangf@email.com
+Phone: 0906-789-012
+
+Summary
+Backend developer with Python, FastAPI, PostgreSQL, Docker, and additional unrelated skills.
+
+Experience
+
+Project: E-Commerce API
+- Built FastAPI API with PostgreSQL and Redis
+- Deployed with Docker
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Git, Blockchain, Web3, Machine Learning, AI, Crypto Trading

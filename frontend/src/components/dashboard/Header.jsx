@@ -1,33 +1,66 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+
 import { logout } from '@/services/authApi';
+import { getAdminMe } from '@/services/adminApi';
 import { clearAuthSession, getStoredAuthToken, getStoredUser } from '@/services/authStorage';
+import { trackEvent, ANALYTICS_EVENTS } from '@/lib/analytics';
 import styles from '@/styles/Header.module.css';
+
+const ADMIN_FLAG_KEY = 'cvfit_is_admin';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useLanguage();
   const [userName, setUserName] = useState('');
   const [userInitial, setUserInitial] = useState('U');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const user = getStoredUser();
     if (user) {
-      const name = user.full_name || user.email || 'User';
+      const name = user.full_name || user.email || 'Người dùng';
       setUserName(name);
       setUserInitial(name.charAt(0).toUpperCase());
       return;
     }
-    setUserName('User');
+    setUserName('Người dùng');
     setUserInitial('U');
   }, []);
 
+  // Show the admin link only to admins. Cached per session so we ask the
+  // backend once; non-admins simply get a (silently handled) 403.
+  useEffect(() => {
+    let active = true;
+    const cached = typeof window !== 'undefined' ? sessionStorage.getItem(ADMIN_FLAG_KEY) : null;
+    if (cached !== null) {
+      setIsAdmin(cached === '1');
+      return;
+    }
+    getAdminMe()
+      .then(() => {
+        if (!active) return;
+        setIsAdmin(true);
+        sessionStorage.setItem(ADMIN_FLAG_KEY, '1');
+      })
+      .catch(() => {
+        if (!active) return;
+        setIsAdmin(false);
+        sessionStorage.setItem(ADMIN_FLAG_KEY, '0');
+      });
+    return () => { active = false; };
+  }, []);
+
   const handleLogout = async () => {
+    trackEvent(ANALYTICS_EVENTS.LOGOUT_CLICK, { feature_name: 'auth' });
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(ADMIN_FLAG_KEY);
+    }
     const token = getStoredAuthToken();
     if (token) {
       try {
@@ -57,14 +90,40 @@ export default function Header() {
 
       <div className={styles.right}>
         <nav className={styles.navLinks} aria-label="Dashboard navigation">
-          <Link href="/dashboard" className={styles.navLink}>
-            Dashboard
+          <Link href="/dashboard" className={`${styles.navLink} ${pathname === '/dashboard' ? styles['navLink--active'] : ''}`}>
+            {t('nav.dashboard')}
           </Link>
-          <Link href="/history" className={styles.navLink}>
-            History
+          <Link href="/history" className={`${styles.navLink} ${pathname === '/history' ? styles['navLink--active'] : ''}`}>
+            {t('nav.history')}
           </Link>
+          <Link href="/applications" className={`${styles.navLink} ${pathname?.startsWith('/applications') ? styles['navLink--active'] : ''}`}>
+            {t('nav.applications')}
+          </Link>
+          <Link href="/jobs" className={`${styles.navLink} ${pathname?.startsWith('/jobs') ? styles['navLink--active'] : ''}`}>
+            Việc làm
+          </Link>
+          <Link href="/interview/sessions" className={`${styles.navLink} ${pathname?.startsWith('/interview') ? styles['navLink--active'] : ''}`}>
+            Phỏng vấn
+          </Link>
+          <Link href="/profile" className={`${styles.navLink} ${pathname?.startsWith('/profile') ? styles['navLink--active'] : ''}`}>
+            {t('nav.profile')}
+          </Link>
+          <Link href="/learning" className={`${styles.navLink} ${pathname?.startsWith('/learning') ? styles['navLink--active'] : ''}`}>
+            {t('nav.learning')}
+          </Link>
+          <Link href="/usage" className={`${styles.navLink} ${['/usage', '/billing', '/pricing'].some((route) => pathname === route || pathname?.startsWith(`${route}/`)) ? styles['navLink--active'] : ''}`}>
+            Mức sử dụng
+          </Link>
+          <Link href="/help" className={`${styles.navLink} ${pathname?.startsWith('/help') ? styles['navLink--active'] : ''}`}>
+            {t('nav.help')}
+          </Link>
+          {isAdmin && (
+            <Link href="/admin" className={`${styles.navLink} ${pathname?.startsWith('/admin') ? styles['navLink--active'] : ''}`}>
+              Quản trị
+            </Link>
+          )}
         </nav>
-        <LanguageSwitcher />
+
         <div className={styles.userInfo}>
           <div className={styles.avatar}>{userInitial}</div>
           <span className={styles.userName}>{userName}</span>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from pathlib import Path
 import sys
 import warnings
 
@@ -10,49 +11,25 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.exc import SAWarning
 
 
-REQUIRED_SCHEMA = {
-    "users": {
-        "id",
-        "email",
-        "password_hash",
-        "full_name",
-        "is_active",
-        "created_at",
-        "updated_at",
-    },
-    "cv_files": {
-        "id",
-        "original_filename",
-        "mime_type",
-        "storage_path",
-        "sha256",
-        "created_at",
-    },
-    "jd_docs": {"id", "jd_text", "role", "created_at"},
-    "analysis_jobs": {
-        "id",
-        "cv_file_id",
-        "jd_id",
-        "user_id",
-        "status",
-        "progress",
-        "error_message",
-        "result_json",
-        "report_docx_path",
-        "access_token_hash",
-        "created_at",
-        "updated_at",
-    },
-    "text_embeddings": {
-        "id",
-        "owner_type",
-        "owner_id",
-        "text",
-        "embedding",
-        "meta_json",
-        "created_at",
-    },
-}
+REPO_ROOT = Path(__file__).resolve().parents[1]
+BACKEND_ROOT = REPO_ROOT / "backend"
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
+
+# The runtime validator is authoritative. Importing it here prevents this
+# operator checker from drifting behind newer application tables or columns.
+_database_url_was_missing = "DATABASE_URL" not in os.environ
+_redis_url_was_missing = "REDIS_URL" not in os.environ
+os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+from app.db.init_db import EXPECTED_ALEMBIC_HEAD, _required_schema  # noqa: E402
+if _database_url_was_missing:
+    os.environ.pop("DATABASE_URL", None)
+if _redis_url_was_missing:
+    os.environ.pop("REDIS_URL", None)
+
+
+REQUIRED_SCHEMA = _required_schema()
 
 
 @dataclass(frozen=True)
@@ -63,6 +40,7 @@ class SchemaCheckResult:
     alembic_versions: list[str]
     vector_extension_exists: bool | None
     dialect: str | None
+    expected_alembic_head: str | None = None
 
     @property
     def baseline_matches(self) -> bool:
@@ -83,6 +61,13 @@ class SchemaCheckResult:
     @property
     def appears_empty(self) -> bool:
         return not self.app_tables_present and not self.alembic_version_exists
+
+    @property
+    def alembic_head_matches(self) -> bool:
+        return (
+            self.expected_alembic_head is not None
+            and self.alembic_versions == [self.expected_alembic_head]
+        )
 
 
 def _print_status(label: str, ok: bool, detail: str = "") -> None:
@@ -123,6 +108,11 @@ def check_schema(database_url: str) -> SchemaCheckResult:
                 str(row[0])
                 for row in connection.execute(text("SELECT version_num FROM alembic_version"))
             ]
+            if alembic_versions != [EXPECTED_ALEMBIC_HEAD]:
+                current = ", ".join(sorted(alembic_versions)) or "<none>"
+                missing_items.append(
+                    f"alembic head (expected {EXPECTED_ALEMBIC_HEAD}, found {current})"
+                )
 
         if dialect == "postgresql":
             vector_extension_exists = (
@@ -139,6 +129,7 @@ def check_schema(database_url: str) -> SchemaCheckResult:
         alembic_versions=alembic_versions,
         vector_extension_exists=vector_extension_exists,
         dialect=dialect,
+        expected_alembic_head=EXPECTED_ALEMBIC_HEAD,
     )
 
 
@@ -159,6 +150,13 @@ def print_schema_result(result: SchemaCheckResult) -> None:
             _print_status(table, True)
 
     _print_status("alembic_version table", result.alembic_version_exists)
+    if result.alembic_version_exists:
+        current = ", ".join(sorted(result.alembic_versions)) or "<none>"
+        _print_status(
+            "alembic expected head",
+            result.alembic_head_matches,
+            f"expected {result.expected_alembic_head}, found {current}",
+        )
 
     if result.vector_extension_exists is None:
         print(f"vector extension: skipped for {result.dialect}")
@@ -184,7 +182,7 @@ def main() -> int:
         print("baseline schema check failed")
         return 1
 
-    print("baseline schema check passed")
+    print("current runtime schema check passed")
     return 0
 
 

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     REDIS_URL: str
     STORAGE_BACKEND: str = "local"
     STORAGE_ROOT: str = "./data"
-    CV_MAX_UPLOAD_MB: int = 5
+    CV_MAX_UPLOAD_MB: int = 10
     S3_BUCKET: str = ""
     S3_REGION: str = ""
     S3_ENDPOINT_URL: str = ""
@@ -23,10 +23,61 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str = "insecure-local-dev-secret-change-me"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    # Google Sign-In (ID-token flow). The endpoint stays unavailable until a
+    # client ID is configured, so leaving these empty cannot weaken existing auth.
+    GOOGLE_CLIENT_ID: str = ""
+    ENABLE_GOOGLE_AUTH: bool = True
     CORS_ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     CORS_ALLOW_CREDENTIALS: bool = False
     CORS_ALLOWED_METHODS: str = "GET,POST,OPTIONS"
     CORS_ALLOWED_HEADERS: str = "Authorization,Content-Type"
+    # Admin Monitoring MVP — comma-separated allow-list of admin emails. Empty by
+    # default, so no account is an admin until an operator sets it in backend env.
+    # Read-only monitoring only; never grants destructive or mutating powers.
+    ADMIN_EMAILS: str = ""
+    # Phase 6 feature flags (default on; share links stay off until privacy review).
+    ENABLE_PHASE6_TARGET_JOBS: bool = True
+    ENABLE_PHASE6_LEARNING: bool = True
+    ENABLE_PHASE6_INTERVIEW_V2: bool = True
+    ENABLE_PHASE6_HELP_ASSISTANT: bool = True
+    # Share links stay OFF until the privacy review passes.
+    ENABLE_PHASE6_SHARE_LINKS: bool = False
+    ENABLE_PHASE6_USAGE_SHELL: bool = True
+    # ----------------------------------------------------------------------
+    # Phase 7A Billing & Credits (payOS / VietQR).
+    #
+    # Billing is OFF by default so this PR can ship safely without exposing any
+    # billing routes or credit gating in production. Provider secrets default to
+    # empty strings and live only in backend env — never committed, never sent
+    # to the frontend. No provider API calls are made in this PR.
+    # ----------------------------------------------------------------------
+    ENABLE_BILLING: bool = False
+    ENABLE_CREDIT_GATING: bool = False
+    PAYMENT_PROVIDER: str = "payos"
+    PAYMENT_CURRENCY: str = "VND"
+    PAYMENT_RETURN_URL: str = ""
+    PAYMENT_CANCEL_URL: str = ""
+    PAYOS_WEBHOOK_URL: str = ""
+    # Secrets — backend env only. Empty by default; never commit real values.
+    PAYOS_CLIENT_ID: str = ""
+    PAYOS_API_KEY: str = ""
+    PAYOS_CHECKSUM_KEY: str = ""
+    # ----------------------------------------------------------------------
+    # Phase 8 — OpenAI Realtime interview backend.
+    #
+    # Disabled by default. Provider credentials and model/voice selection are
+    # backend-only and are checked by the client-secret service at request time
+    # so a disabled or incomplete deployment still starts safely.
+    # ----------------------------------------------------------------------
+    ENABLE_REALTIME_INTERVIEW: bool = False
+    OPENAI_API_KEY: str = ""
+    OPENAI_REALTIME_MODEL: str = ""
+    OPENAI_REALTIME_VOICE: str = ""
+    OPENAI_REALTIME_TRANSCRIPTION_MODEL: str = "gpt-4o-mini-transcribe"
+    OPENAI_REALTIME_SESSION_MAX_MINUTES: int = 15
+    OPENAI_REALTIME_MAX_QUESTIONS: int = 5
+    OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS: int = 60
+    OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS: int = 30
 
     class Config:
         env_file = ("../.env", ".env")
@@ -55,6 +106,20 @@ def validate_runtime_config() -> None:
         raise RuntimeError("JWT_ALGORITHM is required.")
     if settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES <= 0:
         raise RuntimeError("JWT_ACCESS_TOKEN_EXPIRE_MINUTES must be greater than 0.")
+    if not 1 <= settings.OPENAI_REALTIME_SESSION_MAX_MINUTES <= 60:
+        raise RuntimeError(
+            "OPENAI_REALTIME_SESSION_MAX_MINUTES must be between 1 and 60."
+        )
+    if not 1 <= settings.OPENAI_REALTIME_MAX_QUESTIONS <= 20:
+        raise RuntimeError("OPENAI_REALTIME_MAX_QUESTIONS must be between 1 and 20.")
+    if not 30 <= settings.OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS <= 600:
+        raise RuntimeError(
+            "OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS must be between 30 and 600."
+        )
+    if not 5 <= settings.OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS <= 300:
+        raise RuntimeError(
+            "OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS must be between 5 and 300."
+        )
     if settings.CORS_ALLOW_CREDENTIALS and "*" in _split_csv(settings.CORS_ALLOWED_ORIGINS):
         raise RuntimeError("CORS_ALLOW_CREDENTIALS cannot be true when CORS_ALLOWED_ORIGINS contains '*'.")
 

@@ -1,0 +1,20 @@
+Name: Bui Van G
+Email: buivang@email.com
+Phone: 0907-890-123
+
+Summary
+Junior developer with extensive software engineering background.
+
+Experience
+
+Project: Simple API
+- Built a Python API
+
+Project: Frontend Work
+- Built React web applications
+- Created Node.js backend services
+- Used PostgreSQL for database
+- Deployed with Docker containers
+
+Skills
+Python, React, Node.js, PostgreSQL, Docker, Git, TypeScript, Express, MongoDB, AWS, Kubernetes, Machine Learning, AI, Blockchain, Web3

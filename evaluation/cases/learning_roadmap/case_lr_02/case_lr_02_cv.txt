@@ -1,0 +1,15 @@
+Name: Bui Van B
+Email: buivanb@email.com
+Phone: 0902-345-678
+
+Summary
+Backend developer with FastAPI, PostgreSQL, Docker.
+
+Experience
+
+Project: API Service
+- Built FastAPI API with PostgreSQL
+- Deployed with Docker
+
+Skills
+Python, FastAPI, PostgreSQL, Docker, Git

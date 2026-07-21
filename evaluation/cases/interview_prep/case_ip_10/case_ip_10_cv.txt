@@ -1,0 +1,19 @@
+Name: Chu Thi J
+Email: chuthij@email.com
+Phone: 0910-123-456
+
+Summary
+Full stack developer with strong backend capabilities.
+
+Experience
+
+Project: SaaS Platform
+- Built FastAPI backend with PostgreSQL for a multi-tenant SaaS application
+- Designed multi-tenant database schema with row-level security in PostgreSQL
+- Implemented Redis for session management and rate limiting across tenants
+- Deployed with Docker and Docker Compose with Nginx reverse proxy
+- Built background task processing using Celery and Redis queue
+- Implemented JWT authentication with refresh tokens and tenant-specific permissions
+
+Skills
+Python, FastAPI, PostgreSQL, Redis, Docker, Celery, Git, JWT, Nginx
