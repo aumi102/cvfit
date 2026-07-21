@@ -73,19 +73,15 @@ def test_models_still_import():
     assert models.TextEmbedding.__tablename__ == "text_embeddings"
 
 
-def test_schema_checker_script_tracks_baseline_schema():
+def test_schema_checker_uses_authoritative_runtime_schema():
     script = BACKEND_ROOT.parent / "scripts" / "check_db_schema.py"
 
     text = script.read_text(encoding="utf-8")
 
     assert "REQUIRED_SCHEMA" in text
-    assert '"users"' in text
-    assert '"analysis_jobs"' in text
-    assert '"user_id"' in text
-    assert '"access_token_hash"' in text
-    assert '"parent_job_id"' in text
-    assert '"analysis_group_id"' in text
-    assert '"revision_number"' in text
+    assert "_required_schema" in text
+    assert "EXPECTED_ALEMBIC_HEAD" in text
+    assert "from app.db.init_db import" in text
     assert "alembic_version" in text
 
 

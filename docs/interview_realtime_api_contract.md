@@ -1,7 +1,7 @@
 # Realtime Interview API Contract — Phase 8
 
-**Version:** 1.0
-**Date:** 2026-07-16
+**Version:** 1.1
+**Date:** 2026-07-21
 **Backend owner:** Phúc
 **Status:** Backend contract implemented; frontend and QA remain separate work
 
@@ -109,7 +109,8 @@ Rules:
   `OPENAI_REALTIME_MAX_QUESTIONS` at runtime.
 - `consent_audio=true` is mandatory for `realtime_voice`.
 - Camera consent is optional. No camera data is sent to this backend.
-- Recording consent defaults to `false`. This backend does not store media.
+- Recording consent must remain `false`; `true` is rejected because this
+  backend has no media recorder, media table, or deletion route.
 - Extra request fields are forbidden.
 
 ### `RealtimeInterviewSessionResponse`
@@ -188,7 +189,8 @@ are counted and returned.
 - Requires the Phase 8 flag, server API key, realtime model, and voice
 - Rejects terminal sessions and active sessions beyond the configured maximum
 - Builds context and system instructions on the backend
-- Mints a 60-second OpenAI Realtime client secret
+- Mints a short-lived OpenAI Realtime client secret using the server-owned TTL
+- Enforces a persisted, per-session minimum issuance interval
 - Does not persist or log the client secret
 - Does not return the server `OPENAI_API_KEY`
 
@@ -201,7 +203,8 @@ Response schema `RealtimeClientSecretResponse`:
   "expires_at": 1784186460,
   "provider_session_id": "sess_provider_id-or-null",
   "model": "operator-configured-model",
-  "voice": "operator-configured-voice"
+  "voice": "operator-configured-voice",
+  "configuration_version": "realtime_session_v1"
 }
 ```
 
@@ -214,6 +217,8 @@ Errors:
 - `401`: missing/invalid JWT
 - `404`: missing/cross-user session or linked context
 - `409`: invalid/terminal status or session time limit exceeded
+- `409`: also returned when another secret was issued inside the configured
+  minimum interval
 - `422`: audio consent missing
 - `503`: flag off, provider configuration missing, timeout, provider failure,
   or invalid provider response
@@ -226,8 +231,11 @@ Errors:
 - Unknown event types, unknown payload fields, nested payloads, binary values,
   sensitive field names, credential-like strings, encoded media, and payloads
   above 16 KiB are rejected
-- Optional `event_sequence` is non-negative and unique within a session;
-  duplicates return `409`
+- `event_sequence` is required, begins at `0`, and must increase by exactly one
+  for each accepted client event
+- Replaying the same sequence, event type, and validated payload hash is
+  idempotent (`201`, `replayed=true`); reusing a sequence with different
+  content or creating a gap returns `409`
 
 Request schema `RealtimeEventCreate`:
 
@@ -287,6 +295,7 @@ Response:
   "event_type": "question_started",
   "event_sequence": 3,
   "accepted": true,
+  "replayed": false,
   "created_at": "2026-07-16T10:01:00"
 }
 ```
@@ -294,15 +303,17 @@ Response:
 ### `POST /v1/interview/realtime/sessions/{session_id}/complete`
 
 - Auth: required owner
-- Accepts only `ready` or `active`
+- Accepts `ready` or `active`; repeating completion after `completed` is
+  idempotent and does not duplicate or replace turns
 - Persists/upserts at most `question_limit` unique final turns
 - Does not accept frontend scores, feedback, instructions, media, or provider
   secrets
 - Validates text size, credential-like content, encoded media, turn indexes,
   unique indexes, and timestamp order
 - Moves the session to `completed`
-- Attempts deterministic summary aggregation only when every persisted turn
-  already has trusted backend `score_json`; otherwise summary remains pending
+- Runs the bounded server-side deterministic practice evaluator over validated
+  turns when at least one turn exists. Client-provided scores are not accepted
+  or trusted.
 
 `RealtimeSessionCompleteRequest`:
 
@@ -333,7 +344,7 @@ Response:
   "interview_session_id": "uuid",
   "status": "completed",
   "completed_turns": 1,
-  "summary_status": "pending",
+  "summary_status": "ready",
   "ended_at": "2026-07-16T10:02:30"
 }
 ```
@@ -343,9 +354,9 @@ Errors: `401`, `404`, `409`, `422`, `503`.
 ### `GET /v1/interview/realtime/sessions/{session_id}/summary`
 
 - Auth: required owner
-- Returns `200` when a summary row exists
-- Returns `202` with the same schema and `status=pending` when trusted rubric
-  scores/evaluation are not available
+- Returns `200` with `status=ready` or `status=failed` when a summary row exists
+- Returns `202` with the same schema and `status=pending` when no summary row
+  exists yet
 - Never returns provider events, instructions, credentials, SDP, or media
 
 `RealtimeInterviewSummaryResponse`:
@@ -354,15 +365,14 @@ Errors: `401`, `404`, `409`, `422`, `503`.
 {
   "interview_session_id": "uuid",
   "status": "ready",
+  "rubric_version": "realtime_practice_v1",
   "overall_score": 74,
   "rubric": {
-    "relevance": 4.0,
-    "specificity": 3.2,
-    "evidence": 3.5,
-    "structure": 3.0,
-    "technical_depth": 3.4,
-    "communication_clarity": 4.1,
-    "risk": 1.5
+    "relevance": {
+      "score": 4.0,
+      "max_score": 5.0,
+      "evidence_turn_ids": ["turn-uuid"]
+    }
   },
   "strengths": [],
   "weaknesses": [],
@@ -370,6 +380,8 @@ Errors: `401`, `404`, `409`, `422`, `503`.
   "next_practice_questions": [],
   "learning_tasks_to_create": [],
   "limitations": [],
+  "failure_code": null,
+  "disclaimer": "AI interview feedback is for practice only and does not predict hiring outcomes.",
   "created_at": "2026-07-16T10:03:00",
   "updated_at": "2026-07-16T10:03:00"
 }
@@ -389,6 +401,12 @@ risk
 
 No emotion, face-derived confidence, personality, truthfulness, or hiring
 probability fields exist.
+
+The evaluator and rubric are server-owned. Transcript provenance is
+`client_reported_validated`, not provider-attested; the score is a bounded
+practice heuristic, not a hiring decision. A safe evaluation failure retains
+turns and returns `status=failed` plus `failure_code=summary_generation_failed`
+so a repeated completion request can retry.
 
 ## Ownership and consent rules
 
@@ -417,7 +435,7 @@ Expected domain errors use the existing FastAPI shape:
 |---|---|
 | `401` | JWT missing/invalid |
 | `404` | Resource missing or not owned |
-| `409` | Invalid lifecycle transition, terminal session, or duplicate sequence |
+| `409` | Invalid lifecycle transition, issuance throttle, sequence conflict/gap |
 | `422` | Schema, consent, bound, redaction, or safe-persistence validation failed |
 | `503` | Feature disabled or provider unavailable/misconfigured |
 
@@ -441,6 +459,15 @@ Quân may integrate against only the routes and schemas above. In particular:
    only events for a new turn.
 7. Complete explicitly, then treat summary `202/pending` as a normal state.
 8. Stop/disconnect the browser session at the configured question/time limit.
+
+The official Realtime client-secret contract permits the browser to send a
+later `session.update` for most session fields. The backend therefore cannot
+cryptographically make the direct-WebRTC session configuration immutable. The
+frontend contract forbids model, instruction, tool, voice, duration, retention,
+recording, rubric, and provider overrides. The backend never accepts arbitrary
+provider JSON and never treats browser transcript events as provider-attested.
+Changing that trust property would require a separately reviewed provider
+control/proxy architecture.
 
 Frontend implementation, WebRTC code, permissions UI, transcript UI, and
 analytics are not part of this backend contract implementation.

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -33,6 +35,7 @@ from app.services.interview_realtime.event_redaction import (
 )
 from app.services.interview_realtime.summary_service import (
     generate_deterministic_summary_if_ready,
+    summary_status,
 )
 
 
@@ -44,6 +47,14 @@ ALLOWED_STATUS_TRANSITIONS: dict[str, frozenset[str]] = {
     "aborted": frozenset(),
     "failed": frozenset(),
 }
+
+SERVER_EVENT_SESSION_CREATED = "server.session_created"
+SERVER_EVENT_SESSION_ACTIVATED = "server.session_activated"
+SERVER_EVENT_CLIENT_SECRET_ISSUED = "server.client_secret_issued"
+SERVER_EVENT_SESSION_COMPLETED = "server.session_completed"
+SERVER_EVENT_SESSION_FAILED = "server.session_failed"
+SERVER_EVENT_SUMMARY_GENERATED = "server.summary_generated"
+CLIENT_REPORTED_TRANSCRIPT_PROVENANCE = "client_reported_validated"
 
 
 def create_realtime_session(
@@ -60,6 +71,10 @@ def create_realtime_session(
     if body.mode == "realtime_voice" and not body.consent_audio:
         raise RealtimeInterviewValidationError(
             "consent_audio must be true for realtime_voice"
+        )
+    if body.consent_recording:
+        raise RealtimeInterviewValidationError(
+            "recording is disabled; this backend does not store audio or video"
         )
 
     sources = load_owned_context_sources(
@@ -89,6 +104,14 @@ def create_realtime_session(
     )
     transition_session_status(session, "ready", now=now)
     db.add(session)
+    db.flush()
+    _record_server_lifecycle_event(
+        db,
+        session,
+        SERVER_EVENT_SESSION_CREATED,
+        {"status": "ready", "mode": session.mode},
+        now=now,
+    )
     db.commit()
     db.refresh(session)
     return session, sources
@@ -154,6 +177,7 @@ def prepare_session_for_client_secret(
     session: InterviewRealtimeSession,
     *,
     max_minutes: int,
+    min_interval_seconds: int,
 ) -> None:
     if not session.consent_audio:
         raise RealtimeInterviewValidationError(
@@ -163,6 +187,35 @@ def prepare_session_for_client_secret(
         raise RealtimeInterviewConflict(
             f"client secret is unavailable for a {session.status} session"
         )
+    _fail_if_expired(db, session, max_minutes=max_minutes)
+
+    issued_events = (
+        db.query(InterviewRealtimeEvent)
+        .filter(
+            InterviewRealtimeEvent.session_id == session.id,
+            InterviewRealtimeEvent.event_type == SERVER_EVENT_CLIENT_SECRET_ISSUED,
+        )
+        .all()
+    )
+    last_issued_at = max(
+        (event.created_at for event in issued_events if event.created_at is not None),
+        default=None,
+    )
+    if (
+        last_issued_at is not None
+        and datetime.utcnow() < last_issued_at + timedelta(seconds=min_interval_seconds)
+    ):
+        raise RealtimeInterviewConflict(
+            "client secret was issued too recently; retry after the server interval"
+        )
+
+
+def _fail_if_expired(
+    db: Session,
+    session: InterviewRealtimeSession,
+    *,
+    max_minutes: int,
+) -> None:
     if (
         session.status == "active"
         and session.started_at is not None
@@ -173,6 +226,12 @@ def prepare_session_for_client_secret(
             "failed",
             failure_code="session_time_limit_exceeded",
         )
+        _record_server_lifecycle_event(
+            db,
+            session,
+            SERVER_EVENT_SESSION_FAILED,
+            {"failure_code": "session_time_limit_exceeded"},
+        )
         db.commit()
         raise RealtimeInterviewConflict("realtime interview session time limit exceeded")
 
@@ -180,8 +239,20 @@ def prepare_session_for_client_secret(
 def mark_session_active(db: Session, session: InterviewRealtimeSession) -> None:
     if session.status == "ready":
         transition_session_status(session, "active")
-        db.commit()
-        db.refresh(session)
+        _record_server_lifecycle_event(
+            db,
+            session,
+            SERVER_EVENT_SESSION_ACTIVATED,
+            {"status": "active"},
+        )
+    _record_server_lifecycle_event(
+        db,
+        session,
+        SERVER_EVENT_CLIENT_SECRET_ISSUED,
+        {"status": session.status},
+    )
+    db.commit()
+    db.refresh(session)
 
 
 def record_realtime_event(
@@ -189,23 +260,50 @@ def record_realtime_event(
     session: InterviewRealtimeSession,
     body: RealtimeEventCreate,
     redacted: RedactedRealtimeEvent,
-) -> InterviewRealtimeEvent:
+    *,
+    max_minutes: int,
+) -> tuple[InterviewRealtimeEvent, bool]:
     if session.status not in {"ready", "active"}:
         raise RealtimeInterviewConflict(
             f"events are unavailable for a {session.status} session"
         )
+    _fail_if_expired(db, session, max_minutes=max_minutes)
 
-    if body.event_sequence is not None:
-        duplicate = (
-            db.query(InterviewRealtimeEvent.id)
-            .filter(
-                InterviewRealtimeEvent.session_id == session.id,
-                InterviewRealtimeEvent.event_sequence == body.event_sequence,
-            )
-            .first()
+    sequenced_events = (
+        db.query(InterviewRealtimeEvent)
+        .filter(InterviewRealtimeEvent.session_id == session.id)
+        .all()
+    )
+    sequenced_events = [
+        event for event in sequenced_events if event.event_sequence is not None
+    ]
+    duplicate = next(
+        (
+            event
+            for event in sequenced_events
+            if event.event_sequence == body.event_sequence
+        ),
+        None,
+    )
+    if duplicate is not None:
+        if (
+            duplicate.event_type == body.event_type
+            and duplicate.payload_hash == redacted.payload_hash
+        ):
+            return duplicate, True
+        raise RealtimeInterviewConflict(
+            "event_sequence conflicts with a previously accepted event"
         )
-        if duplicate is not None:
-            raise RealtimeInterviewConflict("event_sequence has already been accepted")
+
+    expected_sequence = (
+        max(event.event_sequence for event in sequenced_events) + 1
+        if sequenced_events
+        else 0
+    )
+    if body.event_sequence != expected_sequence:
+        raise RealtimeInterviewConflict(
+            f"event_sequence must be the next value ({expected_sequence})"
+        )
 
     now = datetime.utcnow()
     if redacted.turn_index is not None:
@@ -230,18 +328,30 @@ def record_realtime_event(
     session.updated_at = now
     db.commit()
     db.refresh(event)
-    return event
+    return event, False
 
 
 def complete_realtime_session(
     db: Session,
     session: InterviewRealtimeSession,
     body: RealtimeSessionCompleteRequest,
-) -> tuple[int, bool]:
+    *,
+    max_minutes: int,
+) -> tuple[int, str]:
+    if session.status == "completed":
+        turns = (
+            db.query(InterviewRealtimeTurn)
+            .filter(InterviewRealtimeTurn.session_id == session.id)
+            .all()
+        )
+        summary = generate_deterministic_summary_if_ready(db, session)
+        db.commit()
+        return len(turns), summary_status(summary)
     if session.status not in {"ready", "active"}:
         raise RealtimeInterviewConflict(
             f"cannot complete a {session.status} realtime interview session"
         )
+    _fail_if_expired(db, session, max_minutes=max_minutes)
     if len(body.turns) > session.question_limit:
         raise RealtimeInterviewValidationError(
             "completed turns cannot exceed the session question limit"
@@ -290,11 +400,35 @@ def complete_realtime_session(
         )
 
     transition_session_status(session, "completed", now=now)
+    _record_server_lifecycle_event(
+        db,
+        session,
+        SERVER_EVENT_SESSION_COMPLETED,
+        {
+            "completion_reason": body.completion_reason,
+            "completed_turns": len(body.turns),
+        },
+        now=now,
+    )
     db.flush()
+    completed_turns = (
+        db.query(InterviewRealtimeTurn)
+        .filter(InterviewRealtimeTurn.session_id == session.id)
+        .count()
+    )
     summary = generate_deterministic_summary_if_ready(db, session)
+    generated_status = summary_status(summary)
+    if generated_status in {"ready", "failed"}:
+        _record_server_lifecycle_event(
+            db,
+            session,
+            SERVER_EVENT_SUMMARY_GENERATED,
+            {"summary_status": generated_status},
+            now=now,
+        )
     db.commit()
     db.refresh(session)
-    return len(body.turns), summary is not None
+    return completed_turns, generated_status
 
 
 def abort_realtime_session(
@@ -312,7 +446,48 @@ def fail_realtime_session(
     failure_code: str,
 ) -> None:
     transition_session_status(session, "failed", failure_code=failure_code)
+    _record_server_lifecycle_event(
+        db,
+        session,
+        SERVER_EVENT_SESSION_FAILED,
+        {"failure_code": failure_code[:100]},
+    )
     db.commit()
+
+
+def _record_server_lifecycle_event(
+    db: Session,
+    session: InterviewRealtimeSession,
+    event_type: str,
+    payload: dict[str, object],
+    *,
+    now: datetime | None = None,
+) -> InterviewRealtimeEvent:
+    """Persist bounded server-owned lifecycle metadata without transcripts."""
+    safe_payload = {
+        "source": "server",
+        **{
+            key: value
+            for key, value in payload.items()
+            if isinstance(value, (str, int, float, bool)) or value is None
+        },
+    }
+    serialized = json.dumps(
+        safe_payload,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    event = InterviewRealtimeEvent(
+        id=uuid.uuid4(),
+        session_id=session.id,
+        event_type=event_type,
+        event_sequence=None,
+        redacted_payload_json=safe_payload,
+        payload_hash=hashlib.sha256(serialized.encode("utf-8")).hexdigest(),
+        created_at=now or datetime.utcnow(),
+    )
+    db.add(event)
+    return event
 
 
 def _apply_turn_updates(
@@ -366,6 +541,13 @@ def _apply_turn_updates(
         if isinstance(value, datetime):
             value = _utc_naive(value)
         setattr(turn, field_name, value)
+    if any(
+        field_name in updates
+        for field_name in ("question_text", "answer_transcript", "ai_followup_text")
+    ):
+        feedback = dict(turn.feedback_json) if isinstance(turn.feedback_json, dict) else {}
+        feedback["transcript_provenance"] = CLIENT_REPORTED_TRANSCRIPT_PROVENANCE
+        turn.feedback_json = feedback
     turn.updated_at = now
     return turn
 

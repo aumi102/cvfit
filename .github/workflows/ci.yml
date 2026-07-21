@@ -45,9 +45,73 @@ jobs:
       - name: Compile backend
         run: python -m compileall backend/app
 
-      - name: Run backend tests
+      - name: Collect Phase 8 backend tests
         working-directory: backend
-        run: python -m pytest --basetemp pytest-cache-files-local -p no:cacheprovider
+        run: >-
+          python -m pytest
+          tests/test_interview_realtime.py
+          tests/test_interview_realtime_postgres.py
+          tests/test_phase8_env_contract.py
+          --collect-only
+          --basetemp pytest-cache-files-local
+          -p no:cacheprovider
+
+      - name: Run backend tests
+        id: backend-tests
+        continue-on-error: true
+        working-directory: backend
+        run: >-
+          python -m pytest
+          --junitxml=pytest-results.xml
+          --basetemp pytest-cache-files-local
+          -p no:cacheprovider
+
+      - name: Publish backend test result
+        if: always()
+        working-directory: backend
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          report = Path("pytest-results.xml")
+          if not report.is_file():
+              print("::error file=.github/workflows/ci.yml,title=pytest::pytest did not produce JUnit XML")
+              raise SystemExit(1)
+
+          suite = ET.parse(report).getroot().find(".//testsuite")
+          if suite is None:
+              print("::error file=.github/workflows/ci.yml,title=pytest::JUnit XML has no testsuite")
+              raise SystemExit(1)
+
+          tests = int(suite.attrib.get("tests", 0))
+          failures = int(suite.attrib.get("failures", 0))
+          errors = int(suite.attrib.get("errors", 0))
+          skipped = int(suite.attrib.get("skipped", 0))
+          passed = tests - failures - errors - skipped
+          print(
+              "::notice file=.github/workflows/ci.yml,title=pytest::"
+              f"collected={tests} passed={passed} failed={failures + errors} skipped={skipped}"
+          )
+
+          for case in suite.findall(".//testcase"):
+              failure = case.find("failure")
+              if failure is None:
+                  failure = case.find("error")
+              if failure is None:
+                  continue
+              message = failure.text or failure.attrib.get("message") or "pytest failure"
+              message = " | ".join(message.strip().splitlines()[-20:])[-4000:]
+              message = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              path = case.attrib.get("file", ".github/workflows/ci.yml")
+              if path != ".github/workflows/ci.yml" and not path.startswith("backend/"):
+                  path = f"backend/{path}"
+              line = case.attrib.get("line", "1")
+              name = case.attrib.get("name", "pytest")
+              print(f"::error file={path},line={line},title={name}::{message}")
+
+          raise SystemExit(1 if failures or errors else 0)
+          PY
 
       - name: Check Alembic heads
         working-directory: backend
@@ -123,9 +187,20 @@ jobs:
                   time.sleep(2)
           PY
 
-      - name: Run Alembic migrations on disposable PostgreSQL
+      - name: Exercise Phase 8 migration cycle on disposable PostgreSQL
         working-directory: backend
-        run: alembic upgrade head
+        run: |
+          alembic upgrade head
+          alembic downgrade 20260623_0001
+          alembic upgrade head
+
+      - name: Validate Phase 8 PostgreSQL contract
+        working-directory: backend
+        run: >-
+          python -m pytest
+          tests/test_interview_realtime_postgres.py
+          --basetemp pytest-cache-files-local
+          -p no:cacheprovider
 
       - name: Check Alembic current revision
         working-directory: backend

@@ -57,10 +57,11 @@ https://cvfit.onrender.com/
 
 The page uses same-origin API calls for the real MVP flow: upload a CV through
 `/v1/cv/upload`, create a score job through `/v1/jobs/create-score`, poll job
-status, fetch the token-protected result/report metadata, and expose a DOCX
-report download link. Use only synthetic CV/JD data for demos. The access token
-is MVP per-job protection, not full account auth; the current app has no cleanup
-endpoint, so mutating demos create records and a report.
+status, fetch protected result/report metadata, and expose a DOCX report
+download link. The repository now includes JWT account authentication and
+owner-scoped product routes; legacy guest jobs retain per-job access-token
+protection. Use only synthetic CV/JD data for demos. The current app has no
+cleanup endpoint, so mutating demos create records and a report.
 
 Stop:
 ```bash
@@ -124,10 +125,11 @@ docker compose config
 ```
 
 The PostgreSQL migration job starts a disposable `pgvector/pgvector:pg16`
-service with local CI-only credentials, runs `alembic upgrade head`, verifies
-`alembic current` matches `alembic heads`, and runs
-`python scripts/check_db_schema.py` against that disposable database. It does
-not use Render secrets, call Render APIs, deploy, or run adoption/stamp helpers.
+service with local CI-only credentials, runs `upgrade head`, downgrades Phase 8
+to `20260623_0001`, upgrades to head again, inspects the Phase 8 PostgreSQL
+constraints/indexes, verifies `alembic current` matches `alembic heads`, and
+runs `python scripts/check_db_schema.py`. It does not use Render secrets, call
+Render APIs, deploy, or run adoption/stamp helpers.
 
 On Windows Anaconda Prompt, run the same local checks with:
 
@@ -164,15 +166,34 @@ cd ..
 python scripts/check_db_schema.py
 ```
 
-The current Alembic head for the Phase 2 auth foundation is `20260531_0001`.
-It adds the `users` table and nullable `analysis_jobs.user_id` for logged-in job
-ownership while preserving guest jobs.
+The current expected Alembic head is `20260716_0001`. It adds the four Phase 8
+Realtime Interview tables after `20260623_0001`; the earlier authentication,
+product, learning, and billing migrations remain in the single linear chain.
 
 API and worker startup do not silently create or patch database tables. If the
 schema is missing or behind Alembic head, startup fails with an error that tells
 you to run `alembic upgrade head` against the intended local/disposable
 database. Do not run migrations blindly against an existing production database
 without a backup and schema/adoption checks.
+
+## Phase 8 Realtime Interview backend
+
+The Phase 8 backend contract is seven authenticated owner-scoped routes under
+`/v1/interview/realtime`. It mints a short-lived client secret so the browser
+can connect directly to OpenAI Realtime over WebRTC; the backend never proxies
+or stores SDP, raw audio, or video. Four tables store sessions, bounded turns,
+minimized events, and versioned practice summaries.
+
+`ENABLE_REALTIME_INTERVIEW=false` is the safe default. Do not enable it until
+frontend integration, CI/PostgreSQL evidence, QA/evaluation, privacy approval,
+an approved non-production credential, and a controlled smoke plan are all in
+place. Backend contracts and handoffs:
+
+- [API contract](docs/interview_realtime_api_contract.md)
+- [Backend architecture](docs/interview_realtime_backend_architecture.md)
+- [Frontend handoff](docs/interview_realtime_frontend_handoff.md)
+- [QA/evaluation handoff](docs/interview_realtime_qa_evaluation_handoff.md)
+- [Implementation report](docs/interview_realtime_backend_implementation_report.md)
 
 ## Smoke Test
 
