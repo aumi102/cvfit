@@ -1,95 +1,86 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createRealtimeSession } from '@/lib/interviewRealtime';
+import {
+  createRealtimeClientSecret,
+  ingestRealtimeEvent,
+} from '@/services/interviewRealtimeApi';
 
-/**
- * useInterviewSession
- * Custom hook to manage the realtime WebRTC mock session.
- */
-export function useInterviewSession(sessionId, config = {}) {
-  const [sessionState, setSessionState] = useState({
-    status: 'idle',
-    currentQuestionIndex: 0,
-    totalQuestions: 0,
-    currentQuestion: null,
-    isAISpeaking: false,
-    isUserSpeaking: false,
-    transcript: [],
-  });
-  
+const INITIAL_STATE = {
+  status: 'idle',
+  isAISpeaking: false,
+  isUserSpeaking: false,
+  isProcessing: false,
+  transcript: [],
+  turns: [],
+  error: null,
+};
+
+export function useInterviewSession(sessionId, { mediaStream, questionLimit = 5 } = {}) {
+  const [sessionState, setSessionState] = useState(INITIAL_STATE);
   const [elapsedTime, setElapsedTime] = useState(0);
   const sessionRef = useRef(null);
-  const timerRef = useRef(null);
 
-  // Initialize session
   useEffect(() => {
-    if (!sessionId) return;
-    
-    // Create the session mock
-    const session = createRealtimeSession({ 
-      sessionId, 
-      questions: config.questions,
-      autoAdvanceDelay: 12000 // Mock wait time before next question
+    if (!sessionId || !mediaStream) return undefined;
+
+    const session = createRealtimeSession({
+      sessionId,
+      mediaStream,
+      questionLimit,
+      createClientSecret: createRealtimeClientSecret,
+      sendAuditEvent: (event) => ingestRealtimeEvent(sessionId, event),
     });
-    
     sessionRef.current = session;
 
-    // Attach listeners to sync state
-    session.on('stateChange', status => setSessionState(s => ({ ...s, status })));
-    session.on('questionChange', index => setSessionState(s => ({ ...s, currentQuestionIndex: index, currentQuestion: config.questions?.[index] })));
-    session.on('aiSpeaking', isSpeaking => setSessionState(s => ({ ...s, isAISpeaking: isSpeaking })));
-    session.on('userSpeaking', isSpeaking => setSessionState(s => ({ ...s, isUserSpeaking: isSpeaking })));
-    session.on('transcript', entry => setSessionState(s => ({ ...s, transcript: [...session.getState().transcript] })));
-    
-    // Update initial state
-    setSessionState(s => ({ 
-      ...s, 
-      ...session.getState(), 
-      totalQuestions: config.questions?.length || 0 
+    const onStatus = (status) => setSessionState((state) => ({ ...state, status }));
+    const onTranscript = () => setSessionState((state) => ({
+      ...state,
+      transcript: session.getState().transcript,
     }));
+    const onTurns = (turns) => setSessionState((state) => ({ ...state, turns }));
+    const onAI = (isAISpeaking) => setSessionState((state) => ({ ...state, isAISpeaking }));
+    const onUser = (isUserSpeaking) => setSessionState((state) => ({ ...state, isUserSpeaking }));
+    const onProcessing = (isProcessing) => setSessionState((state) => ({ ...state, isProcessing }));
+    const onError = (error) => setSessionState((state) => ({ ...state, error }));
 
+    session
+      .on('stateChange', onStatus)
+      .on('transcript', onTranscript)
+      .on('turnsChange', onTurns)
+      .on('aiSpeaking', onAI)
+      .on('userSpeaking', onUser)
+      .on('processing', onProcessing)
+      .on('error', onError);
+
+    setSessionState(INITIAL_STATE);
     return () => {
-      session.destroy();
       sessionRef.current = null;
+      void session.destroy();
     };
-  }, [sessionId, config.questions]);
+  }, [sessionId, mediaStream, questionLimit]);
 
-  // Handle timer
   useEffect(() => {
-    if (sessionState.status === 'connected') {
-      timerRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-    
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    if (sessionState.status !== 'connected') return undefined;
+    const timer = setInterval(() => setElapsedTime((value) => value + 1), 1000);
+    return () => clearInterval(timer);
   }, [sessionState.status]);
 
-  const connect = useCallback(() => {
-    if (sessionRef.current) sessionRef.current.connect();
+  const connect = useCallback(async () => {
+    setSessionState((state) => ({ ...state, error: null }));
+    return sessionRef.current?.connect();
   }, []);
 
-  const disconnect = useCallback(() => {
-    if (sessionRef.current) sessionRef.current.disconnect();
+  const disconnect = useCallback((reason) => sessionRef.current?.disconnect(reason), []);
+  const reconnect = useCallback(async () => {
+    setSessionState((state) => ({ ...state, error: null }));
+    return sessionRef.current?.reconnect();
   }, []);
-
-  const reconnect = useCallback(() => {
-    if (sessionRef.current) sessionRef.current.reconnect();
-  }, []);
-  
-  const skipQuestion = useCallback(() => {
-    if (sessionRef.current) sessionRef.current.skipQuestion();
-  }, []);
-
-  // Simulates sending audio to the mock session (would be handled by WebRTC in real life)
-  const setUserSpeaking = useCallback((isSpeaking) => {
-    if (sessionRef.current) sessionRef.current.setUserSpeaking(isSpeaking);
-  }, []);
+  const retryPendingEvent = useCallback(
+    () => sessionRef.current?.retryPendingEvent(),
+    []
+  );
 
   return {
     ...sessionState,
@@ -97,7 +88,6 @@ export function useInterviewSession(sessionId, config = {}) {
     connect,
     disconnect,
     reconnect,
-    skipQuestion,
-    setUserSpeaking
+    retryPendingEvent,
   };
 }

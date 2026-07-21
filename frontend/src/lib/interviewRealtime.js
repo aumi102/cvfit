@@ -1,247 +1,395 @@
+import { CONNECTION_STATUS } from './interviewTypes';
+import { createRealtimeEventSequencer } from './realtimeEventSequencer';
+
+const OPENAI_REALTIME_CALLS_URL = 'https://api.openai.com/v1/realtime/calls';
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function transcriptKey(event) {
+  return event.response_id || event.item_id || event.output_index || 'assistant';
+}
+
+function publicConnectionError(error) {
+  if (error?.name === 'NotAllowedError') {
+    return 'Quyền microphone đã bị từ chối.';
+  }
+  if (error?.code === 'EVENT_SYNC_FAILED') {
+    return 'Không thể đồng bộ bản ghi phiên. Vui lòng thử kết nối lại.';
+  }
+  if (error?.response?.status === 503) {
+    return 'Phỏng vấn bằng giọng nói hiện chưa được cấu hình.';
+  }
+  return 'Không thể kết nối phỏng vấn bằng giọng nói. Vui lòng thử lại.';
+}
+
 /**
- * Interview Realtime Client — Mock WebRTC Session (Phase 8)
- *
- * Simulates a real-time AI interview session with event-driven state
- * management. When the backend WebRTC/WebSocket endpoint is ready,
- * replace the mock timers with actual signalling logic.
- *
- * Usage:
- *   const session = createRealtimeSession({ sessionId, questions });
- *   session.on('stateChange', (status) => { ... });
- *   session.on('transcript', (entry) => { ... });
- *   session.on('questionChange', (index) => { ... });
- *   session.on('aiSpeaking', (isSpeaking) => { ... });
- *   session.connect();
+ * Low-level OpenAI Realtime WebRTC controller. The long-lived provider key is
+ * never available here; the short-lived credential is used once for SDP and
+ * kept only in this connect() stack frame.
  */
+export function createRealtimeSession({
+  sessionId,
+  mediaStream,
+  questionLimit = 5,
+  createClientSecret,
+  sendAuditEvent,
+  fetchImpl = globalThis.fetch,
+  RTCPeerConnectionImpl = globalThis.RTCPeerConnection,
+  audioElementFactory = () => document.createElement('audio'),
+}) {
+  if (!sessionId) throw new TypeError('sessionId is required');
+  if (!mediaStream?.getAudioTracks?.().length) {
+    throw new TypeError('A consented microphone stream is required');
+  }
+  if (typeof createClientSecret !== 'function' || typeof sendAuditEvent !== 'function') {
+    throw new TypeError('Realtime backend functions are required');
+  }
 
-import { CONNECTION_STATUS, MOCK_QUESTIONS } from './interviewTypes';
-
-/**
- * Create a new realtime interview session controller.
- *
- * @param {{
- *   sessionId: string,
- *   questions?: Array<{ id: string, text: string, type?: string }>,
- *   autoAdvanceDelay?: number,
- * }} config
- * @returns {RealtimeSession}
- */
-export function createRealtimeSession(config = {}) {
-  const {
-    sessionId = 'mock-session',
-    questions = MOCK_QUESTIONS,
-    autoAdvanceDelay = 12000,
-  } = config;
-
-  /* ─── Internal State ─── */
-  let status = CONNECTION_STATUS.IDLE;
-  let currentQuestionIndex = 0;
-  let isAISpeaking = false;
-  let isUserSpeaking = false;
-  let transcript = [];
-  let timers = [];
-  let transcriptIdCounter = 0;
-
-  /* ─── Event Listeners ─── */
   const listeners = {
     stateChange: [],
     transcript: [],
-    questionChange: [],
     aiSpeaking: [],
     userSpeaking: [],
+    processing: [],
+    turnsChange: [],
     error: [],
   };
+  const sequencer = createRealtimeEventSequencer(sendAuditEvent);
 
-  function emit(event, data) {
-    (listeners[event] || []).forEach((fn) => {
-      try { fn(data); } catch (e) { console.error(`[RealtimeSession] listener error:`, e); }
-    });
+  let status = CONNECTION_STATUS.IDLE;
+  let peerConnection = null;
+  let dataChannel = null;
+  let remoteAudio = null;
+  let providerSessionId = null;
+  let transcript = [];
+  let turns = [];
+  let assistantDeltas = new Map();
+  let transcriptCounter = 0;
+  let connectPromise = null;
+  let destroyed = false;
+
+  function emit(event, value) {
+    (listeners[event] || []).forEach((listener) => listener(value));
   }
 
-  function setStatus(newStatus) {
-    status = newStatus;
-    emit('stateChange', status);
+  function setStatus(nextStatus) {
+    status = nextStatus;
+    emit('stateChange', nextStatus);
   }
 
-  function setAISpeaking(speaking) {
-    isAISpeaking = speaking;
-    emit('aiSpeaking', speaking);
-  }
-
-  function addTranscript(speaker, text) {
+  function addTranscript(speaker, text, providerItemId) {
+    const normalized = String(text || '').trim();
+    if (!normalized) return null;
     const entry = {
-      id: `t-${++transcriptIdCounter}`,
+      id: providerItemId || `transcript-${++transcriptCounter}`,
       speaker,
-      text,
+      text: normalized,
       timestamp: Date.now(),
     };
-    transcript.push(entry);
-    emit('transcript', entry);
+    if (!transcript.some((item) => item.id === entry.id && item.text === entry.text)) {
+      transcript = [...transcript, entry];
+      emit('transcript', entry);
+    }
     return entry;
   }
 
-  function scheduleTimer(fn, delay) {
-    const id = setTimeout(fn, delay);
-    timers.push(id);
-    return id;
+  function enqueueAudit(eventType, payload) {
+    return sequencer.enqueue(eventType, payload).catch((cause) => {
+      const error = new Error('Realtime audit event synchronization failed', { cause });
+      const responseStatus = cause?.response?.status;
+      error.code = responseStatus === 409 ? 'EVENT_SEQUENCE_CONFLICT' : 'EVENT_SYNC_FAILED';
+      emit('error', {
+        code: error.code,
+        message: responseStatus === 409
+          ? 'Chuỗi sự kiện phỏng vấn không còn đồng bộ. Hãy kết thúc phiên và tạo phiên mới.'
+          : publicConnectionError(error),
+        retryable: responseStatus !== 409 && responseStatus !== 422,
+      });
+      return null;
+    });
   }
 
-  function clearAllTimers() {
-    timers.forEach(clearTimeout);
-    timers = [];
+  function appendQuestion(text, providerItemId) {
+    if (turns.length >= questionLimit) return;
+    const turnIndex = turns.length;
+    const occurredAt = nowIso();
+    const turn = {
+      turn_index: turnIndex,
+      question_text: text,
+      question_type: null,
+      answer_transcript: null,
+      ai_followup_text: null,
+      started_at: occurredAt,
+      ended_at: null,
+    };
+    turns = [...turns, turn];
+    emit('turnsChange', [...turns]);
+    void enqueueAudit('question_started', {
+      turn_index: turnIndex,
+      question_text: text,
+      occurred_at: occurredAt,
+    });
+    void enqueueAudit('assistant_transcript_completed', {
+      turn_index: turnIndex,
+      transcript: text,
+      transcript_kind: 'question',
+      ...(providerItemId ? { provider_item_id: providerItemId } : {}),
+      occurred_at: occurredAt,
+    });
   }
 
-  /* ─── Mock AI Flow ─── */
-  function startMockAIFlow() {
-    // AI greets
-    setAISpeaking(true);
-    addTranscript('ai', 'Xin chào! Tôi là AI phỏng vấn viên của bạn. Chúng ta sẽ bắt đầu buổi phỏng vấn ngay bây giờ.');
-
-    scheduleTimer(() => {
-      setAISpeaking(false);
-      askCurrentQuestion();
-    }, 3000);
+  function appendAnswer(text, providerItemId) {
+    const turnIndex = turns.length - 1;
+    if (turnIndex < 0) return;
+    const occurredAt = nowIso();
+    turns = turns.map((turn, index) =>
+      index === turnIndex
+        ? { ...turn, answer_transcript: text, ended_at: occurredAt }
+        : turn
+    );
+    emit('turnsChange', [...turns]);
+    void enqueueAudit('user_transcript_completed', {
+      turn_index: turnIndex,
+      transcript: text,
+      ...(providerItemId ? { provider_item_id: providerItemId } : {}),
+      occurred_at: occurredAt,
+    });
+    void enqueueAudit('question_completed', {
+      turn_index: turnIndex,
+      question_text: turns[turnIndex].question_text,
+      occurred_at: occurredAt,
+    });
   }
 
-  function askCurrentQuestion() {
-    if (currentQuestionIndex >= questions.length) {
-      endMockInterview();
-      return;
+  function handleProviderEvent(event) {
+    if (!event || typeof event.type !== 'string') return;
+
+    switch (event.type) {
+      case 'session.created':
+        providerSessionId = event.session?.id || providerSessionId;
+        break;
+      case 'input_audio_buffer.speech_started':
+        emit('userSpeaking', true);
+        emit('processing', false);
+        break;
+      case 'input_audio_buffer.speech_stopped':
+        emit('userSpeaking', false);
+        emit('processing', true);
+        break;
+      case 'conversation.item.input_audio_transcription.completed': {
+        const entry = addTranscript('user', event.transcript, event.item_id);
+        if (entry) appendAnswer(entry.text, event.item_id);
+        break;
+      }
+      case 'response.output_audio_transcript.delta':
+      case 'response.audio_transcript.delta': {
+        const key = transcriptKey(event);
+        assistantDeltas.set(key, `${assistantDeltas.get(key) || ''}${event.delta || ''}`);
+        emit('aiSpeaking', true);
+        emit('processing', false);
+        break;
+      }
+      case 'response.output_audio_transcript.done':
+      case 'response.audio_transcript.done': {
+        const key = transcriptKey(event);
+        const text = event.transcript || assistantDeltas.get(key) || '';
+        assistantDeltas.delete(key);
+        const entry = addTranscript('ai', text, event.item_id || key);
+        if (entry) appendQuestion(entry.text, event.item_id);
+        emit('aiSpeaking', false);
+        break;
+      }
+      case 'response.created':
+        emit('processing', true);
+        break;
+      case 'response.output_audio.delta':
+      case 'response.audio.delta':
+        emit('aiSpeaking', true);
+        emit('processing', false);
+        break;
+      case 'response.output_audio.done':
+      case 'response.audio.done':
+      case 'response.done':
+        emit('aiSpeaking', false);
+        emit('processing', false);
+        break;
+      case 'error':
+        emit('error', {
+          code: 'PROVIDER_EVENT_ERROR',
+          message: 'Dịch vụ phỏng vấn gặp lỗi. Vui lòng kết nối lại.',
+          retryable: true,
+        });
+        break;
+      default:
+        break;
     }
-
-    const q = questions[currentQuestionIndex];
-    emit('questionChange', currentQuestionIndex);
-
-    scheduleTimer(() => {
-      setAISpeaking(true);
-      addTranscript('ai', q.text);
-
-      scheduleTimer(() => {
-        setAISpeaking(false);
-        // Wait for user answer (auto-advance after delay in mock mode)
-        scheduleTimer(() => {
-          simulateUserAnswer();
-        }, autoAdvanceDelay);
-      }, 2500);
-    }, 1000);
   }
 
-  function simulateUserAnswer() {
-    // In mock mode, simulate a user answering
-    isUserSpeaking = true;
-    emit('userSpeaking', true);
+  async function connect() {
+    if (destroyed) throw new Error('Realtime session has been destroyed');
+    if (status === CONNECTION_STATUS.CONNECTED) return;
+    if (connectPromise) return connectPromise;
 
-    scheduleTimer(() => {
-      isUserSpeaking = false;
-      emit('userSpeaking', false);
-      addTranscript('user', '(Đang trả lời câu hỏi...)');
-
-      // Move to next question
-      currentQuestionIndex++;
-      scheduleTimer(() => {
-        askCurrentQuestion();
-      }, 2000);
-    }, 4000);
-  }
-
-  function endMockInterview() {
-    setAISpeaking(true);
-    addTranscript('ai', 'Cảm ơn bạn đã hoàn thành buổi phỏng vấn! Tôi sẽ tổng hợp kết quả ngay bây giờ.');
-
-    scheduleTimer(() => {
-      setAISpeaking(false);
-      setStatus(CONNECTION_STATUS.DISCONNECTED);
-    }, 3000);
-  }
-
-  /* ─── Public API ─── */
-  const session = {
-    /** Register an event listener. */
-    on(event, fn) {
-      if (listeners[event]) {
-        listeners[event].push(fn);
-      }
-      return session;
-    },
-
-    /** Remove an event listener. */
-    off(event, fn) {
-      if (listeners[event]) {
-        listeners[event] = listeners[event].filter((f) => f !== fn);
-      }
-      return session;
-    },
-
-    /** Connect to the AI interviewer (mock: simulates connection delay). */
-    connect() {
-      if (status === CONNECTION_STATUS.CONNECTED || status === CONNECTION_STATUS.CONNECTING) return;
-
+    connectPromise = (async () => {
       setStatus(CONNECTION_STATUS.CONNECTING);
-      currentQuestionIndex = 0;
-      transcript = [];
+      let credential = null;
+      try {
+        credential = await createClientSecret(sessionId);
+        const ephemeralKey = credential?.client_secret;
+        if (!ephemeralKey) throw new Error('Missing ephemeral credential');
+        if (typeof RTCPeerConnectionImpl !== 'function') {
+          throw new Error('WebRTC is not supported');
+        }
 
-      scheduleTimer(() => {
-        setStatus(CONNECTION_STATUS.CONNECTED);
-        startMockAIFlow();
-      }, 2000);
-    },
+        providerSessionId = credential.provider_session_id || null;
+        peerConnection = new RTCPeerConnectionImpl();
+        remoteAudio = audioElementFactory();
+        remoteAudio.autoplay = true;
+        remoteAudio.playsInline = true;
 
-    /** Disconnect from the session. */
-    disconnect() {
-      clearAllTimers();
-      setAISpeaking(false);
-      isUserSpeaking = false;
+        peerConnection.ontrack = (event) => {
+          remoteAudio.srcObject = event.streams?.[0] || null;
+        };
+        peerConnection.onconnectionstatechange = () => {
+          const connectionState = peerConnection?.connectionState;
+          if (connectionState === 'failed') {
+            setStatus(CONNECTION_STATUS.FAILED);
+            emit('error', {
+              code: 'WEBRTC_CONNECTION_FAILED',
+              message: 'Kết nối WebRTC đã bị gián đoạn.',
+              retryable: true,
+            });
+          } else if (connectionState === 'disconnected') {
+            setStatus(CONNECTION_STATUS.DISCONNECTED);
+          }
+        };
+
+        mediaStream.getAudioTracks().forEach((track) => {
+          peerConnection.addTrack(track, mediaStream);
+        });
+
+        dataChannel = peerConnection.createDataChannel('oai-events');
+        dataChannel.addEventListener('message', (message) => {
+          try {
+            handleProviderEvent(JSON.parse(message.data));
+          } catch {
+            emit('error', {
+              code: 'INVALID_PROVIDER_EVENT',
+              message: 'Dữ liệu thời gian thực không hợp lệ đã được bỏ qua.',
+              retryable: false,
+            });
+          }
+        });
+        dataChannel.addEventListener('open', () => {
+          setStatus(CONNECTION_STATUS.CONNECTED);
+          void enqueueAudit('session_connected', {
+            ...(providerSessionId ? { provider_session_id: providerSessionId } : {}),
+            transport: 'webrtc',
+            occurred_at: nowIso(),
+          });
+          dataChannel.send(JSON.stringify({ type: 'response.create' }));
+        });
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        const response = await fetchImpl(OPENAI_REALTIME_CALLS_URL, {
+          method: 'POST',
+          body: offer.sdp,
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            'Content-Type': 'application/sdp',
+          },
+        });
+        if (!response.ok) throw new Error('OpenAI WebRTC negotiation failed');
+        await peerConnection.setRemoteDescription({
+          type: 'answer',
+          sdp: await response.text(),
+        });
+      } catch (error) {
+        dataChannel?.close();
+        peerConnection?.close();
+        if (remoteAudio) remoteAudio.srcObject = null;
+        dataChannel = null;
+        peerConnection = null;
+        remoteAudio = null;
+        setStatus(CONNECTION_STATUS.FAILED);
+        emit('error', {
+          code: 'WEBRTC_CONNECT_FAILED',
+          message: publicConnectionError(error),
+          retryable: true,
+        });
+        throw error;
+      } finally {
+        credential = null;
+        connectPromise = null;
+      }
+    })();
+
+    return connectPromise;
+  }
+
+  async function disconnect(reason = 'user_ended') {
+    try {
+      dataChannel?.close();
+      peerConnection?.close();
+      if (remoteAudio) remoteAudio.srcObject = null;
+    } finally {
+      dataChannel = null;
+      peerConnection = null;
+      remoteAudio = null;
+      emit('aiSpeaking', false);
       emit('userSpeaking', false);
-      setStatus(CONNECTION_STATUS.DISCONNECTED);
-    },
+      emit('processing', false);
+      if (status !== CONNECTION_STATUS.IDLE) {
+        setStatus(CONNECTION_STATUS.DISCONNECTED);
+        try {
+          await enqueueAudit('session_disconnected', {
+            reason,
+            occurred_at: nowIso(),
+          });
+        } catch {
+          // The pending event remains available for an exact retry.
+        }
+      }
+    }
+  }
 
-    /** Reconnect after a drop. */
-    reconnect() {
-      clearAllTimers();
+  const session = {
+    on(event, listener) {
+      if (listeners[event]) listeners[event].push(listener);
+      return session;
+    },
+    off(event, listener) {
+      if (listeners[event]) {
+        listeners[event] = listeners[event].filter((item) => item !== listener);
+      }
+      return session;
+    },
+    connect,
+    disconnect,
+    async reconnect() {
       setStatus(CONNECTION_STATUS.RECONNECTING);
-
-      scheduleTimer(() => {
-        setStatus(CONNECTION_STATUS.CONNECTED);
-        addTranscript('ai', 'Kết nối đã được khôi phục. Chúng ta tiếp tục nhé.');
-        scheduleTimer(() => {
-          askCurrentQuestion();
-        }, 2000);
-      }, 3000);
+      await disconnect('network_interrupted');
+      return connect();
     },
-
-    /** Skip to next question. */
-    skipQuestion() {
-      clearAllTimers();
-      setAISpeaking(false);
-      isUserSpeaking = false;
-      emit('userSpeaking', false);
-      currentQuestionIndex++;
-      askCurrentQuestion();
+    retryPendingEvent() {
+      return sequencer.retryPending();
     },
-
-    /** Manually advance user speaking state (for real mic integration). */
-    setUserSpeaking(speaking) {
-      isUserSpeaking = speaking;
-      emit('userSpeaking', speaking);
-    },
-
-    /** Get current state snapshot. */
     getState() {
       return {
         status,
-        currentQuestionIndex,
-        totalQuestions: questions.length,
-        currentQuestion: questions[currentQuestionIndex] || null,
-        isAISpeaking,
-        isUserSpeaking,
         transcript: [...transcript],
+        turns: turns.map((turn) => ({ ...turn })),
       };
     },
-
-    /** Clean up all resources. */
-    destroy() {
-      clearAllTimers();
-      Object.keys(listeners).forEach((key) => { listeners[key] = []; });
+    async destroy() {
+      destroyed = true;
+      await disconnect('component_unmounted');
+      Object.keys(listeners).forEach((key) => {
+        listeners[key] = [];
+      });
     },
   };
 

@@ -129,7 +129,7 @@ function QuestionItem({ question, index, appId, pastAnswer }) {
             placeholder="Nhập câu trả lời của bạn vào đây…"
             disabled={isSubmitting}
             id={`answer-textarea-${index + 1}`}
-            aria-label={`Answer for question ${index + 1}`}
+            aria-label={`Câu trả lời cho câu hỏi ${index + 1}`}
           />
           {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
           <div className={styles.answerFooter}>
@@ -236,6 +236,7 @@ export default function InterviewPage() {
   const [isLoading, setIsLoading]   = useState(true);
   const [error, setError]           = useState(null);
   const [disclaimer, setDisclaimer] = useState(null);
+  const [mode, setMode] = useState('voice');
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -320,10 +321,53 @@ export default function InterviewPage() {
         )}
       </div>
 
-      {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-      {isLoading && <LoadingSpinner fullPage label="Đang tải câu hỏi…" />}
+      <div className={styles.modeTabs} role="tablist" aria-label="Chọn hình thức luyện phỏng vấn">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'voice'}
+          className={mode === 'voice' ? styles.modeTabActive : styles.modeTab}
+          onClick={() => setMode('voice')}
+        >
+          Phỏng vấn bằng giọng nói
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'text'}
+          className={mode === 'text' ? styles.modeTabActive : styles.modeTab}
+          onClick={() => setMode('text')}
+        >
+          Luyện tập bằng văn bản
+        </button>
+      </div>
 
-      {!isLoading && !error && questions.length === 0 && (
+      {mode === 'voice' && (
+        <section className={styles.voiceLauncher} role="tabpanel">
+          <div className={styles.voiceLauncherIcon} aria-hidden="true">🎙️</div>
+          <div>
+            <h2>Phỏng vấn bằng giọng nói</h2>
+            <p>
+              AI đặt câu hỏi và phản hồi bằng tiếng Việt qua kết nối WebRTC trực tiếp.
+              Trình duyệt chỉ yêu cầu microphone khi bạn bắt đầu.
+            </p>
+            <p className={styles.voicePrivacyNote}>
+              CVFit không ghi âm và không lưu audio, video hoặc dữ liệu SDP.
+            </p>
+            <Link
+              href={`/interview/sessions/new?application_id=${id}`}
+              className={styles.voiceStartLink}
+            >
+              Bắt đầu phỏng vấn bằng giọng nói
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {mode === 'text' && error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
+      {mode === 'text' && isLoading && <LoadingSpinner fullPage label="Đang tải câu hỏi…" />}
+
+      {mode === 'text' && !isLoading && !error && questions.length === 0 && (
         <EmptyStatePage
           icon={micIcon}
           title="Chưa có câu hỏi"
@@ -331,7 +375,7 @@ export default function InterviewPage() {
         />
       )}
 
-      {!isLoading && questions.length > 0 && (
+      {mode === 'text' && !isLoading && questions.length > 0 && (
         <>
           <div className={styles.questionsList}>
             {questions.map((q, i) => {

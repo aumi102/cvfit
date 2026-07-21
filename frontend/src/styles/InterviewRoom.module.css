@@ -933,6 +933,250 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+/* Hotfix: actual voice/WebRTC experience */
+.voiceLanguageBadge {
+  display: inline-flex;
+  padding: 0.25rem 0.65rem;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.voiceError {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-4) 0;
+  padding: var(--space-4);
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-lg);
+}
+
+.voiceError button {
+  padding: var(--space-2) var(--space-4);
+  color: white;
+  background: var(--color-danger);
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.voiceStartCard {
+  max-width: 720px;
+  margin: 4rem auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  text-align: center;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.voiceStartCard h1 {
+  margin-bottom: var(--space-3);
+}
+
+.voiceStartCard p,
+.voiceStartCard li {
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.voiceStartCard ul {
+  display: inline-block;
+  margin: var(--space-5) auto;
+  text-align: left;
+}
+
+.voiceStartIcon {
+  margin-bottom: var(--space-4);
+  font-size: 3rem;
+}
+
+.voiceModeIntro {
+  margin: var(--space-8) 0 var(--space-4);
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.voiceModeIntro span {
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.voiceConsentLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--color-text-secondary);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.voiceConsentLabel input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-top: 0.15rem;
+  flex: 0 0 auto;
+}
+
+.voiceRoomContainer {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(300px, 1.2fr) minmax(300px, 1fr);
+  gap: var(--space-4);
+  min-height: calc(100vh - 190px);
+}
+
+.voiceStatusPanel,
+.voiceQuestionPanel,
+.voiceTranscriptPanel {
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.voiceStatusPanel p {
+  margin-top: var(--space-4);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.voiceControlsBar {
+  position: sticky;
+  bottom: var(--space-4);
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.summaryStateCard {
+  margin: 5rem auto;
+  padding: var(--space-8);
+  text-align: center;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+.summaryStateCard p {
+  margin: var(--space-4) 0;
+  color: var(--color-text-secondary);
+}
+
+.summaryScoreCard {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-8);
+  padding: var(--space-6);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.summaryScoreCard strong {
+  color: var(--color-primary);
+  font-size: clamp(3rem, 8vw, 5rem);
+}
+
+.summaryInsightGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: var(--space-8) 0;
+}
+
+.summaryInsightCard,
+.summaryLimitations {
+  padding: var(--space-5);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.summaryInsightCard h2,
+.summaryLimitations h2 {
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-lg);
+}
+
+.summaryInsightCard li,
+.summaryLimitations li,
+.summaryInsightCard p {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.summaryActions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 1024px) {
+  .voiceRoomContainer {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .voiceTranscriptPanel {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .voiceRoomContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .voiceTranscriptPanel,
+  .voiceControlsBar {
+    grid-column: auto;
+  }
+
+  .voiceControlsBar,
+  .voiceError {
+    flex-direction: column;
+  }
+
+  .voiceControlsBar button,
+  .voiceError button {
+    width: 100%;
+  }
+
+  .summaryInsightGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .summaryActions {
+    flex-direction: column;
+  }
+}
+
 .loadingIcon {
   width: 80px;
   height: 80px;
