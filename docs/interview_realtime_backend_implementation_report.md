@@ -8,7 +8,7 @@
 
 **Starting main HEAD:** `21f99c2a5e643c9101a35fc901610c9bb95a6e67`
 
-**Status:** Phúc backend scope implemented for review; team integration and live evidence remain
+**Status:** Phúc backend scope implemented and CI-verified; team integration and live evidence remain
 
 This report is limited to repository code and isolated validation. It does not
 claim frontend completion, rubric-quality approval, privacy approval,
@@ -78,9 +78,10 @@ architecture that conflicts with the approved no-SDP-proxy design.
 - Phase 8 tables: sessions, turns, events, summaries only.
 - Runtime schema and the standalone checker now use the same authoritative
   `app.db.init_db._required_schema()` contract and expected head.
-- CI is configured to run `upgrade head`, downgrade to `20260623_0001`, upgrade
-  to head again, inspect PostgreSQL constraints/indexes, and run the runtime
-  schema validator on a disposable `pgvector/pgvector:pg16` service.
+- Draft PR #101 CI run `29796351253` passed `upgrade head`, downgrade to
+  `20260623_0001`, upgrade to head again, Phase 8 PostgreSQL constraint/index
+  inspection, Alembic current/head comparison, and the runtime schema validator
+  on disposable `pgvector/pgvector:pg16`.
 - No local or production migration was run in this work session. Local
   PostgreSQL verification remains infrastructure-blocked because Docker Desktop
   is not running.
@@ -109,16 +110,17 @@ OpenAI or payOS.
 Local compile validation succeeded before the documentation pass:
 
 ```text
-python -m compileall -q backend/app scripts/check_env_contract.py scripts/check_db_schema.py
+python -m compileall -q -f backend/app backend/tests scripts/check_env_contract.py scripts/check_db_schema.py
 exit 0
 ```
 
 Local pytest execution is blocked, not passed: the repository pins Python 3.11,
 but the machine exposes Python 3.14 and neither available interpreter has
 pytest. Dependencies were not installed because the task forbids installation.
-The new Python 3.11 CI jobs are the intended execution environment. Their final
-results must be attached to the draft PR before this backend scope is treated
-as regression-verified.
+The final Python 3.11 CI run collected 686 backend tests: 685 passed, 0 failed,
+and 1 PostgreSQL-only test skipped in the SQLite job. The separate disposable
+PostgreSQL job ran all 3 Phase 8 migration-contract tests successfully and
+passed the full migration cycle/schema validation. No paid provider was called.
 
 ## Handoffs
 
