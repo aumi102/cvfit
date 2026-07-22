@@ -12,7 +12,9 @@
 
 **Starting main HEAD:** `21f99c2a5e643c9101a35fc901610c9bb95a6e67`
 
-**Status:** Phúc backend scope implemented and CI-verified; team integration and live evidence remain
+**Historical status at PR #101:** Phúc backend scope implemented and
+CI-verified. Team integration and live evidence were later completed through
+PRs #102/#104 and the production report linked from the authoritative closeout.
 
 This report is limited to repository code and isolated validation. It does not
 claim frontend completion, rubric-quality approval, privacy approval,

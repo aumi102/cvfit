@@ -66,11 +66,11 @@ Notes:
 - Generate a high-entropy `JWT_SECRET_KEY`; never use the insecure local default
   on Render. Set explicit frontend origins and never combine wildcard origins
   with credentialed CORS.
-- Realtime Interview is disabled by default. Its frontend is implemented, but
-  activation still requires reviewed backend-only provider configuration,
-  current deployed SHA evidence, privacy/reviewer approval, and controlled
-  synthetic voice/history/reconnect smoke. Never set `OPENAI_API_KEY` on the
-  frontend service.
+- Realtime Interview is fail-closed by default. The reviewed production
+  environment is an explicit activation: backend-only provider configuration,
+  current SHA/DB evidence, privacy acceptance, and controlled synthetic
+  text/voice/history/reconnect/deletion smoke were recorded on 2026-07-23.
+  Never set `OPENAI_API_KEY` on the frontend service.
 - Billing and credit gating remain disabled. This Phase 8 work does not activate
   payOS or change the Phase 7 rollout decision.
 
@@ -337,8 +337,11 @@ GET /health
 Expected response:
 
 ```json
-{"status":"ok"}
+{"status":"ok","service":"backend","commit_sha":"<sha-or-unknown>","environment":"production","build_time":null}
 ```
+
+The fields are allowlisted build metadata, not an environment dump. A closeout
+or rollback verification requires a real reviewed SHA, not `unknown`.
 
 ## Production-Safe MVP Smoke Test
 
@@ -381,8 +384,11 @@ Troubleshooting:
   legacy guest job access-token protection.
 - Some legacy guest job status/result/report flows remain UUID plus per-job
   access-token based.
-- Realtime Interview is disabled by default and has no production/live smoke
-  evidence in this handoff.
+- Realtime Interview keeps a disabled-by-default code contract. The owner-run
+  production environment was verified at backend/frontend/worker SHA
+  `280cb96c0e6501cb42aa58eb5fae43c1e5022805`, database head
+  `20260716_0001`, with controlled synthetic text/voice/reconnect/history/
+  deletion smoke. See `phase8_production_closeout_smoke_report.md`.
 - Render environment variables must be set for both the API and worker services.
 - S3 integration must be smoke-tested with a real private bucket before demo use.
 - S3 lifecycle cleanup is still needed for uploaded CVs and generated reports.
@@ -395,7 +401,8 @@ Troubleshooting:
 After deployment:
 
 1. Open the Web Service URL.
-2. Confirm `GET /health` returns `{"status":"ok"}`.
+2. Confirm `GET /health` returns `status=ok` and the expected allowlisted
+   backend build identity.
 3. Upload a small PDF CV under `CV_MAX_UPLOAD_MB`.
 4. Paste a JD longer than 30 characters.
 5. Submit the score request and confirm the UI moves through queued/running/succeeded.
@@ -404,6 +411,26 @@ After deployment:
 8. Confirm the object-storage bucket contains one upload object and one report object under `S3_PREFIX`.
 9. Try uploading `.doc` or `.txt` and confirm the API rejects it cleanly.
 10. Review Render logs for uncaught exceptions or S3 credential errors.
+
+For Phase 8 Realtime Interview, additionally verify all service SHAs, DB head,
+masked/presence-only provider configuration, exact frontend CORS origin and
+`GET,POST,DELETE,OPTIONS`, then run the bounded synthetic text/voice/reconnect/
+history/delete matrix in
+[phase8_production_closeout_smoke_report.md](phase8_production_closeout_smoke_report.md).
+Do not record media or copy credentials/transcripts. The sole maintainer runs
+the 30-day purge dry-run once per Asia/Ho_Chi_Minh calendar day while production
+is online; broad execution requires count/environment review.
+
+## Phase 8 Maintenance Transition
+
+AI CV Fit v1.0 is owner-operated in Maintenance/Portfolio Mode. Rollback starts
+by setting `ENABLE_REALTIME_INTERVIEW=false`, then rolling frontend, backend,
+and worker to a recorded compatible SHA and rechecking DB head. Stop retention
+execution separately; this closeout adds no migration to downgrade. Cost,
+archive, incident, and dependency-risk procedures are in
+[maintenance_mode.md](maintenance_mode.md). Issue #103 is an accepted
+non-blocking maintenance risk and is reviewed monthly or before image-processing
+work.
 
 ## render.yaml
 

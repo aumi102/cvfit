@@ -11,8 +11,20 @@
 **Scope:** Reconcile the merged Realtime AI Interview backend before completing
 Phúc-owned backend, test, CI, migration, and documentation work.
 
-**Status:** Canonical contract established; Phase 8 is not team-complete and is
-not enabled for production users.
+**Historical status:** canonical contract established before the later team
+replacement closeout.
+
+## Final closeout addendum — 2026-07-23
+
+This file preserves the PR #101 reconciliation baseline; it no longer owns the
+team completion decision. PRs #102 and #104 subsequently merged the Vietnamese
+WebRTC/history integration and the rewritten QA/evaluation/privacy closeout.
+PR #98 was closed unmerged. Backend, frontend, and worker were verified in
+production at `280cb96c0e6501cb42aa58eb5fae43c1e5022805`, PostgreSQL at
+`20260716_0001`, and controlled synthetic text/voice/reconnect/history/deletion
+smoke passed. The authoritative final state is
+`docs/phase8_team_closeout.md`; historical assignments and blockers below are
+not current work instructions.
 
 ## Repository truth
 
@@ -152,7 +164,7 @@ and must be rebased/reviewed separately by Quân. `origin/DLIGHT-phase7-`
 contains older status documentation and must not override main's current
 implementation or this Phase 8 contract.
 
-## Stale status claims
+## Stale status claims at the reconciliation baseline
 
 - `README.md`, `docs/database_migrations.md`, and older Render documents still
   describe pre-Next.js, pre-auth, or old Alembic-head states and require scoped
@@ -165,7 +177,7 @@ implementation or this Phase 8 contract.
   but must be updated with the completion branch's actual tests, migration
   evidence, and remaining frontend/QA/privacy/live-smoke blockers.
 
-## Team handoff decision
+## Historical team handoff decision
 
 Quân must integrate only the canonical seven endpoints and strict schemas
 documented in `docs/interview_realtime_api_contract.md`. He must not create

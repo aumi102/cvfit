@@ -1,8 +1,10 @@
 # Phase 8 Realtime Interview Privacy Review
 
 **Decision date:** 2026-07-22  
-**Decision status:** implemented proposal; independent reviewer approval is
-required on the replacement PR before Phase 8 closeout.
+**Decision status:** accepted by the project owner for owner-operated
+Maintenance/Portfolio Mode. PR #104 has recorded reviewer approval; this is an
+operational privacy decision, not legal certification or a new former-team
+signature.
 
 ## Data-Minimization Decision
 
@@ -49,8 +51,10 @@ proposals only and cannot mutate a roadmap automatically.
 
 ## Residual Risks
 
-- Operational scheduling of the purge command must be configured and verified
-  after deployment; this session does not execute a production purge.
+- Purge ownership is concentrated in the sole maintainer. Until an approved
+  Render Cron Job replaces it, the control is one manual dry-run-first operator
+  check per Asia/Ho_Chi_Minh calendar day. Missed checks are an operational
+  risk and must be reconciled at the next maintenance review.
 - A database backup may retain deleted rows according to the infrastructure
   provider's backup lifecycle. The production privacy notice must state that
   limitation and the operator must follow the provider's approved backup policy.
@@ -62,8 +66,19 @@ proposals only and cannot mutate a roadmap automatically.
 | Role | Evidence | State |
 |---|---|---|
 | Implementation owner | code, automated ownership/cascade tests, this decision | complete |
-| QA/privacy reviewer (Đạt or delegate) | independent review on replacement PR | pending |
-| Product/team acceptance | controlled deployed deletion and smoke evidence | pending |
+| Replacement review | PR #104 `reviewDecision=APPROVED`, CI green, merged | complete |
+| Product-owner acceptance | controlled deployed deletion/cascade, retention dry-run, smoke, and statement below | complete |
 
-This document does not use “approved” until both pending rows have reproducible
-evidence.
+Production deletion was exercised only with a synthetic session. Owner delete
+returned `204`, repeat delete remained safe, and a read-only DB check found zero
+session/event/turn/summary child rows while the linked application remained.
+The production retention command was dry-run only: zero candidates and zero
+deletions, with no IDs or transcript content printed. Cross-owner protection is
+covered by tests against production modules.
+
+> Tôi, Nguyễn Đức Hoàng Phúc, với vai trò project owner và sole maintainer của AI CV Fit sau Phase 8, xác nhận đã xem xét kết quả CI, production deployment, synthetic smoke, QA và privacy controls. Tôi chấp nhận Phase 8 cho mục đích vận hành ở Maintenance/Portfolio Mode, với retention tối đa 30 ngày, owner-scoped deletion, không lưu raw audio/video/SDP và không thực hiện sensitive inference. Xác nhận này không phải chứng nhận pháp lý và không đại diện cho chữ ký mới của các thành viên cũ.
+
+The sole maintainer owns daily purge evidence, backup-policy review, incident
+handling, and archival execution. Detailed commands and rollback boundaries are
+in [phase8_data_retention_and_deletion.md](phase8_data_retention_and_deletion.md)
+and [maintenance_mode.md](maintenance_mode.md).
