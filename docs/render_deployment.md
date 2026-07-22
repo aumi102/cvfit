@@ -4,9 +4,10 @@ This guide prepares the app for an MVP/demo deployment on Render. It does not de
 
 For the step-by-step service setup handoff, use the [Render manual setup checklist](render_manual_setup_checklist.md). For the real Phase 1 deployment trial runbook, use [Phase 1 Render execution](phase1_render_execution.md).
 
-## MVP Architecture
+## Current Architecture
 
-- Render Web Service: FastAPI API and current Jinja/vanilla JS frontend.
+- Render Web Service: FastAPI API (the Jinja/vanilla UI is legacy fallback).
+- Render Web Service: Next.js primary frontend.
 - Render Background Worker: Celery worker for CV parsing, JD parsing, scoring, and DOCX report generation.
 - Render Redis/Key Value: Celery broker and result backend.
 - Render Postgres: application database. Use a PostgreSQL option that supports the `vector` extension.
@@ -34,9 +35,19 @@ CV_MAX_UPLOAD_MB=10
 JWT_SECRET_KEY=
 CORS_ALLOWED_ORIGINS=
 CORS_ALLOW_CREDENTIALS=false
+CORS_ALLOWED_METHODS=GET,POST,DELETE,OPTIONS
+CORS_ALLOWED_HEADERS=Authorization,Content-Type
 ENABLE_BILLING=false
 ENABLE_CREDIT_GATING=false
 ENABLE_REALTIME_INTERVIEW=false
+OPENAI_API_KEY=
+OPENAI_REALTIME_MODEL=
+OPENAI_REALTIME_VOICE=
+OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
+OPENAI_REALTIME_SESSION_MAX_MINUTES=15
+OPENAI_REALTIME_MAX_QUESTIONS=5
+OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS=60
+OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS=30
 ```
 
 Notes:
@@ -47,16 +58,19 @@ Notes:
 - On Render, set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as secret environment variables unless using an object-storage provider with another supported credential mechanism.
 - Set the same storage, database, Redis, and upload-limit environment variables on both the Render API service and the Render worker service.
 - API and worker must share the same `DATABASE_URL`, `REDIS_URL`, `STORAGE_BACKEND`, and S3 environment variables.
+- Provider variables and `OPENAI_API_KEY` are API-only; do not copy the
+  long-lived key to the frontend or worker.
 - For future AWS deployments, prefer IAM roles and set `AWS_USE_IAM_ROLE=true`.
 - Keep `STORAGE_ROOT` defined even when using S3; it remains useful for temporary/local development paths.
 - Do not commit secrets to git, docs, tickets, or smoke-test logs.
 - Generate a high-entropy `JWT_SECRET_KEY`; never use the insecure local default
   on Render. Set explicit frontend origins and never combine wildcard origins
   with credentialed CORS.
-- Realtime Interview remains disabled for this handoff. Enabling it later also
-  requires backend-only OpenAI key/model/voice/transcription settings, bounded
-  session/question/client-secret timing settings, completed frontend and QA,
-  privacy approval, and controlled smoke approval.
+- Realtime Interview is disabled by default. Its frontend is implemented, but
+  activation still requires reviewed backend-only provider configuration,
+  current deployed SHA evidence, privacy/reviewer approval, and controlled
+  synthetic voice/history/reconnect smoke. Never set `OPENAI_API_KEY` on the
+  frontend service.
 - Billing and credit gating remain disabled. This Phase 8 work does not activate
   payOS or change the Phase 7 rollout decision.
 
@@ -81,6 +95,24 @@ cd backend && pip install -r requirements.txt
 ```bash
 cd backend && celery -A app.workers.celery_app:celery_app worker --loglevel=INFO -Q cvfit
 ```
+
+Next.js Frontend Web Service:
+
+```bash
+cd frontend && npm ci && npm run build
+```
+
+```bash
+cd frontend && npm run start -- --hostname 0.0.0.0 --port $PORT
+```
+
+Set `NEXT_PUBLIC_API_BASE_URL` to the public HTTPS API origin. The API
+`CORS_ALLOWED_ORIGINS` must contain the exact frontend origin. Render provides
+`RENDER_GIT_COMMIT`; `/health` (backend) and `/api/version` (frontend) expose
+only allowlisted build identity. Verify the worker with
+`python scripts/show_build_metadata.py --service worker` in its shell/logs.
+The frontend service must not contain `OPENAI_API_KEY` or any other long-lived
+provider credential.
 
 The API and worker do not run migrations at startup. Before starting or
 restarting services against a database after a PR with new Alembic migrations,
@@ -138,8 +170,10 @@ Before creating Render services:
 9. Confirm uploaded CVs and reports are not committed to git.
 10. Run `python scripts/check_env_contract.py --mode render` in the intended
     service environment; it reports presence only and hides known secrets.
-11. Keep `ENABLE_REALTIME_INTERVIEW=false` until the separate Phase 8 team gates
-    are approved.
+11. Keep `ENABLE_REALTIME_INTERVIEW=false` until the Phase 8 closeout gates in
+    `phase8_team_closeout.md` are approved and deployed SHA checks pass.
+12. Run `python scripts/purge_realtime_interviews.py` as a dry-run and schedule
+    the reviewed `--execute` form in bounded batches for the 30-day policy.
 
 ## Local Docker Smoke Test
 

@@ -1,5 +1,9 @@
 # Realtime Interview Backend Implementation Report — Phase 8
 
+> Historical PR #101 evidence. Later frontend/hotfix/closeout changes supersede
+> its branch, evaluator version, local-test blockers, and deployment status.
+> Use `docs/phase8_team_closeout.md` as the current Phase 8 source of truth.
+
 **Updated:** 2026-07-21
 
 **Owner:** Phúc
@@ -39,7 +43,7 @@ selectively after rebasing to the canonical contract.
   deletion endpoint.
 - Added a server-owned provider configuration builder with validated operator
   model, voice, transcription model, fixed tools policy, bounded instructions,
-  and version `realtime_session_v1`.
+  and version `realtime_session_vi_v2`.
 - Added configurable client-secret TTL and a persisted per-session issuance
   interval. Neither server API keys nor ephemeral values are persisted/logged.
 - Requires event sequences starting at zero and increasing by one. An exact

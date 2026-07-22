@@ -1,10 +1,14 @@
 # Phase 8 Realtime Interview — Frontend Handoff for Quân
 
+> Status: implemented on the Phase 8 closeout replacement branch. This file is
+> now the maintenance contract; `docs/phase8_team_closeout.md` owns final gates.
+
 **Contract version:** 1.1
 
-**Backend configuration version:** `realtime_session_v1`
+**Backend configuration version:** `realtime_session_vi_v2`
 
-**Status:** backend contract ready for frontend integration; live provider use is not approved
+**Status:** frontend integration implemented; replacement CI/review and
+current-SHA controlled live evidence remain approval gates
 
 Use only the authenticated API below. The backend flag is disabled by default,
 so `503` is normal until an operator deliberately enables a non-production
@@ -84,6 +88,14 @@ direct WebRTC makes those settings cryptographically immutable.
 8. Stop local media tracks and disconnect at the configured time/question
    limit. Do not assume the server can close the direct peer connection.
 
+On reconnect, close the old peer/data channel/audio element but reuse the one
+consented live microphone stream. Mint a fresh ephemeral credential. A
+client-secret throttle returns `409` plus `Retry-After`; wait that duration,
+retry at most three times, expose a cancel action, and stop all retry work after
+the user ends or the component unmounts. A microphone track with
+`readyState=ended` requires new consent and must not trigger another secret
+request.
+
 Persisted states are `setup`, `ready`, `active`, `completed`, `aborted`, and
 `failed`. The public happy path is `ready -> active -> completed`. Do not invent
 `/start`, `/turns`, or media-delete calls.
@@ -147,6 +159,8 @@ value that never leaves the mock boundary. Simulate:
 - ready/active/completed session responses;
 - exact event replay and sequence conflict;
 - client-secret throttle `409`;
+- throttle `Retry-After`, cancel/end during the wait, offline/online, revoked
+  microphone, and unexpected data-channel close;
 - summary `202/pending`, `200/ready`, and `200/failed`;
 - microphone denial and recording rejection.
 Do not call paid APIs or add a real key to frontend environment variables.

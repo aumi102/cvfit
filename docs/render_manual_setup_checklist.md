@@ -1,10 +1,13 @@
 # Render Manual Setup Checklist
 
-This checklist prepares a manual Render deployment for the Phase 1 MVP baseline. It does not deploy anything, does not include secrets, and does not add product features.
+This checklist prepares a manual Render deployment for the current product,
+including the Phase 8 Next.js Realtime Interview client. It does not deploy
+anything and does not include secrets.
 
 ## Architecture
 
-- Render Web Service: FastAPI API plus the existing Jinja/vanilla JS frontend.
+- Render Web Service: FastAPI API; the Jinja/vanilla UI remains a legacy fallback.
+- Render Web Service: Next.js primary frontend.
 - Render Background Worker: Celery worker on the `cvfit` queue.
 - Render Redis/Key Value: Celery broker and result backend.
 - Render Postgres: application database. Choose an option that supports the `vector` extension.
@@ -39,8 +42,26 @@ cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 Expected health response:
 
 ```json
-{"status":"ok"}
+{"status":"ok","service":"backend","commit_sha":"<sha-or-unknown>","environment":"production","build_time":null}
 ```
+
+The response is allowlisted metadata, not an environment dump. A production
+closeout requires a real commit SHA rather than `unknown`.
+
+## Render Next.js Frontend
+
+Create a separate Web Service from the same reviewed commit.
+
+```bash
+cd frontend && npm ci && npm run build
+```
+
+```bash
+cd frontend && npm run start -- --hostname 0.0.0.0 --port $PORT
+```
+
+Set `NEXT_PUBLIC_API_BASE_URL` to the public HTTPS API origin. Verify
+`GET /api/version` returns `service=frontend` and the same reviewed SHA.
 
 ## Render Background Worker
 
@@ -97,6 +118,21 @@ AWS_ACCESS_KEY_ID=<secret>
 AWS_SECRET_ACCESS_KEY=<secret>
 AWS_USE_IAM_ROLE=false
 CV_MAX_UPLOAD_MB=10
+JWT_SECRET_KEY=<strong-random-secret>
+CORS_ALLOWED_ORIGINS=https://<next-frontend-domain>
+CORS_ALLOW_CREDENTIALS=false
+CORS_ALLOWED_METHODS=GET,POST,DELETE,OPTIONS
+ENABLE_BILLING=false
+ENABLE_CREDIT_GATING=false
+ENABLE_REALTIME_INTERVIEW=false
+OPENAI_API_KEY=<backend-only-secret>
+OPENAI_REALTIME_MODEL=<reviewed-model>
+OPENAI_REALTIME_VOICE=<reviewed-voice>
+OPENAI_REALTIME_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe
+OPENAI_REALTIME_SESSION_MAX_MINUTES=15
+OPENAI_REALTIME_MAX_QUESTIONS=5
+OPENAI_REALTIME_CLIENT_SECRET_TTL_SECONDS=60
+OPENAI_REALTIME_CLIENT_SECRET_MIN_INTERVAL_SECONDS=30
 ```
 
 Notes:
@@ -121,6 +157,9 @@ AWS_ACCESS_KEY_ID=<secret>
 AWS_SECRET_ACCESS_KEY=<secret>
 AWS_USE_IAM_ROLE=false
 CV_MAX_UPLOAD_MB=10
+ENABLE_BILLING=false
+ENABLE_CREDIT_GATING=false
+ENABLE_REALTIME_INTERVIEW=false
 ```
 
 Render provides `PORT` for the Web Service start command.
@@ -142,7 +181,8 @@ AWS_USE_IAM_ROLE=false
 CV_MAX_UPLOAD_MB=10
 ```
 
-The worker does not need `PORT`.
+The worker does not need `PORT` or a browser-exposed OpenAI key. Backend and
+worker must deploy the same reviewed SHA when shared code/settings change.
 
 ## Optional Local Env Contract Check
 
@@ -175,9 +215,9 @@ On Windows PowerShell:
 $env:API_BASE_URL="https://<render-api-url>"; python scripts/smoke_test_s3.py
 ```
 
-Expected success criteria:
+Expected backend/storage success criteria:
 
-- `/health` returns `{"status":"ok"}`.
+- `/health` returns `status=ok` plus allowlisted backend build identity.
 - CV upload returns `cv_file_id`.
 - Score job reaches `succeeded`.
 - Result JSON includes `scores.fit_score`.
@@ -185,14 +225,26 @@ Expected success criteria:
 - DOCX report download returns non-empty bytes.
 - The private bucket contains upload/report objects under `S3_PREFIX`.
 
+Phase 8 activation is a separate controlled gate:
+
+1. Verify backend, frontend, and worker build SHA.
+2. Verify database current revision is `20260716_0001`; this closeout adds no
+   migration.
+3. Verify required realtime variables by presence/masked output only.
+4. Keep billing and credit gating disabled.
+5. Enable realtime only after privacy/reviewer approval.
+6. Use a synthetic account for Vietnamese text, voice, reconnect, history, and
+   deletion smoke; inspect console/network without recording media.
+7. Configure the reviewed 30-day purge schedule only after its dry-run.
+
 ## Current Limitations
 
 - JWT account authentication and owner-scoped product routes coexist with
   legacy guest job access-token protection.
 - Some legacy guest job status/result/report flows remain UUID plus per-job
   access-token based.
-- Phase 8 Realtime Interview remains disabled by default and is not live-smoke
-  verified by this checklist.
+- Phase 8 Realtime Interview code is implemented but remains disabled by
+  default until current-SHA deploy and controlled live smoke are evidenced.
 - S3 lifecycle cleanup is still needed.
 - API and worker startup require the database schema to be at Alembic head.
 - First scoring run may be slower if the embedding model has to download at runtime.
@@ -209,3 +261,11 @@ Expected success criteria:
 - Smoke test cannot reach the API: confirm `API_BASE_URL` has the public Render Web Service URL and no trailing path.
 - Unexpected auth assumptions: JWT account auth coexists with legacy guest
   access-token flows; verify the intended route's auth model before exposing it.
+
+## Rollback and Feature Disable
+
+Set `ENABLE_REALTIME_INTERVIEW=false` on the backend to fail closed, then roll
+the frontend, API, and worker back to their previously recorded compatible
+deploys. Do not downgrade production migrations for this closeout because it
+adds none. Stop the retention schedule independently if required; do not try to
+restore hard-deleted transcript rows without the approved backup procedure.

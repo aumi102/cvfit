@@ -316,3 +316,12 @@ extension, and does not add missing columns such as `analysis_jobs.access_token_
 If the schema is missing or outdated, run Alembic deliberately against the
 intended local/disposable database. For existing production-like databases,
 take a backup and run schema/adoption checks before any migration or stamp.
+
+## Phase 8 Closeout Retention Note
+
+The Phase 8 closeout does not add a migration after `20260716_0001`. Existing
+foreign keys and ORM relationships already cascade a realtime session deletion
+to its events, transcript turns, and summary. The owner deletion endpoint and
+30-day bounded purge reuse that reviewed schema. Do not run a production
+migration for this closeout unless `alembic heads` on the merged replacement
+commit shows a new reviewed revision (it is not expected).
