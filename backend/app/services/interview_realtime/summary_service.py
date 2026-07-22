@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 import uuid
 from datetime import datetime
 from typing import Any
@@ -17,7 +18,7 @@ from app.db.models import (
 
 
 RUBRIC_VERSION = "realtime_practice_v1"
-EVALUATOR_VERSION = "deterministic_transcript_v1"
+EVALUATOR_VERSION = "deterministic_transcript_v2_unicode"
 TRANSCRIPT_PROVENANCE = "client_reported_validated"
 SUMMARY_DISCLAIMER = (
     "Phản hồi phỏng vấn AI chỉ phục vụ luyện tập và không dự đoán kết quả tuyển dụng."
@@ -44,18 +45,28 @@ _DIMENSION_LABELS = {
     "risk": "rủi ro từ tuyên bố thiếu căn cứ",
 }
 _TECHNICAL_TERMS = {
+    ".net",
     "api",
     "architecture",
     "backend",
     "cache",
+    "c#",
+    "c++",
+    "ci/cd",
     "database",
     "deploy",
     "design",
+    "fastapi",
     "framework",
     "latency",
     "migration",
+    "next.js",
     "performance",
+    "postgresql",
+    "python",
     "query",
+    "react.js",
+    "render",
     "security",
     "service",
     "testing",
@@ -79,6 +90,8 @@ _ACTION_TERMS = {
     "tối ưu",
     "giải quyết",
     "kiểm thử",
+    "chịu trách nhiệm",
+    "phát triển",
 }
 _RESULT_TERMS = {
     "delivered",
@@ -106,7 +119,21 @@ _UNSUPPORTED_CLAIM_TERMS = {
     "never fail",
     "perfect",
     "100%",
+    "luôn luôn",
+    "tốt nhất",
+    "chuyên gia",
+    "đảm bảo",
+    "không bao giờ thất bại",
+    "hoàn hảo",
 }
+
+# Python's ``re`` engine treats ``\w`` as Unicode by default. The pattern keeps
+# Vietnamese letters intact and preserves the technical spellings that carry
+# meaning in interview answers (for example React.js, C++, .NET, and CI/CD).
+_TOKEN_PATTERN = re.compile(
+    r"(?:\.[^\W_][\w]*|[^\W_][\w]*)(?:[./-][^\W_][\w]*)*(?:\+\+|#|%)?",
+    flags=re.UNICODE,
+)
 
 
 def generate_deterministic_summary_if_ready(
@@ -192,9 +219,11 @@ def _trusted_or_deterministic_score(turn: InterviewRealtimeTurn) -> dict[str, fl
 
 
 def _score_turn(question_text: str | None, answer_text: str | None) -> dict[str, float]:
-    question_tokens = _tokens(question_text)
-    answer_tokens = _tokens(answer_text)
-    word_count = len(answer_tokens)
+    question_sequence = _token_sequence(question_text)
+    answer_sequence = _token_sequence(answer_text)
+    question_tokens = set(question_sequence)
+    answer_tokens = set(answer_sequence)
+    word_count = len(answer_sequence)
     if word_count == 0:
         return {
             "relevance": 0.5,
@@ -209,17 +238,28 @@ def _score_turn(question_text: str | None, answer_text: str | None) -> dict[str,
     overlap = len(question_tokens & answer_tokens) / max(1, len(question_tokens))
     length_factor = min(word_count / 80, 1.0)
     digit_count = sum(token.isdigit() or any(char.isdigit() for char in token) for token in answer_tokens)
-    action_count = len(answer_tokens & _ACTION_TERMS)
-    result_count = len(answer_tokens & _RESULT_TERMS)
-    structure_count = len(answer_tokens & _STRUCTURE_TERMS)
-    technical_count = len(answer_tokens & _TECHNICAL_TERMS)
-    first_person = bool(answer_tokens & {"i", "my", "we", "our"})
-    normalized_answer = " ".join(answer_tokens)
-    unsupported_count = sum(term in normalized_answer for term in _UNSUPPORTED_CLAIM_TERMS)
+    action_count = _matching_term_count(answer_sequence, _ACTION_TERMS)
+    result_count = _matching_term_count(answer_sequence, _RESULT_TERMS)
+    quantified_result_count = _quantified_result_count(
+        answer_sequence,
+        has_result_term=result_count > 0,
+    )
+    structure_count = _matching_term_count(answer_sequence, _STRUCTURE_TERMS)
+    technical_count = _matching_term_count(answer_sequence, _TECHNICAL_TERMS)
+    first_person = bool(
+        _matching_term_count(
+            answer_sequence,
+            {"i", "my", "we", "our", "tôi", "mình", "chúng tôi", "chúng ta"},
+        )
+    )
+    unsupported_count = _matching_term_count(
+        answer_sequence,
+        _UNSUPPORTED_CLAIM_TERMS,
+    )
 
     relevance = _bounded(1.0 + (overlap * 2.5) + (length_factor * 1.5))
     specificity = _bounded(0.8 + (length_factor * 2.0) + min(digit_count, 2) * 0.5 + min(technical_count, 3) * 0.25)
-    evidence = _bounded(0.5 + (1.0 if first_person else 0.0) + min(action_count, 2) * 0.8 + min(result_count + digit_count, 2) * 0.7)
+    evidence = _bounded(0.5 + (1.0 if first_person else 0.0) + min(action_count, 2) * 0.8 + min(result_count + quantified_result_count, 2) * 0.7)
     structure = _bounded(0.8 + (length_factor * 1.5) + min(structure_count, 4) * 0.6)
     technical_depth = _bounded(0.5 + (length_factor * 1.5) + min(technical_count, 5) * 0.55)
 
@@ -432,9 +472,51 @@ def _improvement_for(dimension: str) -> str:
 
 
 def _tokens(value: str | None) -> set[str]:
+    return set(_token_sequence(value))
+
+
+def _token_sequence(value: str | None) -> tuple[str, ...]:
+    """Return stable NFC/case-folded Unicode tokens in source order."""
     if not value:
-        return set()
-    return set(re.findall(r"[a-z0-9+#.-]+", value.lower()))
+        return ()
+    normalized = unicodedata.normalize("NFC", value).casefold()
+    return tuple(
+        token
+        for match in _TOKEN_PATTERN.finditer(normalized)
+        if (token := match.group(0))
+    )
+
+
+def _matching_term_count(
+    tokens: tuple[str, ...],
+    terms: set[str],
+) -> int:
+    """Count distinct single- or multi-token rubric terms without substring matches."""
+    if not tokens:
+        return 0
+    count = 0
+    for term in terms:
+        phrase = _token_sequence(term)
+        if not phrase or len(phrase) > len(tokens):
+            continue
+        if any(
+            tokens[index : index + len(phrase)] == phrase
+            for index in range(len(tokens) - len(phrase) + 1)
+        ):
+            count += 1
+    return count
+
+
+def _quantified_result_count(
+    tokens: tuple[str, ...],
+    *,
+    has_result_term: bool,
+) -> int:
+    """Count numeric evidence only when it looks like an outcome, not fake JSON."""
+    numeric = [token for token in tokens if any(char.isdigit() for char in token)]
+    if has_result_term:
+        return len(numeric)
+    return sum(token.endswith("%") for token in numeric)
 
 
 def _bounded(value: float) -> float:

@@ -34,6 +34,7 @@ from app.services.interview_realtime.errors import (
     RealtimeInterviewConflict,
     RealtimeInterviewNotFound,
     RealtimeInterviewProviderUnavailable,
+    RealtimeInterviewThrottled,
     RealtimeInterviewUnavailable,
     RealtimeInterviewValidationError,
 )
@@ -46,6 +47,10 @@ from app.services.interview_realtime.realtime_client_service import (
     RealtimeClientSecret,
     build_realtime_provider_session_config,
     create_realtime_client_secret,
+)
+from app.services.interview_realtime.retention_service import (
+    REALTIME_INTERVIEW_RETENTION_DAYS,
+    purge_expired_realtime_sessions,
 )
 from app.services.interview_realtime.instruction_builder import build_realtime_instructions
 from app.services.interview_realtime.session_service import (
@@ -91,6 +96,21 @@ class FakeDb:
     def refresh(self, obj: Any) -> None:
         pass
 
+    def delete(self, obj: Any) -> None:
+        if isinstance(obj, InterviewRealtimeSession):
+            for model in (
+                InterviewRealtimeTurn,
+                InterviewRealtimeEvent,
+                InterviewRealtimeSummary,
+            ):
+                for child in list(self._rows.get(model, [])):
+                    if child.session_id == obj.id:
+                        self.delete(child)
+        self._store.pop((type(obj), obj.id), None)
+        rows = self._rows.get(type(obj), [])
+        if obj in rows:
+            rows.remove(obj)
+
 
 class FakeQuery:
     def __init__(self, rows: list[Any]) -> None:
@@ -102,9 +122,18 @@ class FakeQuery:
             try:
                 key = expression.left.key
                 value = expression.right.value
+                operator_name = getattr(expression.operator, "__name__", "")
             except AttributeError:
                 continue
-            rows = [row for row in rows if getattr(row, key, None) == value]
+            if operator_name == "lt":
+                rows = [
+                    row
+                    for row in rows
+                    if getattr(row, key, None) is not None
+                    and getattr(row, key) < value
+                ]
+            else:
+                rows = [row for row in rows if getattr(row, key, None) == value]
         return FakeQuery(rows)
 
     def order_by(self, *expressions: Any) -> "FakeQuery":
@@ -309,6 +338,32 @@ class TestLifecycleAndOwnership:
             )
         assert session.status == "failed"
         assert session.failure_code == "session_time_limit_exceeded"
+
+    def test_client_secret_throttle_reports_a_bounded_retry_delay(self) -> None:
+        db = FakeDb()
+        session = make_session(uuid.uuid4(), status="active")
+        db.add(session)
+        db.add(
+            InterviewRealtimeEvent(
+                id=uuid.uuid4(),
+                session_id=session.id,
+                event_type=SERVER_EVENT_CLIENT_SECRET_ISSUED,
+                event_sequence=None,
+                redacted_payload_json={"source": "server"},
+                payload_hash="a" * 64,
+                created_at=datetime.utcnow() - timedelta(seconds=5),
+            )
+        )
+
+        with pytest.raises(RealtimeInterviewThrottled) as exc_info:
+            prepare_session_for_client_secret(
+                db,
+                session,
+                max_minutes=15,
+                min_interval_seconds=30,
+            )
+
+        assert 24 <= exc_info.value.retry_after_seconds <= 25
 
 
 class TestServerOwnedProviderConfiguration:
@@ -600,6 +655,50 @@ class TestRealtimeApi:
         response = client_for(FakeDb(), make_user()).get("/v1/interview/realtime/sessions")
         assert response.status_code == 503
 
+    def test_owner_delete_is_idempotent_cascading_and_available_when_disabled(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        db = FakeDb()
+        owner = make_user()
+        session = make_session(owner.id, status="completed")
+        turn = make_turn(session.id, answer="Synthetic transcript")
+        summary = InterviewRealtimeSummary(
+            id=uuid.uuid4(),
+            session_id=session.id,
+            overall_score=50,
+            rubric_json={"status": "ready"},
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+        db.add(session)
+        db.add(turn)
+        db.add(summary)
+        monkeypatch.setattr(settings, "ENABLE_REALTIME_INTERVIEW", False)
+        client = client_for(db, owner)
+
+        first = client.delete(f"/v1/interview/realtime/sessions/{session.id}")
+        second = client.delete(f"/v1/interview/realtime/sessions/{session.id}")
+
+        assert first.status_code == second.status_code == 204
+        assert db.get(InterviewRealtimeSession, session.id) is None
+        assert db.get(InterviewRealtimeTurn, turn.id) is None
+        assert db.get(InterviewRealtimeSummary, summary.id) is None
+
+    def test_cross_owner_delete_is_a_non_disclosing_noop(self) -> None:
+        db = FakeDb()
+        owner = make_user("owner@example.com")
+        other = make_user("other@example.com")
+        session = make_session(owner.id)
+        db.add(session)
+
+        response = client_for(db, other).delete(
+            f"/v1/interview/realtime/sessions/{session.id}"
+        )
+
+        assert response.status_code == 204
+        assert db.get(InterviewRealtimeSession, session.id) is session
+
     def test_create_list_read_and_cross_user_access(self) -> None:
         db = FakeDb()
         owner = make_user("owner@example.com")
@@ -687,9 +786,12 @@ class TestRealtimeApi:
             InterviewRealtimeEvent.event_type == SERVER_EVENT_CLIENT_SECRET_ISSUED
         ).count() == 1
 
-        assert client_for(db, user).post(
+        throttled = client_for(db, user).post(
             f"/v1/interview/realtime/sessions/{session.id}/client-secret"
-        ).status_code == 409
+        )
+        assert throttled.status_code == 409
+        assert 1 <= int(throttled.headers["retry-after"]) <= 30
+        assert throttled.json()["detail"] == "client secret was issued too recently"
         assert client_for(db, other).post(
             f"/v1/interview/realtime/sessions/{session.id}/client-secret"
         ).status_code == 404
@@ -801,3 +903,28 @@ class TestRealtimeApi:
         assert response.json()["status"] == "pending"
         assert response.json()["language"] == "vi"
         assert "chưa sẵn sàng" in response.json()["limitations"][0].lower()
+
+
+def test_retention_purge_is_bounded_dry_run_first_and_cascading() -> None:
+    db = FakeDb()
+    now = datetime.utcnow()
+    owner_id = uuid.uuid4()
+    expired = make_session(
+        owner_id,
+        status="completed",
+        updated_at=now - timedelta(days=REALTIME_INTERVIEW_RETENTION_DAYS + 1),
+    )
+    current = make_session(owner_id, status="completed", updated_at=now)
+    expired_turn = make_turn(expired.id, answer="Synthetic expired transcript")
+    for row in (expired, current, expired_turn):
+        db.add(row)
+
+    preview = purge_expired_realtime_sessions(db, now=now, dry_run=True)
+    assert (preview.candidates, preview.deleted, preview.dry_run) == (1, 0, True)
+    assert db.get(InterviewRealtimeSession, expired.id) is expired
+
+    executed = purge_expired_realtime_sessions(db, now=now, dry_run=False)
+    assert (executed.candidates, executed.deleted, executed.dry_run) == (1, 1, False)
+    assert db.get(InterviewRealtimeSession, expired.id) is None
+    assert db.get(InterviewRealtimeTurn, expired_turn.id) is None
+    assert db.get(InterviewRealtimeSession, current.id) is current

@@ -2,6 +2,9 @@ import { CONNECTION_STATUS } from './interviewTypes';
 import { createRealtimeEventSequencer } from './realtimeEventSequencer';
 
 const OPENAI_REALTIME_CALLS_URL = 'https://api.openai.com/v1/realtime/calls';
+const DEFAULT_RECONNECT_ATTEMPTS = 3;
+const DEFAULT_RECONNECT_BASE_DELAY_MS = 1_000;
+const DEFAULT_RECONNECT_MAX_DELAY_MS = 300_000;
 
 function nowIso() {
   return new Date().toISOString();
@@ -9,6 +12,38 @@ function nowIso() {
 
 function transcriptKey(event) {
   return event.response_id || event.item_id || event.output_index || 'assistant';
+}
+
+function retryAfterMilliseconds(error, maximumDelayMs) {
+  const headers = error?.response?.headers;
+  const rawValue = headers?.get?.('retry-after')
+    ?? headers?.['retry-after']
+    ?? error?.response?.data?.retry_after_seconds;
+  const seconds = Number(rawValue);
+  if (!Number.isFinite(seconds) || seconds < 0) return null;
+  return Math.min(Math.ceil(seconds * 1000), maximumDelayMs);
+}
+
+function abortError() {
+  const error = new Error('Realtime reconnect was cancelled');
+  error.name = 'AbortError';
+  return error;
+}
+
+function waitForDelay(milliseconds, signal, setTimer, clearTimer) {
+  if (signal.aborted) return Promise.reject(abortError());
+  return new Promise((resolve, reject) => {
+    const timer = setTimer(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, milliseconds);
+    function onAbort() {
+      clearTimer(timer);
+      signal.removeEventListener('abort', onAbort);
+      reject(abortError());
+    }
+    signal.addEventListener('abort', onAbort, { once: true });
+  });
 }
 
 function publicConnectionError(error) {
@@ -38,6 +73,12 @@ export function createRealtimeSession({
   fetchImpl = globalThis.fetch,
   RTCPeerConnectionImpl = globalThis.RTCPeerConnection,
   audioElementFactory = () => document.createElement('audio'),
+  isOnline = () => globalThis.navigator?.onLine !== false,
+  maxReconnectAttempts = DEFAULT_RECONNECT_ATTEMPTS,
+  reconnectBaseDelayMs = DEFAULT_RECONNECT_BASE_DELAY_MS,
+  reconnectMaxDelayMs = DEFAULT_RECONNECT_MAX_DELAY_MS,
+  setTimer = globalThis.setTimeout,
+  clearTimer = globalThis.clearTimeout,
 }) {
   if (!sessionId) throw new TypeError('sessionId is required');
   if (!mediaStream?.getAudioTracks?.().length) {
@@ -68,7 +109,11 @@ export function createRealtimeSession({
   let assistantDeltas = new Map();
   let transcriptCounter = 0;
   let connectPromise = null;
+  let reconnectPromise = null;
+  let reconnectController = null;
   let destroyed = false;
+  let ended = false;
+  let hasConnectedOnce = false;
 
   function emit(event, value) {
     (listeners[event] || []).forEach((listener) => listener(value));
@@ -88,10 +133,13 @@ export function createRealtimeSession({
       text: normalized,
       timestamp: Date.now(),
     };
-    if (!transcript.some((item) => item.id === entry.id && item.text === entry.text)) {
-      transcript = [...transcript, entry];
-      emit('transcript', entry);
-    }
+    const previous = transcript[transcript.length - 1];
+    const isDuplicate = transcript.some(
+      (item) => item.id === entry.id && item.text === entry.text
+    ) || (previous?.speaker === speaker && previous?.text === normalized);
+    if (isDuplicate) return null;
+    transcript = [...transcript, entry];
+    emit('transcript', entry);
     return entry;
   }
 
@@ -227,16 +275,52 @@ export function createRealtimeSession({
     }
   }
 
-  async function connect() {
+  function usableAudioTracks() {
+    return mediaStream.getAudioTracks().filter((track) => track.readyState !== 'ended');
+  }
+
+  function closeTransport() {
+    const channel = dataChannel;
+    const connection = peerConnection;
+    const audio = remoteAudio;
+    dataChannel = null;
+    peerConnection = null;
+    remoteAudio = null;
+    if (connection) {
+      connection.ontrack = null;
+      connection.onconnectionstatechange = null;
+    }
+    channel?.close();
+    connection?.close();
+    if (audio) {
+      audio.srcObject = null;
+    }
+  }
+
+  async function connect({ reconnecting = false, reportError = true, signal = null } = {}) {
     if (destroyed) throw new Error('Realtime session has been destroyed');
+    if (ended) throw new Error('Realtime session has ended');
     if (status === CONNECTION_STATUS.CONNECTED) return;
     if (connectPromise) return connectPromise;
 
     connectPromise = (async () => {
-      setStatus(CONNECTION_STATUS.CONNECTING);
+      setStatus(reconnecting ? CONNECTION_STATUS.RECONNECTING : CONNECTION_STATUS.CONNECTING);
       let credential = null;
       try {
+        if (!isOnline()) {
+          const error = new Error('Browser is offline');
+          error.code = 'NETWORK_OFFLINE';
+          throw error;
+        }
+        const audioTracks = usableAudioTracks();
+        if (!audioTracks.length) {
+          const error = new Error('Microphone permission is no longer available');
+          error.name = 'NotAllowedError';
+          error.code = 'MICROPHONE_UNAVAILABLE';
+          throw error;
+        }
         credential = await createClientSecret(sessionId);
+        if (signal?.aborted || ended || destroyed) throw abortError();
         const ephemeralKey = credential?.client_secret;
         if (!ephemeralKey) throw new Error('Missing ephemeral credential');
         if (typeof RTCPeerConnectionImpl !== 'function') {
@@ -244,16 +328,19 @@ export function createRealtimeSession({
         }
 
         providerSessionId = credential.provider_session_id || null;
-        peerConnection = new RTCPeerConnectionImpl();
+        const nextPeerConnection = new RTCPeerConnectionImpl();
+        peerConnection = nextPeerConnection;
         remoteAudio = audioElementFactory();
         remoteAudio.autoplay = true;
         remoteAudio.playsInline = true;
 
-        peerConnection.ontrack = (event) => {
+        nextPeerConnection.ontrack = (event) => {
+          if (peerConnection !== nextPeerConnection) return;
           remoteAudio.srcObject = event.streams?.[0] || null;
         };
-        peerConnection.onconnectionstatechange = () => {
-          const connectionState = peerConnection?.connectionState;
+        nextPeerConnection.onconnectionstatechange = () => {
+          if (peerConnection !== nextPeerConnection || ended || destroyed) return;
+          const connectionState = nextPeerConnection.connectionState;
           if (connectionState === 'failed') {
             setStatus(CONNECTION_STATUS.FAILED);
             emit('error', {
@@ -263,15 +350,21 @@ export function createRealtimeSession({
             });
           } else if (connectionState === 'disconnected') {
             setStatus(CONNECTION_STATUS.DISCONNECTED);
+            emit('error', {
+              code: 'WEBRTC_CONNECTION_DISCONNECTED',
+              message: 'Kết nối mạng bị gián đoạn. Bạn có thể kết nối lại an toàn.',
+              retryable: true,
+            });
           }
         };
 
-        mediaStream.getAudioTracks().forEach((track) => {
-          peerConnection.addTrack(track, mediaStream);
+        audioTracks.forEach((track) => {
+          nextPeerConnection.addTrack(track, mediaStream);
         });
 
-        dataChannel = peerConnection.createDataChannel('oai-events');
-        dataChannel.addEventListener('message', (message) => {
+        const nextDataChannel = nextPeerConnection.createDataChannel('oai-events');
+        dataChannel = nextDataChannel;
+        nextDataChannel.addEventListener('message', (message) => {
           try {
             handleProviderEvent(JSON.parse(message.data));
           } catch {
@@ -282,18 +375,31 @@ export function createRealtimeSession({
             });
           }
         });
-        dataChannel.addEventListener('open', () => {
+        nextDataChannel.addEventListener('close', () => {
+          if (dataChannel !== nextDataChannel || ended || destroyed) return;
+          setStatus(CONNECTION_STATUS.DISCONNECTED);
+          emit('error', {
+            code: 'WEBRTC_DATA_CHANNEL_CLOSED',
+            message: 'Kênh dữ liệu thời gian thực đã đóng ngoài dự kiến.',
+            retryable: true,
+          });
+        });
+        nextDataChannel.addEventListener('open', () => {
+          if (dataChannel !== nextDataChannel || ended || destroyed) return;
           setStatus(CONNECTION_STATUS.CONNECTED);
           void enqueueAudit('session_connected', {
             ...(providerSessionId ? { provider_session_id: providerSessionId } : {}),
             transport: 'webrtc',
             occurred_at: nowIso(),
           });
-          dataChannel.send(JSON.stringify({ type: 'response.create' }));
+          if (!hasConnectedOnce || turns.length === 0) {
+            nextDataChannel.send(JSON.stringify({ type: 'response.create' }));
+          }
+          hasConnectedOnce = true;
         });
 
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
+        const offer = await nextPeerConnection.createOffer();
+        await nextPeerConnection.setLocalDescription(offer);
         const response = await fetchImpl(OPENAI_REALTIME_CALLS_URL, {
           method: 'POST',
           body: offer.sdp,
@@ -302,24 +408,22 @@ export function createRealtimeSession({
             'Content-Type': 'application/sdp',
           },
         });
+        if (signal?.aborted || ended || destroyed) throw abortError();
         if (!response.ok) throw new Error('OpenAI WebRTC negotiation failed');
-        await peerConnection.setRemoteDescription({
+        await nextPeerConnection.setRemoteDescription({
           type: 'answer',
           sdp: await response.text(),
         });
       } catch (error) {
-        dataChannel?.close();
-        peerConnection?.close();
-        if (remoteAudio) remoteAudio.srcObject = null;
-        dataChannel = null;
-        peerConnection = null;
-        remoteAudio = null;
-        setStatus(CONNECTION_STATUS.FAILED);
-        emit('error', {
-          code: 'WEBRTC_CONNECT_FAILED',
-          message: publicConnectionError(error),
-          retryable: true,
-        });
+        closeTransport();
+        if (!reconnecting) setStatus(CONNECTION_STATUS.FAILED);
+        if (reportError) {
+          emit('error', {
+            code: error?.code || 'WEBRTC_CONNECT_FAILED',
+            message: publicConnectionError(error),
+            retryable: error?.code !== 'MICROPHONE_UNAVAILABLE',
+          });
+        }
         throw error;
       } finally {
         credential = null;
@@ -331,14 +435,13 @@ export function createRealtimeSession({
   }
 
   async function disconnect(reason = 'user_ended') {
+    if (reason === 'user_ended' || reason === 'component_unmounted') {
+      ended = true;
+      reconnectController?.abort();
+    }
     try {
-      dataChannel?.close();
-      peerConnection?.close();
-      if (remoteAudio) remoteAudio.srcObject = null;
+      closeTransport();
     } finally {
-      dataChannel = null;
-      peerConnection = null;
-      remoteAudio = null;
       emit('aiSpeaking', false);
       emit('userSpeaking', false);
       emit('processing', false);
@@ -370,9 +473,94 @@ export function createRealtimeSession({
     connect,
     disconnect,
     async reconnect() {
-      setStatus(CONNECTION_STATUS.RECONNECTING);
-      await disconnect('network_interrupted');
-      return connect();
+      if (destroyed || ended) return false;
+      if (reconnectPromise) return reconnectPromise;
+      reconnectController = new AbortController();
+      const { signal } = reconnectController;
+      reconnectPromise = (async () => {
+        closeTransport();
+        emit('aiSpeaking', false);
+        emit('userSpeaking', false);
+        emit('processing', false);
+        setStatus(CONNECTION_STATUS.RECONNECTING);
+        await enqueueAudit('session_disconnected', {
+          reason: 'network_interrupted',
+          occurred_at: nowIso(),
+        });
+
+        let lastError = null;
+        for (let attempt = 0; attempt < maxReconnectAttempts; attempt += 1) {
+          if (signal.aborted) return false;
+          if (attempt > 0 && lastError?.response?.status !== 409) {
+            const delay = Math.min(
+              reconnectBaseDelayMs * (2 ** (attempt - 1)),
+              reconnectMaxDelayMs,
+            );
+            await waitForDelay(delay, signal, setTimer, clearTimer);
+          }
+          try {
+            await connect({ reconnecting: true, reportError: false, signal });
+            return true;
+          } catch (error) {
+            lastError = error;
+            if (signal.aborted) return false;
+            if (error?.code === 'MICROPHONE_UNAVAILABLE' || error?.name === 'NotAllowedError') {
+              setStatus(CONNECTION_STATUS.FAILED);
+              emit('error', {
+                code: 'MICROPHONE_UNAVAILABLE',
+                message: 'Quyền microphone không còn hiệu lực. Hãy cấp quyền lại trước khi kết nối.',
+                retryable: false,
+              });
+              throw error;
+            }
+
+            const retryAfterMs = error?.response?.status === 409
+              ? retryAfterMilliseconds(error, reconnectMaxDelayMs)
+              : null;
+            const canRetry = attempt + 1 < maxReconnectAttempts
+              && (error?.response?.status !== 409 || retryAfterMs !== null);
+            if (!canRetry) {
+              setStatus(CONNECTION_STATUS.FAILED);
+              emit('error', {
+                code: 'WEBRTC_RECONNECT_FAILED',
+                message: publicConnectionError(error),
+                retryable: true,
+              });
+              throw error;
+            }
+
+            setStatus(CONNECTION_STATUS.RECONNECTING);
+            if (retryAfterMs !== null) {
+              emit('error', {
+                code: 'RECONNECT_THROTTLED',
+                message: `Máy chủ yêu cầu chờ ${Math.ceil(retryAfterMs / 1000)} giây trước khi kết nối lại.`,
+                retryable: true,
+                retryAfterSeconds: Math.ceil(retryAfterMs / 1000),
+              });
+              await waitForDelay(retryAfterMs, signal, setTimer, clearTimer);
+            } else if (!isOnline()) {
+              emit('error', {
+                code: 'NETWORK_OFFLINE',
+                message: 'Thiết bị đang ngoại tuyến. Hệ thống sẽ thử lại có giới hạn.',
+                retryable: true,
+              });
+            }
+          }
+        }
+        return false;
+      })().catch((error) => {
+        if (error?.name === 'AbortError') return false;
+        throw error;
+      }).finally(() => {
+        reconnectPromise = null;
+        reconnectController = null;
+      });
+      return reconnectPromise;
+    },
+    cancelReconnect() {
+      reconnectController?.abort();
+      closeTransport();
+      if (!ended && !destroyed) setStatus(CONNECTION_STATUS.DISCONNECTED);
     },
     retryPendingEvent() {
       return sequencer.retryPending();

@@ -221,9 +221,11 @@ a server evaluator; otherwise it computes a bounded deterministic practice
 score from the validated transcript. It averages dimensions, combines positive
 dimensions with inverse risk into a 0–100 overall score, and creates bounded
 templated recommendations. Rubric version `realtime_practice_v1`, evaluator
-version, evidence turn IDs, and `client_reported_validated` provenance are
-persisted. A safe evaluation failure retains turns and records a retryable
-`failed` summary.
+version `deterministic_transcript_v2_unicode`, evidence turn IDs, and
+`client_reported_validated` provenance are persisted. NFC normalization and a
+Unicode-aware ordered tokenizer support Vietnamese, English, mixed-language,
+and spellings such as `React.js`, `C++`, `.NET`, and `CI/CD`. A safe evaluation
+failure retains turns and records a retryable `failed` summary.
 
 The frontend cannot submit score or feedback fields. Emotion, face-derived
 confidence, personality, truthfulness, and hiring probability are excluded.
@@ -232,7 +234,7 @@ confidence, personality, truthfulness, and hiring probability are excluded.
 
 | Failure | Behavior |
 |---|---|
-| Feature flag off | All Phase 8 routes return `503`; startup remains healthy |
+| Feature flag off | Lifecycle routes return `503`; privacy `DELETE` remains available; startup remains healthy |
 | API key/model/voice missing | Client-secret route returns `503`; no fake credential |
 | Provider timeout/HTTP/invalid JSON | Safe `503`; provider body and auth are not returned |
 | Cross-user ID | `404` non-leak response |
@@ -242,9 +244,25 @@ confidence, personality, truthfulness, and hiring probability are excluded.
 | Exact duplicate event | `201` with `replayed=true`; no duplicate write |
 | Conflicting/gapped event sequence | `409` |
 | Summary evaluator failure | Turns retained; versioned `failed` summary |
+| Client-secret throttle | `409` plus bounded integer `Retry-After`; no provider call |
 
 Provider exceptions are converted to fixed messages. The server API key and
 ephemeral value are never interpolated into exceptions.
+
+## Privacy lifecycle and retention
+
+The owner-scoped `DELETE /sessions/{id}` hard-deletes the complete realtime
+session graph through the existing ORM and database cascades. It never deletes
+the linked application, target job, analysis job, or user. The same non-leaking
+`204` is returned for an exact retry, a missing id, or a cross-owner id.
+
+Realtime sessions, turns/transcripts, minimized events, and summaries have a
+30-day maximum retention measured from `session.updated_at`. Operators use
+`python scripts/purge_realtime_interviews.py` in dry-run mode first; `--execute`
+deletes at most 500 rows per invocation unless a smaller batch is selected.
+The command reports counts/cutoff only and never logs transcript text. Raw
+audio, video, SDP, provider payloads, and credentials have zero application
+retention because they are never persisted.
 
 ## Deployment configuration
 
@@ -279,31 +297,30 @@ Rules:
 - WebRTC browser/network compatibility and TURN/ICE behavior are Quân/Đạt
   integration concerns, not modified here.
 
-## Dependencies and handoff
+## Merged product integration and QA replacement
 
 ### Quân
 
-Quân can consume the stable contract in
-`docs/interview_realtime_api_contract.md`. Remaining frontend work includes the
-browser WebRTC connection, microphone/camera consent UI, media cleanup,
-transcript/event mapping, pending-summary state, and client-side time/question
-disconnect behavior. None is implemented here.
+The Next.js product uses the stable contract in
+`docs/interview_realtime_api_contract.md`. The room implements browser WebRTC,
+microphone consent, remote audio, media cleanup, ordered transcript/event
+mapping, bounded/cancellable reconnect, completion, and summary states. Camera
+is not part of the Phase 8 transport.
 
 ### Đạt
 
-Đạt should independently verify authentication/non-leak ownership, context
-ownership, consent, disabled/misconfigured `503`, provider error safety, event
-allowlists, payload bounds, credential/media rejection, duplicate sequences,
-lifecycle conflicts, completion bounds, and pending/ready/failed summary states.
-Automated backend and migration-contract tests plus a QA handoff are included;
-independent evaluation results, privacy approval, browser QA, and a team
-closeout report are not.
+PR #98 is not a merge source. Its useful scenario ideas are replaced by tests
+against production modules, multilingual fixtures, the privacy/retention
+decision, browser QA, and malicious-flow review referenced by
+`docs/phase8_team_closeout.md`. External reviewer/privacy sign-off and deployed
+synthetic smoke remain explicit release gates rather than inferred from mocks.
 
 ## Known backend limitations
 
-- The deterministic transcript evaluator is a bounded practice heuristic over
-  validated client-reported text. Its quality and privacy still require
-  independent evaluation before the feature can be enabled.
+- The deterministic transcript evaluator remains a bounded practice heuristic
+  over validated client-reported text. The synthetic multilingual evaluation
+  is documented, but it does not establish hiring validity or provider-attested
+  transcript truth.
 - Backend time limits prevent new/reconnect credentials after expiry but cannot
   forcibly close a direct browser-to-provider peer connection.
 - Provider session settings can be client-overridden under the ephemeral-token

@@ -1,5 +1,9 @@
 # Phase 8 Repository Reconciliation
 
+> Historical reconciliation baseline for PR #101. The canonical contract is
+> retained, while completion/evaluation/privacy/deployment gates now live in
+> `docs/phase8_team_closeout.md`.
+
 **Date:** 2026-07-21
 
 **Owner:** Phúc

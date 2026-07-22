@@ -66,7 +66,7 @@ Local defaults:
 ```env
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 CORS_ALLOW_CREDENTIALS=false
-CORS_ALLOWED_METHODS=GET,POST,OPTIONS
+CORS_ALLOWED_METHODS=GET,POST,DELETE,OPTIONS
 CORS_ALLOWED_HEADERS=Authorization,Content-Type
 ```
 
@@ -87,7 +87,11 @@ Response:
 
 ```json
 {
-  "status": "ok"
+  "status": "ok",
+  "service": "backend",
+  "commit_sha": "<safe-build-sha-or-unknown>",
+  "environment": "<safe-environment-or-unknown>",
+  "build_time": "<iso-time-or-null>"
 }
 ```
 

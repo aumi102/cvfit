@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     ENABLE_GOOGLE_AUTH: bool = True
     CORS_ALLOWED_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     CORS_ALLOW_CREDENTIALS: bool = False
-    CORS_ALLOWED_METHODS: str = "GET,POST,OPTIONS"
+    CORS_ALLOWED_METHODS: str = "GET,POST,DELETE,OPTIONS"
     CORS_ALLOWED_HEADERS: str = "Authorization,Content-Type"
     # Admin Monitoring MVP — comma-separated allow-list of admin emails. Empty by
     # default, so no account is an admin until an operator sets it in backend env.

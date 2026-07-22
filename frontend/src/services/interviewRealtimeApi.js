@@ -29,6 +29,10 @@ export async function getRealtimeInterviewSession(sessionId) {
   return response.data;
 }
 
+export async function deleteRealtimeInterviewSession(sessionId) {
+  await apiClient.delete(`${BASE_PATH}/${sessionId}`);
+}
+
 export async function createRealtimeClientSecret(sessionId) {
   const response = await apiClient.post(`${BASE_PATH}/${sessionId}/client-secret`);
   return response.data;

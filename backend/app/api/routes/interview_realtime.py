@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -38,6 +38,7 @@ from app.services.interview_realtime.errors import (
     RealtimeInterviewConflict,
     RealtimeInterviewNotFound,
     RealtimeInterviewProviderUnavailable,
+    RealtimeInterviewThrottled,
     RealtimeInterviewUnavailable,
     RealtimeInterviewValidationError,
 )
@@ -51,6 +52,7 @@ from app.services.interview_realtime.realtime_client_service import (
 from app.services.interview_realtime.session_service import (
     complete_realtime_session,
     create_realtime_session,
+    delete_owned_session,
     get_owned_session,
     list_owned_sessions,
     mark_session_active,
@@ -66,8 +68,9 @@ from app.services.interview_realtime.summary_service import (
 )
 
 
-def require_realtime_interview_enabled() -> None:
-    if not settings.ENABLE_REALTIME_INTERVIEW:
+def require_realtime_interview_enabled(request: Request) -> None:
+    # Privacy deletion remains available when the product feature is disabled.
+    if request.method != "DELETE" and not settings.ENABLE_REALTIME_INTERVIEW:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="realtime interview is disabled",
@@ -144,6 +147,21 @@ def get_session(
     except _DOMAIN_ERRORS as exc:
         _raise_http_error(exc)
     return _session_response(db, session, include_turns=True)
+
+
+@router.delete(
+    "/sessions/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_session(
+    session_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Session = Depends(get_db),
+) -> Response:
+    # A missing or cross-owner id is an idempotent no-op, preventing existence
+    # disclosure while ensuring another user's data is never deleted.
+    delete_owned_session(db, current_user.id, session_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -397,6 +415,12 @@ def _raise_http_error(exc: Exception) -> None:
         status_code = status.HTTP_404_NOT_FOUND
     elif isinstance(exc, RealtimeInterviewValidationError):
         status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    elif isinstance(exc, RealtimeInterviewThrottled):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        )
     elif isinstance(exc, RealtimeInterviewConflict):
         status_code = status.HTTP_409_CONFLICT
     else:

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useMediaDevices } from '@/hooks/useMediaDevices';
@@ -42,6 +42,7 @@ export default function InterviewRoomPage() {
   const [pageError, setPageError] = useState(null);
   const [startRequested, setStartRequested] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const endingRef = useRef(false);
 
   const {
     micStatus,
@@ -65,6 +66,7 @@ export default function InterviewRoomPage() {
     connect,
     disconnect,
     reconnect,
+    cancelReconnect,
   } = useInterviewSession(id, {
     mediaStream: micStream,
     questionLimit: sessionData?.question_limit || 5,
@@ -108,7 +110,8 @@ export default function InterviewRoomPage() {
   }, [requestMic]);
 
   const handleEndSession = useCallback(async () => {
-    if (isEnding) return;
+    if (endingRef.current) return;
+    endingRef.current = true;
     setIsEnding(true);
     setPageError(null);
     try {
@@ -128,10 +131,11 @@ export default function InterviewRoomPage() {
       });
       router.replace(`/interview/sessions/${id}/summary`);
     } catch {
+      endingRef.current = false;
       setPageError('Không thể kết thúc phiên an toàn. Vui lòng thử lại.');
       setIsEnding(false);
     }
-  }, [disconnect, id, isEnding, router, stopAll, turns]);
+  }, [disconnect, id, router, stopAll, turns]);
 
   const currentQuestion = useMemo(() => {
     const turn = turns[turns.length - 1];
@@ -176,11 +180,15 @@ export default function InterviewRoomPage() {
       {visibleError && (
         <div className={styles.voiceError} role="alert">
           <span>{visibleError}</span>
-          {connectionError?.retryable && micStream && (
-            <button type="button" onClick={() => void reconnect()}>
+          {connectionStatus === CONNECTION_STATUS.RECONNECTING ? (
+            <button type="button" onClick={cancelReconnect}>
+              Hủy kết nối lại
+            </button>
+          ) : connectionError?.retryable && micStream ? (
+            <button type="button" onClick={() => void reconnect().catch(() => undefined)}>
               Kết nối lại
             </button>
-          )}
+          ) : null}
         </div>
       )}
 

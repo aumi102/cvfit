@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { getRealtimeInterviewSummary } from '@/services/interviewRealtimeApi';
+import {
+  deleteRealtimeInterviewSession,
+  getRealtimeInterviewSummary,
+} from '@/services/interviewRealtimeApi';
 import PageShell from '@/components/common/PageShell';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import styles from '@/styles/InterviewRoom.module.css';
@@ -22,10 +25,14 @@ const RUBRIC_LABELS = {
 export default function InterviewSummaryPage() {
   const { isAuthChecking } = useRequireAuth();
   const { id } = useParams();
+  const router = useRouter();
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [retryToken, setRetryToken] = useState(0);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   const loadSummary = useCallback(async () => {
     setError(null);
@@ -40,6 +47,19 @@ export default function InterviewSummaryPage() {
       setIsLoading(false);
     }
   }, [id]);
+
+  const deleteSession = useCallback(async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteRealtimeInterviewSession(id);
+      router.replace('/interview/sessions');
+    } catch {
+      setDeleteError('Không thể xóa dữ liệu phiên. Vui lòng thử lại.');
+      setIsDeleting(false);
+    }
+  }, [id, isDeleting, router]);
 
   useEffect(() => {
     if (isAuthChecking) return undefined;
@@ -153,7 +173,28 @@ export default function InterviewSummaryPage() {
         <div className={styles.summaryActions}>
           <Link href="/interview/sessions/new" className={styles.btnPrimary}>Luyện tập tiếp</Link>
           <Link href="/interview/sessions" className={styles.btnSecondary}>Về danh sách phiên</Link>
+          <button
+            type="button"
+            className={styles.summaryDeleteButton}
+            onClick={() => setConfirmDelete(true)}
+          >
+            Xóa dữ liệu phiên
+          </button>
         </div>
+        {confirmDelete && (
+          <section className={styles.summaryDeleteConfirm} role="alert">
+            <p>Thao tác này xóa vĩnh viễn transcript, sự kiện và đánh giá của phiên.</p>
+            {deleteError && <p>{deleteError}</p>}
+            <div>
+              <button type="button" onClick={() => void deleteSession()} disabled={isDeleting}>
+                {isDeleting ? 'Đang xóa…' : 'Xác nhận xóa'}
+              </button>
+              <button type="button" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
+                Hủy
+              </button>
+            </div>
+          </section>
+        )}
       </div>
     </PageShell>
   );

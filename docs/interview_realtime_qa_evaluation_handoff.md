@@ -1,15 +1,23 @@
 # Phase 8 Realtime Interview — QA/Evaluation Handoff for Đạt
 
+> Status: superseded as a pending checklist by the executable replacement
+> fixtures/tests and reports linked from `docs/phase8_team_closeout.md`. PR #98
+> remains intentionally unmergeable and must be closed only after the
+> replacement PR merges.
+
 **Rubric version:** `realtime_practice_v1`
 
-**Evaluator version:** `deterministic_transcript_v1`
+**Evaluator version:** `deterministic_transcript_v2_unicode`
 
 **Transcript provenance:** `client_reported_validated`
 
-**Status:** evaluation hooks implemented; independent quality/privacy approval remains
+**Status:** automated replacement evidence implemented; external review and deployed smoke remain gates
 
-This handoff defines what to evaluate. It does not assert that the deterministic
-rubric is quality-approved or that live Realtime behavior has been verified.
+This handoff defines the independent evaluation boundary. Passing automated
+tests is evidence of contract behavior; it is not a claim of hiring validity or
+live-provider verification. The executable dataset and measured result are in
+`backend/tests/fixtures/phase8_rubric_evaluation.json` and
+`docs/phase8_rubric_evaluation_report.md`.
 
 ## Trust model
 

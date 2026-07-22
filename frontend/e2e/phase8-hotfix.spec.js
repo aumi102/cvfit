@@ -4,6 +4,7 @@ const CORS_HEADERS = {
   'access-control-allow-origin': '*',
   'access-control-allow-headers': 'authorization,content-type',
   'access-control-allow-methods': 'GET,POST,OPTIONS',
+  'access-control-expose-headers': 'Retry-After',
   'content-type': 'application/json',
 };
 
@@ -122,6 +123,46 @@ test('History opens an existing analysis detail and actions remain clickable', a
   expect(browserErrors).toEqual([]);
 });
 
+test('Interview modes remain usable at a mobile viewport', async ({ page }) => {
+  const browserErrors = collectBrowserErrors(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await authenticate(page);
+  await mockBackend(page, async ({ request, url }) => {
+    if (url.pathname === '/v1/applications/app-mobile/interview/questions') {
+      expect(url.searchParams.get('language')).toBe('vi');
+      return {
+        body: {
+          application_id: 'app-mobile',
+          questions: [{
+            question_id: 'q-mobile',
+            question: 'Hãy mô tả một dự án mà bạn tự hào.',
+            type: 'behavioral', related_jd_requirement: 'Frontend',
+            related_cv_evidence: [], why_this_question: 'Luyện tập tiếng Việt.',
+          }],
+          disclaimer: 'Chỉ phục vụ luyện tập.',
+        },
+      };
+    }
+    if (url.pathname === '/v1/applications/app-mobile/interview/answers' && request.method() === 'GET') {
+      return { body: { application_id: 'app-mobile', answers: [], total: 0 } };
+    }
+    return null;
+  });
+
+  await page.goto('/applications/app-mobile/interview');
+  const voiceTab = page.getByRole('tab', { name: 'Phỏng vấn bằng giọng nói' });
+  const textTab = page.getByRole('tab', { name: 'Luyện tập bằng văn bản' });
+  await expect(voiceTab).toBeVisible();
+  await expect(textTab).toBeVisible();
+  await textTab.click();
+  await expect(page.getByText('Hãy mô tả một dự án mà bạn tự hào.')).toBeVisible();
+  const hasHorizontalOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth > window.innerWidth,
+  );
+  expect(hasHorizontalOverflow).toBe(false);
+  expect(browserErrors).toEqual([]);
+});
+
 test('Text interview defaults new questions and feedback to Vietnamese', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
   await authenticate(page);
@@ -175,9 +216,19 @@ test('Text interview defaults new questions and feedback to Vietnamese', async (
 
 test('Voice mock connects WebRTC, shows live transcript, completes and opens summary', async ({ page }) => {
   const browserErrors = collectBrowserErrors(page);
+  let clientSecretCalls = 0;
+  let completeCalls = 0;
   await authenticate(page);
   await page.addInitScript(() => {
-    const track = { enabled: true, stop() {} };
+    window.__trackStopCount = 0;
+    const track = {
+      enabled: true,
+      readyState: 'live',
+      stop() {
+        this.readyState = 'ended';
+        window.__trackStopCount += 1;
+      },
+    };
     const stream = {
       getAudioTracks: () => [track],
       getTracks: () => [track],
@@ -236,6 +287,10 @@ test('Voice mock connects WebRTC, shows live transcript, completes and opens sum
       constructor() {
         this.connectionState = 'new';
         this.channel = new MockDataChannel();
+        window.__disconnectVoice = () => {
+          this.connectionState = 'disconnected';
+          this.onconnectionstatechange?.();
+        };
       }
       addTrack() {}
       createDataChannel() {
@@ -265,6 +320,14 @@ test('Voice mock connects WebRTC, shows live transcript, completes and opens sum
       };
     }
     if (url.pathname.endsWith('/client-secret')) {
+      clientSecretCalls += 1;
+      if (clientSecretCalls === 2) {
+        return {
+          status: 409,
+          headers: { 'Retry-After': '1' },
+          body: { detail: 'client secret was issued too recently' },
+        };
+      }
       return {
         body: {
           interview_session_id: 'session-voice-1',
@@ -289,6 +352,7 @@ test('Voice mock connects WebRTC, shows live transcript, completes and opens sum
       };
     }
     if (url.pathname.endsWith('/complete')) {
+      completeCalls += 1;
       const payload = request.postDataJSON();
       expect(payload.turns[0].question_text).toContain('Hãy giới thiệu');
       expect(payload.turns[0].answer_transcript).toContain('Tôi đã xây dựng');
@@ -323,6 +387,17 @@ test('Voice mock connects WebRTC, shows live transcript, completes and opens sum
   await expect(page.getByText('Tôi đã xây dựng một API FastAPI và cải thiện độ trễ.')).toBeVisible();
   expect(await page.evaluate(() => window.__micConstraints)).toEqual({ audio: true });
   expect(await page.evaluate(() => Object.values(localStorage).some((value) => value.includes('ek_synthetic')))).toBe(false);
+  await page.evaluate(() => window.__disconnectVoice());
+  await expect(
+    page.locator('[role="alert"]').filter({ hasText: 'Kết nối mạng bị gián đoạn' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Kết nối lại' }).click();
+  await expect(page.getByText('Đang kết nối lại...')).toBeVisible();
+  await expect(
+    page.locator('[role="alert"]').filter({ hasText: 'chờ 1 giây' }),
+  ).toBeVisible();
+  await expect(page.getByText('Đã kết nối', { exact: true })).toBeVisible({ timeout: 5_000 });
+  expect(clientSecretCalls).toBe(3);
   await page.getByRole('button', { name: 'Tắt microphone' }).click();
   await expect(page.getByRole('button', { name: 'Bật microphone' })).toBeVisible();
   await page.getByRole('button', { name: 'Kết thúc phiên' }).click();
@@ -330,5 +405,12 @@ test('Voice mock connects WebRTC, shows live transcript, completes and opens sum
   await expect(page).toHaveURL(/\/interview\/sessions\/session-voice-1\/summary$/);
   await expect(page.getByRole('heading', { name: 'Đánh giá buổi phỏng vấn' })).toBeVisible();
   await expect(page.getByText('Câu trả lời có bằng chứng cụ thể.')).toBeVisible();
-  expect(browserErrors).toEqual([]);
+  expect(completeCalls).toBe(1);
+  expect(await page.evaluate(() => window.__trackStopCount)).toBe(1);
+  // The browser reports the deliberately mocked throttle response as a
+  // resource error even though the client handles it. No other console/page
+  // errors are allowed.
+  expect(browserErrors).toEqual([
+    expect.stringMatching(/status of 409.*client-secret/i),
+  ]);
 });

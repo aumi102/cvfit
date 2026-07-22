@@ -82,7 +82,7 @@ jobs:
         run: python scripts/ci_guard.py
 
       - name: Compile backend
-        run: python -m compileall backend/app
+        run: python -m compileall -q -f backend/app backend/tests scripts
 
       - name: Collect Phase 8 backend tests
         working-directory: backend
@@ -90,10 +90,15 @@ jobs:
           python -m pytest
           tests/test_interview_realtime.py
           tests/test_interview_realtime_postgres.py
+          tests/test_phase8_multilingual_evaluation.py
+          tests/test_build_metadata.py
           tests/test_phase8_env_contract.py
           --collect-only
           --basetemp pytest-cache-files-local
           -p no:cacheprovider
+
+      - name: Evaluate Phase 8 multilingual rubric fixtures
+        run: python scripts/evaluate_phase8_rubric.py --check
 
       - name: Run backend tests
         id: backend-tests

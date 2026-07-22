@@ -50,6 +50,7 @@ function baseInterview(overrides = {}) {
     connect: vi.fn().mockResolvedValue(undefined),
     disconnect: vi.fn().mockResolvedValue(undefined),
     reconnect: vi.fn().mockResolvedValue(undefined),
+    cancelReconnect: vi.fn(),
     ...overrides,
   };
 }
@@ -105,11 +106,14 @@ describe('realtime voice room UX', () => {
     expect(mocks.media.toggleMute).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Kết thúc phiên' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Đang kết thúc…' }));
     await waitFor(() => expect(mocks.complete).toHaveBeenCalledWith(
       'session-1',
       expect.objectContaining({ completion_reason: 'user_ended' })
     ));
     expect(mocks.interview.disconnect).toHaveBeenCalledWith('user_ended');
+    expect(mocks.interview.disconnect).toHaveBeenCalledTimes(1);
+    expect(mocks.complete).toHaveBeenCalledTimes(1);
     expect(mocks.media.stopAll).toHaveBeenCalled();
     expect(mocks.replace).toHaveBeenCalledWith('/interview/sessions/session-1/summary');
   });

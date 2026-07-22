@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -27,6 +28,7 @@ from app.services.interview_realtime.context_builder import (
 from app.services.interview_realtime.errors import (
     RealtimeInterviewConflict,
     RealtimeInterviewNotFound,
+    RealtimeInterviewThrottled,
     RealtimeInterviewValidationError,
 )
 from app.services.interview_realtime.event_redaction import (
@@ -148,6 +150,20 @@ def get_owned_session(
     return session
 
 
+def delete_owned_session(
+    db: Session,
+    user_id: uuid.UUID,
+    session_id: uuid.UUID,
+) -> bool:
+    """Hard-delete an owned session and its cascade children without disclosure."""
+    session = db.get(InterviewRealtimeSession, session_id)
+    if session is None or session.user_id != user_id:
+        return False
+    db.delete(session)
+    db.commit()
+    return True
+
+
 def transition_session_status(
     session: InterviewRealtimeSession,
     new_status: str,
@@ -201,12 +217,16 @@ def prepare_session_for_client_secret(
         (event.created_at for event in issued_events if event.created_at is not None),
         default=None,
     )
-    if (
-        last_issued_at is not None
-        and datetime.utcnow() < last_issued_at + timedelta(seconds=min_interval_seconds)
-    ):
-        raise RealtimeInterviewConflict(
-            "client secret was issued too recently; retry after the server interval"
+    now = datetime.utcnow()
+    retry_at = (
+        last_issued_at + timedelta(seconds=min_interval_seconds)
+        if last_issued_at is not None
+        else None
+    )
+    if retry_at is not None and now < retry_at:
+        raise RealtimeInterviewThrottled(
+            "client secret was issued too recently",
+            retry_after_seconds=math.ceil((retry_at - now).total_seconds()),
         )
 
 

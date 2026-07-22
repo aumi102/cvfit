@@ -1,6 +1,8 @@
 # AI CV Fit App
 
-FastAPI-based CV-to-job-description fit scoring MVP. The app uploads a CV, accepts pasted JD text, runs an async Celery job, stores results in PostgreSQL, and returns JSON plus a downloadable DOCX report.
+AI CV Fit is a FastAPI + Next.js application for CV/JD analysis, job history,
+interview practice, and a Vietnamese Realtime Voice/WebRTC interview. Celery
+workers process CV analysis jobs; PostgreSQL stores owner-scoped product data.
 
 ## Folder Structure
 
@@ -12,8 +14,9 @@ backend/
   requirements-ml.txt   ML runtime dependencies with CPU-only Torch
   requirements-dev.txt  local test/development dependencies
 frontend/
-  templates/            Jinja templates
-  static/               vanilla JS/static assets
+  src/                  Next.js App Router UI and API client
+  e2e/                  Playwright mocked browser regressions
+  templates/, static/   legacy FastAPI-served fallback UI
 scripts/                smoke tests and operational scripts
 docs/                   deployment and baseline docs
 docker/                 API and worker Dockerfiles
@@ -22,7 +25,11 @@ docker-compose.yml      local API/worker/Postgres/Redis stack
 
 ## Architecture
 
-FastAPI + Celery + Redis + PostgreSQL.
+The deployed topology is a Next.js frontend, FastAPI API, Celery worker, Redis,
+PostgreSQL/pgvector, and private S3-compatible object storage. Realtime audio
+travels directly between the consented browser and OpenAI over WebRTC using a
+short-lived credential minted by the backend; CV Fit never stores raw audio,
+video, or SDP.
 
 ## Local Docker Run
 
@@ -44,24 +51,21 @@ Open:
 http://localhost:8000
 ```
 
-## Frontend Demo
+## Frontend
 
-The MVP frontend is served by the FastAPI backend from `frontend/templates` and
-`frontend/static`; there is no separate Node/React/Next app or separate
-frontend deployment. On Render, the demo URL is the backend Web Service root,
-for example:
+Run the Next.js application separately from FastAPI:
 
-```text
-https://cvfit.onrender.com/
+```bash
+cd frontend
+npm ci
+npm run dev
 ```
 
-The page uses same-origin API calls for the real MVP flow: upload a CV through
-`/v1/cv/upload`, create a score job through `/v1/jobs/create-score`, poll job
-status, fetch protected result/report metadata, and expose a DOCX report
-download link. The repository now includes JWT account authentication and
-owner-scoped product routes; legacy guest jobs retain per-job access-token
-protection. Use only synthetic CV/JD data for demos. The current app has no
-cleanup endpoint, so mutating demos create records and a report.
+Set `NEXT_PUBLIC_API_BASE_URL` to the FastAPI origin. The legacy Jinja/vanilla
+UI remains a fallback, not the primary product frontend. JWT users can open
+stable history detail routes at `/history/[jobId]`, use Vietnamese text
+practice, or enter the visible Realtime Voice mode. Use synthetic CV/JD and
+interview content for demos.
 
 Stop:
 ```bash
@@ -117,11 +121,16 @@ The backend job checks:
 
 ```bash
 python scripts/ci_guard.py
-python -m compileall backend/app
+python -m compileall -q -f backend/app backend/tests scripts
+python scripts/evaluate_phase8_rubric.py --check
 cd backend && python -m pytest --basetemp pytest-cache-files-local -p no:cacheprovider
 cd backend && alembic heads
 cd backend && alembic history
 docker compose config
+cd frontend && npm run lint
+cd frontend && npm test -- --run
+cd frontend && npm run build
+cd frontend && npm run test:e2e
 ```
 
 The PostgreSQL migration job starts a disposable `pgvector/pgvector:pg16`
@@ -138,7 +147,8 @@ set "DATABASE_URL=sqlite+pysqlite:///:memory:"
 set "REDIS_URL=redis://localhost:6379/0"
 set "PYTHONPYCACHEPREFIX=backend/pytest-cache-files-local/pycache-prefix"
 python scripts/ci_guard.py
-python -m compileall backend/app
+python -m compileall -q -f backend/app backend/tests scripts
+python scripts/evaluate_phase8_rubric.py --check
 cd backend
 python -m pytest --basetemp pytest-cache-files-local -p no:cacheprovider
 alembic heads
@@ -176,24 +186,35 @@ you to run `alembic upgrade head` against the intended local/disposable
 database. Do not run migrations blindly against an existing production database
 without a backup and schema/adoption checks.
 
-## Phase 8 Realtime Interview backend
+## Phase 8 Realtime Interview
 
 The Phase 8 backend contract is seven authenticated owner-scoped routes under
 `/v1/interview/realtime`. It mints a short-lived client secret so the browser
 can connect directly to OpenAI Realtime over WebRTC; the backend never proxies
 or stores SDP, raw audio, or video. Four tables store sessions, bounded turns,
-minimized events, and versioned practice summaries.
+minimized events, and versioned practice summaries. The Next.js room implements
+microphone consent, remote audio, live transcript, mute, bounded reconnect that
+honors `Retry-After`, idempotent completion, summary polling, and owner-requested
+hard deletion. New summaries use the Unicode-aware evaluator
+`deterministic_transcript_v2_unicode`; Vietnamese, English, and mixed-language
+synthetic fixtures run in CI.
 
-`ENABLE_REALTIME_INTERVIEW=false` is the safe default. Do not enable it until
-frontend integration, CI/PostgreSQL evidence, QA/evaluation, privacy approval,
-an approved non-production credential, and a controlled smoke plan are all in
-place. Backend contracts and handoffs:
+`ENABLE_REALTIME_INTERVIEW=false` remains the safe default. Enable it only when
+the reviewed commit is deployed, backend-only provider settings are present,
+HTTPS/CORS are correct, and the controlled synthetic browser smoke is approved.
+Deletion remains available while the feature is disabled. The retention policy
+is a 30-day maximum for the full realtime session graph, enforced by a
+dry-run-first bounded operator purge.
 
 - [API contract](docs/interview_realtime_api_contract.md)
 - [Backend architecture](docs/interview_realtime_backend_architecture.md)
 - [Frontend handoff](docs/interview_realtime_frontend_handoff.md)
 - [QA/evaluation handoff](docs/interview_realtime_qa_evaluation_handoff.md)
 - [Implementation report](docs/interview_realtime_backend_implementation_report.md)
+- [Rubric evaluation](docs/phase8_rubric_evaluation_report.md)
+- [Privacy and retention](docs/phase8_privacy_review.md)
+- [Browser/device QA](docs/phase8_browser_device_qa_report.md)
+- [Authoritative team closeout](docs/phase8_team_closeout.md)
 
 ## Smoke Test
 

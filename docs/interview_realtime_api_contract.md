@@ -9,6 +9,8 @@
 
 The Phase 8 API is an authenticated, owner-scoped backend contract for a
 browser WebRTC interview using a short-lived OpenAI Realtime client secret.
+Seven lifecycle routes remain canonical; one privacy-specific `DELETE` route
+is additive and does not change their request/response contract.
 
 - Base path: `/v1/interview/realtime`
 - Authentication: JWT Bearer via the existing `get_current_user` dependency
@@ -181,6 +183,18 @@ are counted and returned.
 - Response: `200 RealtimeInterviewSessionResponse`
 - Errors: `401`, `404`, `503`
 
+### `DELETE /v1/interview/realtime/sessions/{session_id}`
+
+- Auth: required
+- Response: `204`, including an exact retry, a missing id, or a cross-owner id
+- Hard-deletes only the owned realtime session. Database/ORM cascades delete
+  its turns, minimized events, and summary; linked application/analysis rows
+  are never deleted.
+- It remains available when `ENABLE_REALTIME_INTERVIEW=false`, so disabling the
+  product feature never blocks a privacy request.
+- The non-disclosing `204` contract prevents an attacker from probing whether
+  another user's session exists; cross-owner data remains unchanged.
+
 ### `POST /v1/interview/realtime/sessions/{session_id}/client-secret`
 
 - Auth: required owner
@@ -204,7 +218,7 @@ Response schema `RealtimeClientSecretResponse`:
   "provider_session_id": "sess_provider_id-or-null",
   "model": "operator-configured-model",
   "voice": "operator-configured-voice",
-  "configuration_version": "realtime_session_v1"
+  "configuration_version": "realtime_session_vi_v2"
 }
 ```
 
@@ -218,7 +232,8 @@ Errors:
 - `404`: missing/cross-user session or linked context
 - `409`: invalid/terminal status or session time limit exceeded
 - `409`: also returned when another secret was issued inside the configured
-  minimum interval
+  minimum interval. This throttle response includes an integer `Retry-After`
+  header in seconds; CORS exposes that header to the approved frontend origin.
 - `422`: audio consent missing
 - `503`: flag off, provider configuration missing, timeout, provider failure,
   or invalid provider response
@@ -442,6 +457,8 @@ Expected domain errors use the existing FastAPI shape:
 FastAPI validation failures retain the normal structured `detail` array.
 Provider response bodies and authorization details are never copied into error
 responses.
+Only a client-secret throttle `409` carries `Retry-After`; clients must not
+blindly retry other lifecycle or event-sequence conflicts.
 
 ## Frontend integration expectations for Quân
 
@@ -459,6 +476,9 @@ Quân may integrate against only the routes and schemas above. In particular:
    only events for a new turn.
 7. Complete explicitly, then treat summary `202/pending` as a normal state.
 8. Stop/disconnect the browser session at the configured question/time limit.
+9. On transport loss, request a fresh ephemeral credential only after the
+   server `Retry-After` delay (or bounded exponential backoff for network
+   failures); allow cancellation and never retry after explicit completion.
 
 The official Realtime client-secret contract permits the browser to send a
 later `session.update` for most session fields. The backend therefore cannot
@@ -469,5 +489,6 @@ provider JSON and never treats browser transcript events as provider-attested.
 Changing that trust property would require a separately reviewed provider
 control/proxy architecture.
 
-Frontend implementation, WebRTC code, permissions UI, transcript UI, and
-analytics are not part of this backend contract implementation.
+The merged frontend implementation is in `frontend/src/lib/interviewRealtime.js`
+and the room/summary routes. Mocked browser regression coverage must continue to
+exercise this contract without contacting OpenAI.
