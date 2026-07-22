@@ -1,9 +1,8 @@
 # Phase 8 Realtime Interview — QA/Evaluation Handoff for Đạt
 
-> Status: superseded as a pending checklist by the executable replacement
+> Status: superseded as a pending checklist by the executable production-module
 > fixtures/tests and reports linked from `docs/phase8_team_closeout.md`. PR #98
-> remains intentionally unmergeable and must be closed only after the
-> replacement PR merges.
+> was closed unmerged after replacement PR #104 was reviewed, green, and merged.
 
 **Rubric version:** `realtime_practice_v1`
 
@@ -11,7 +10,8 @@
 
 **Transcript provenance:** `client_reported_validated`
 
-**Status:** automated replacement evidence implemented; external review and deployed smoke remain gates
+**Status:** replacement evaluation, malicious-flow review, privacy decision,
+browser QA, reviewer approval, and controlled deployed smoke are recorded
 
 This handoff defines the independent evaluation boundary. Passing automated
 tests is evidence of contract behavior; it is not a claim of hiring validity or
@@ -120,13 +120,15 @@ absolute-claim, Vietnamese, English, and mixed-language answers. Review:
 - usefulness and non-discrimination of recommendations;
 - stable rubric/evaluator versioning.
 
-Quality thresholds and approval remain Đạt/team decisions; do not tune the
-heuristic silently inside QA artifacts.
+The replacement evaluation thresholds and results are recorded in
+`docs/phase8_rubric_evaluation_report.md`; do not tune the heuristic silently
+inside QA artifacts.
 
 ## Browser/live blockers
 
-Browser WebRTC behavior, microphone permissions, reconnection, device changes,
-live transcripts, accessibility, and provider session-update behavior require
-Quân's frontend. A controlled OpenAI smoke additionally requires an approved
-non-production credential, privacy approval, budget/abuse controls, and an
-explicit operator decision. None is satisfied by backend unit tests alone.
+Browser WebRTC behavior, microphone permissions, reconnection, live transcripts,
+accessibility, and provider session-update behavior are not satisfied by backend
+unit tests alone. Automated regressions and the bounded production evidence are
+recorded separately in `docs/phase8_browser_device_qa_report.md` and
+`docs/phase8_production_closeout_smoke_report.md`; future runtime changes must
+repeat the relevant gates.

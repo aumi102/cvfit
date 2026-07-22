@@ -20,6 +20,12 @@ or other interview sessions.
 
 ## Operator Purge
 
+**Owner:** Nguyễn Đức Hoàng Phúc, sole maintainer.
+**Temporary schedule:** one manual operator check per local calendar day
+(`Asia/Ho_Chi_Minh`) while production is online. There is no automated cron at
+closeout. A fixed Render Cron Job may replace this process only after cost,
+timezone, alerting, access, and disable behavior are reviewed.
+
 From a reviewed backend deployment, first inspect a dry-run:
 
 ```bash
@@ -35,8 +41,10 @@ python scripts/purge_realtime_interviews.py --retention-days 30 --batch-limit 50
 
 Repeat only through an approved scheduled job. The script does not print
 session IDs or transcript text. `--retention-days` cannot be less than 1 and
-batch size is bounded to 500. It uses the existing application database configuration and
-must never be pointed at production from an unapproved local shell.
+batch size is bounded to 500. It uses the existing application database
+configuration and must never be pointed at production from an unapproved local
+shell. The owner records date, environment, dry-run count, executed count, and
+result without recording row IDs or transcript content.
 
 ## Verification
 
@@ -49,6 +57,12 @@ For a synthetic session, verify after deletion:
 5. Another owner cannot use the ID to discover or delete the session.
 6. Logs contain no transcript, credential, authorization header, or raw
    provider payload.
+
+The production closeout performed the dry-run command with zero candidates and
+zero deletions; no broad purge was executed. It also deleted each reconnect
+smoke session through the owner endpoint. The final read-only query found zero
+closeout synthetic realtime sessions and zero associated session/event/turn/
+summary rows. Linked application fixture data remained intact.
 
 ## Rollback and Recovery
 

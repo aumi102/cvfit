@@ -2,8 +2,9 @@
 
 **Local automated environment:** Windows, Microsoft Edge `150.0.4078.83`
 through Playwright  
-**Run date:** 2026-07-22  
-**Data:** synthetic identities and mocked backend/provider only
+**Run date:** 2026-07-22 to 2026-07-23
+**Data:** synthetic identities; mocked provider for automation and a controlled
+synthetic account for production smoke
 
 ## Reproducible Automated Matrix
 
@@ -63,22 +64,33 @@ title `AI CV Fit Analyzer — Phân tích CV thông minh` and an empty error log
 
 ## Manual and Production Evidence
 
-The product owner reported that voice worked on the day before this audit. That
-is useful supplementary evidence, but the browser version, exact timestamp,
-deployed SHA, synthetic account, network trace, and console result were not
-provided and are not invented here.
+The controlled production smoke ran against backend, frontend, and worker SHA
+`280cb96c0e6501cb42aa58eb5fae43c1e5022805` on Render. The browser was the
+Codex in-app Chromium-based surface on Windows; that controlled surface did not
+expose an exact Chromium version, so none is invented. Desktop viewport was
+1274x714 and the responsive production pass used 390x844. Automated Playwright
+used Microsoft Edge `150.0.4078.83` and a 375x812 mobile viewport.
 
-Required controlled production rows remain pending until recorded against the
-replacement merge SHA:
-
-| Browser/device | Scenario | State |
+| Browser/device | Scenario | State/evidence |
 |---|---|---|
-| Current Chromium desktop | Vietnamese text, voice, mute/end/summary | pending |
-| Current Chromium desktop | disconnect/reconnect without 409 loop | pending |
-| Current Chromium desktop | history refresh/retry/download | pending |
-| Mobile viewport/device | interview modes and history actions | pending |
-| Browser with microphone denied then allowed | consent and recovery | pending |
+| Production Chromium desktop | Vietnamese text, voice, mute/unmute, end, summary | PASS; Vietnamese question/feedback/audio transcript and summary rendered; no retained recording |
+| Production Chromium desktop | disconnect/reconnect with throttle | PASS; actual system WLAN interruption, one `409` with server-requested 3-second wait, then reconnect; no loop, duplicate transcript, or double completion |
+| Production Chromium desktop | history refresh/back/report | PASS; stable detail route, direct refresh, clickable evidence/report controls, successful report GET, no overlay or redirect loop |
+| Production Chromium mobile viewport 390x844 | interview modes and history actions | PASS; core controls remained visible/clickable with no blocking layer |
+| Automated Chromium/Edge | microphone denied/revoked, offline/online, cancel/end during wait | PASS; component/client regressions cover readable errors, bounded retry, and cleanup |
 
-No screenshot or video is included yet. Any later artifact must use only a
-synthetic account and must not contain a credential, real CV, private
-transcript, raw audio, or video recording.
+Chrome DevTools Network Offline alone did not transition the already-established
+peer connection within the observation window. It is therefore recorded as a
+tool limitation, not a pass. The final reconnect gate used a bounded 9-second
+system WLAN interruption and observed `Đã ngắt kết nối`,
+`Đang kết nối lại...`, a visible cancel action, the 3-second throttle message,
+and `Đã kết nối`. Backend status evidence was client-secret
+`200 -> 409 -> 200`, followed by exactly one completion and one owner deletion.
+The final DB check found no closeout synthetic realtime session or child rows.
+
+No page error or unexpected console warning/error was observed in the final
+text, voice, reconnect, history, mobile, or deletion checks. The expected
+handled `409` was visible only as endpoint/status evidence. No screenshot,
+video, raw audio, Authorization header, credential, full transcript, or private
+payload is retained. See
+[phase8_production_closeout_smoke_report.md](phase8_production_closeout_smoke_report.md).

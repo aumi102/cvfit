@@ -199,12 +199,13 @@ hard deletion. New summaries use the Unicode-aware evaluator
 `deterministic_transcript_v2_unicode`; Vietnamese, English, and mixed-language
 synthetic fixtures run in CI.
 
-`ENABLE_REALTIME_INTERVIEW=false` remains the safe default. Enable it only when
-the reviewed commit is deployed, backend-only provider settings are present,
-HTTPS/CORS are correct, and the controlled synthetic browser smoke is approved.
-Deletion remains available while the feature is disabled. The retention policy
-is a 30-day maximum for the full realtime session graph, enforced by a
-dry-run-first bounded operator purge.
+`ENABLE_REALTIME_INTERVIEW=false` remains the fail-closed default for a fresh
+environment. The reviewed Render production activation was verified at runtime
+SHA `280cb96c0e6501cb42aa58eb5fae43c1e5022805` with backend-only provider
+settings, HTTPS/CORS, and controlled synthetic text/voice/reconnect/history/
+deletion smoke. Deletion remains available while the feature is disabled. The
+retention policy is a 30-day maximum for the full realtime session graph,
+enforced by a dry-run-first bounded operator purge.
 
 - [API contract](docs/interview_realtime_api_contract.md)
 - [Backend architecture](docs/interview_realtime_backend_architecture.md)
@@ -215,6 +216,14 @@ dry-run-first bounded operator purge.
 - [Privacy and retention](docs/phase8_privacy_review.md)
 - [Browser/device QA](docs/phase8_browser_device_qa_report.md)
 - [Authoritative team closeout](docs/phase8_team_closeout.md)
+- [Production closeout smoke](docs/phase8_production_closeout_smoke_report.md)
+- [Maintenance/portfolio operating policy](docs/maintenance_mode.md)
+
+AI CV Fit v1.0 is now owner-operated in Maintenance/Portfolio Mode. Nguyễn Đức
+Hoàng Phúc is the sole maintainer; active feature phases are paused. Billing and
+payOS remain outside Phase 8 and are not activated by this closeout. Dependency
+issue [#103](https://github.com/aumi102/cvfit/issues/103) is a documented,
+non-blocking maintenance risk rather than a resolved advisory.
 
 ## Smoke Test
 

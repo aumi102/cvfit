@@ -39,7 +39,7 @@ and OpenAI; this backend never accepts or persists them.
 
 | Component | Responsibility |
 |---|---|
-| `app/api/routes/interview_realtime.py` | Seven authenticated endpoints and HTTP/domain error mapping |
+| `app/api/routes/interview_realtime.py` | Seven canonical lifecycle endpoints, additive owner privacy `DELETE`, and HTTP/domain error mapping |
 | `app/schemas/interview_realtime.py` | Strict request/response types, bounded enums, consent and completion validation |
 | `app/services/interview_realtime/session_service.py` | Ownership, persistence, pagination, transitions, event/turn writes, completion |
 | `context_builder.py` | Minimal owned target-job/application/analysis/profile context |
@@ -141,8 +141,9 @@ rubric/evaluator versions, transcript provenance, overall score, rubric,
 strengths, weaknesses, improvement recommendations, next practice questions,
 proposed learning tasks, limitations, and timestamps.
 
-Child tables use `ON DELETE CASCADE` at the database layer, although this PR
-does not expose a session-delete route.
+Child tables use `ON DELETE CASCADE` at the database layer. The additive
+owner-scoped privacy route exposes idempotent session deletion without changing
+the seven canonical lifecycle operations.
 
 ## Context-building flow
 

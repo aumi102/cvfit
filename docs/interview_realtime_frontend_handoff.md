@@ -1,18 +1,20 @@
 # Phase 8 Realtime Interview — Frontend Handoff for Quân
 
-> Status: implemented on the Phase 8 closeout replacement branch. This file is
-> now the maintenance contract; `docs/phase8_team_closeout.md` owns final gates.
+> Status: implemented, merged in PR #104, deployed, and verified with controlled
+> synthetic production text/voice/reconnect/history/deletion smoke. This file
+> is now the maintenance contract; `docs/phase8_team_closeout.md` owns final
+> closeout evidence.
 
 **Contract version:** 1.1
 
 **Backend configuration version:** `realtime_session_vi_v2`
 
-**Status:** frontend integration implemented; replacement CI/review and
-current-SHA controlled live evidence remain approval gates
+**Status:** frontend integration and current-SHA production evidence complete
 
-Use only the authenticated API below. The backend flag is disabled by default,
-so `503` is normal until an operator deliberately enables a non-production
-environment.
+Use only the authenticated API below. The backend flag retains a fail-closed
+default; `503` is normal in environments where an operator has not deliberately
+enabled and configured Realtime Interview. Production activation evidence is
+recorded in `docs/phase8_production_closeout_smoke_report.md`.
 
 ## Endpoints
 

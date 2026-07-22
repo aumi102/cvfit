@@ -1,9 +1,10 @@
 # Phase 8 Team Closeout — Authoritative Source of Truth
 
-**Candidate date:** 2026-07-22  
+**Closeout date:** 2026-07-23
 **Authoritative repository:** `aumi102/cvfit`  
-**Status:** closeout candidate; not complete until the replacement PR, review,
-CI, deployment identity, and controlled production smoke gates below pass.
+**Status:** runtime, QA, privacy, deployment, and production-smoke gates pass.
+This document becomes the final repository record when its closeout PR passes
+review/CI and merges without a protection bypass.
 
 This document supersedes the Phase 8 status portions of the historical PR #99,
 #100, #101, #102 implementation/handoff reports and the stale unmerged PR #98.
@@ -18,8 +19,8 @@ gate.
 | #100 | merged initial frontend foundation; later superseded where mock-only |
 | #101 | merged backend reconciliation/hardening |
 | #102 | merged Vietnamese WebRTC voice and history recovery |
-| #98 | stale/open replacement target; must not merge or cherry-pick |
-| #104 | replacement closeout PR; open as draft, CI/review/merge pending |
+| #98 | closed unmerged on 2026-07-22; superseded because its contract/tests were stale and CI was red |
+| #104 | merged replacement closeout on 2026-07-22; approved and green; merge SHA `280cb96c0e6501cb42aa58eb5fae43c1e5022805` |
 
 The replacement work salvages the intent of PR #98—multilingual evaluation,
 malicious-flow QA, privacy review, browser evidence, and sign-off—but imports
@@ -36,10 +37,10 @@ deletion, or `InterviewMediaArtifact` assumptions.
   credential, microphone/remote audio/transcript lifecycle, ordered event
   sequencer, bounded reconnect, summary UI, history detail recovery, and
   frontend tests.
-- **Đạt/reviewer:** replacement QA fixtures/report and privacy/malicious-flow
-  checklist are implemented here. Independent QA/privacy approval and team
-  acceptance remain pending until recorded on the replacement PR and deployed
-  smoke evidence.
+- **Đạt/reviewer scope:** PR #98 was not merged. Its useful QA intent was
+  rewritten against production modules in PR #104: multilingual fixtures,
+  malicious-flow coverage, privacy/retention decisions, browser evidence, and
+  evaluation reports. No new approval or signature is attributed to Đạt.
 
 ## Architecture and API
 
@@ -114,24 +115,27 @@ See [phase8_rubric_evaluation_report.md](phase8_rubric_evaluation_report.md) and
   allowlisted identity in its reviewed deployment shell/log.
 
 `RENDER_GIT_COMMIT` is preferred. A health page that opens with
-`commit_sha=unknown` is not deployed-SHA evidence. API/frontend/worker must use
-the reviewed replacement merge SHA and the database must report the expected
-head before production closeout.
+`commit_sha=unknown` is not deployed-SHA evidence. The controlled closeout
+verified backend, frontend, and worker at
+`280cb96c0e6501cb42aa58eb5fae43c1e5022805`, and PostgreSQL at
+`20260716_0001 (head)`. Provider and feature configuration were checked only as
+masked/presence evidence; no secret value was copied.
 
 ## CI Gates
 
-The replacement commit must pass Backend Checks, Frontend Checks, PostgreSQL
-Migration Checks, production-module multilingual evaluation, unit/component
-tests, Next build, and Playwright mock flows. PostgreSQL validation must run a
-disposable upgrade/downgrade/upgrade cycle. Jobs may not call paid OpenAI,
-payOS, production services, or require production secrets.
-
-Local results may be recorded in the replacement PR, but GitHub Actions on the
-final PR head is the remote source of truth. A pass on an older SHA is invalid.
+PR #104 passed CI run
+[`29912736873`](https://github.com/aumi102/cvfit/actions/runs/29912736873)
+on its merge SHA: Frontend Checks job `88899292028`, Backend Checks job
+`88899292044`, and PostgreSQL Migration Checks job `88899292043` all succeeded.
+That run covered production-module multilingual evaluation, unit/component
+tests, Next build, Playwright mock flows, and the disposable PostgreSQL
+upgrade/downgrade/upgrade cycle. The final documentation PR must independently
+pass all configured checks on its own head. CI calls neither paid OpenAI nor
+payOS, uses no production secret, and performs no deployment.
 
 ## Production Smoke Gates
 
-After merge and reviewed deployment, a synthetic account must prove:
+The controlled synthetic account proved:
 
 - Vietnamese text question/answer/feedback.
 - Voice consent, WebRTC connection, Vietnamese AI audio/transcript,
@@ -139,9 +143,20 @@ After merge and reviewed deployment, a synthetic account must prove:
 - Safe disconnect/reconnect without a `409` loop or duplicate transcript/event.
 - History detail, direct refresh, retry, report action, browser back, and no
   invisible overlay/console or failed-request loop.
-- Owner deletion, idempotent repeat, cross-owner protection, and child cascade.
+- Owner deletion, idempotent repeat, and child cascade; cross-owner protection
+  is covered by production-module automated tests rather than a second live user.
 
-No real CV/transcript, recording, video, secret, or payment mutation is allowed.
+The reconnect run used an actual bounded WLAN interruption because DevTools
+Network Offline did not sever the already-established WebRTC transport. UI
+transitioned through disconnected/reconnecting, displayed the server-requested
+3-second wait, and returned to connected. Backend endpoint/status evidence was
+one `200 -> 409 -> 200` client-secret sequence, not a loop, followed by exactly
+one completion and one deletion. Transcript state did not duplicate. A final
+read-only database query found zero remaining closeout synthetic realtime
+sessions and zero session/turn/event/summary rows for the deleted run.
+
+No real CV/transcript, recording, video, secret, or payment mutation was used.
+See [phase8_production_closeout_smoke_report.md](phase8_production_closeout_smoke_report.md).
 
 ## Dependency Risk
 
@@ -150,8 +165,9 @@ findings. The final `npm audit --omit=dev` reports two high package nodes
 (`next` and transitive `sharp`) for the same `sharp/libvips` advisory chain.
 The repository does not use `next/image`; npm offers only a semver-major Next
 downgrade while `sharp` 0.35 is outside the Next 15 optional range. It is tracked separately
-in [GitHub issue #103](https://github.com/aumi102/cvfit/issues/103) and must be
-re-evaluated before introducing image processing.
+in [GitHub issue #103](https://github.com/aumi102/cvfit/issues/103) as a
+non-blocking accepted maintenance risk and must be re-evaluated before
+introducing image processing.
 
 ## Rollback and Known Limitations
 
@@ -160,24 +176,29 @@ backend, and worker back to recorded compatible SHAs. This closeout adds no
 migration to downgrade. Stop the purge schedule separately.
 
 Known limitations: browser-to-provider policy is not cryptographic
-immutability; transcript text is client-reported; the rubric is lexical; live
-provider/browser/device behavior still requires controlled evidence per deploy;
-hard deletion may persist temporarily in infrastructure backups according to
-the approved backup lifecycle.
+immutability; transcript text is client-reported; the rubric is lexical; a
+desktop Chromium-based production smoke does not represent every physical
+device/browser; and hard-deleted rows may persist temporarily in infrastructure
+backups according to the provider lifecycle.
 
 ## Sign-offs and Final Gate
 
 | Gate | State |
 |---|---|
-| Implementation and local evidence | frontend lint (one documented warning), 28/28 unit tests, clean production build, and 4/4 Playwright flows pass with a clean runner exit; the previous backend run passed 705 tests with one PostgreSQL-only SQLite skip, but the final added PostgreSQL cascade test and strengthened evaluation gate await CI because this shell has no backend virtualenv and the local Docker daemon is unavailable |
-| GitHub CI on final head | pending |
-| Independent reviewer approval | pending |
-| QA/privacy approval (Đạt or delegate) | pending |
-| Replacement PR merged | pending |
-| PR #98 superseded comment and closure | pending until replacement merge |
-| Backend/frontend/worker SHA and DB head | pending |
-| Controlled production synthetic smoke | pending |
+| Implementation and local evidence | PASS: frontend lint (one documented warning), 28/28 unit tests, clean production build, 4/4 Playwright flows with clean exit; backend and PostgreSQL coverage confirmed by CI |
+| Replacement PR #104 | PASS: approved, CI green, merged as `280cb96c0e6501cb42aa58eb5fae43c1e5022805` |
+| PR #98 disposition | PASS: superseded comment recorded and PR closed unmerged |
+| Backend/frontend/worker SHA and DB head | PASS: all services at `280cb96c0e6501cb42aa58eb5fae43c1e5022805`; DB `20260716_0001` |
+| Controlled production synthetic smoke | PASS: Vietnamese text, voice, reconnect/throttle, history, mobile viewport, deletion/cascade, retention dry-run, and clean console/network checks |
+| Privacy/operations | PASS for owner-operated Maintenance/Portfolio Mode: 30-day maximum, owner delete, daily manual purge ownership, no raw media/SDP, no sensitive inference |
+| Final closeout documentation PR | must pass review, CI, and merge without bypass; GitHub metadata is the authoritative evidence |
 
-**Closeout verdict:** NOT YET CLOSED. Phase 8 becomes complete only when every
-row above is evidenced; this document must then be updated with exact PR, SHA,
-CI run IDs, deployment metadata, smoke date/environment, and sign-offs.
+## Product-owner acceptance
+
+> Tôi, Nguyễn Đức Hoàng Phúc, với vai trò project owner và sole maintainer của AI CV Fit sau Phase 8, xác nhận đã xem xét kết quả CI, production deployment, synthetic smoke, QA và privacy controls. Tôi chấp nhận Phase 8 cho mục đích vận hành ở Maintenance/Portfolio Mode, với retention tối đa 30 ngày, owner-scoped deletion, không lưu raw audio/video/SDP và không thực hiện sensitive inference. Xác nhận này không phải chứng nhận pháp lý và không đại diện cho chữ ký mới của các thành viên cũ.
+
+**Closeout decision:** all runtime and operational gates are evidenced for
+Maintenance/Portfolio Mode. This decision becomes the final repository
+closeout when the documentation PR containing it is reviewed, green, and
+merged. Maintenance ownership, purge cadence, cost control, rollback, archive,
+and risk review are defined in [maintenance_mode.md](maintenance_mode.md).

@@ -232,7 +232,8 @@ Phase 8 activation is a separate controlled gate:
    migration.
 3. Verify required realtime variables by presence/masked output only.
 4. Keep billing and credit gating disabled.
-5. Enable realtime only after privacy/reviewer approval.
+5. Enable realtime only after privacy/reviewer approval; keep the default false
+   in any fresh environment.
 6. Use a synthetic account for Vietnamese text, voice, reconnect, history, and
    deletion smoke; inspect console/network without recording media.
 7. Configure the reviewed 30-day purge schedule only after its dry-run.
@@ -243,8 +244,11 @@ Phase 8 activation is a separate controlled gate:
   legacy guest job access-token protection.
 - Some legacy guest job status/result/report flows remain UUID plus per-job
   access-token based.
-- Phase 8 Realtime Interview code is implemented but remains disabled by
-  default until current-SHA deploy and controlled live smoke are evidenced.
+- Phase 8 Realtime Interview code remains fail-closed by default. The reviewed
+  owner-operated production environment was verified at backend/frontend/worker
+  SHA `280cb96c0e6501cb42aa58eb5fae43c1e5022805`, DB head
+  `20260716_0001`, with controlled synthetic text/voice/reconnect/history/
+  deletion smoke. A new environment or runtime change must repeat its own gate.
 - S3 lifecycle cleanup is still needed.
 - API and worker startup require the database schema to be at Alembic head.
 - First scoring run may be slower if the embedding model has to download at runtime.
@@ -269,3 +273,14 @@ the frontend, API, and worker back to their previously recorded compatible
 deploys. Do not downgrade production migrations for this closeout because it
 adds none. Stop the retention schedule independently if required; do not try to
 restore hard-deleted transcript rows without the approved backup procedure.
+
+## Maintenance Ownership
+
+Nguyễn Đức Hoàng Phúc is the sole maintainer and operator after Phase 8. While
+production remains online, he performs one 30-day retention dry-run check per
+Asia/Ho_Chi_Minh calendar day; execution is bounded to 500 rows and occurs only
+after environment/count review. Cost control begins with the realtime feature
+disable, followed by Render/provider usage review. The complete rollback,
+archive, credential-revocation, and issue #103 non-blocking risk procedure is in
+[maintenance_mode.md](maintenance_mode.md). Production evidence is in
+[phase8_production_closeout_smoke_report.md](phase8_production_closeout_smoke_report.md).

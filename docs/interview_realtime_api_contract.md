@@ -1,9 +1,10 @@
 # Realtime Interview API Contract — Phase 8
 
 **Version:** 1.1
-**Date:** 2026-07-21
+**Date:** 2026-07-23
 **Backend owner:** Phúc
-**Status:** Backend contract implemented; frontend and QA remain separate work
+**Status:** implemented, integrated, evaluated, and production-smoke verified;
+maintained under `docs/phase8_team_closeout.md`
 
 ## Scope and base contract
 
@@ -17,8 +18,9 @@ is additive and does not change their request/response contract.
 - Cross-user lookup: `404` to avoid revealing resource existence
 - Content type: `application/json`, except the browser's later direct WebRTC
   exchange with OpenAI, which is outside this backend route contract
-- Feature flag: every route returns `503` while
-  `ENABLE_REALTIME_INTERVIEW=false`
+- Feature flag: lifecycle/create/read/provider/event/complete/summary routes
+  return `503` while `ENABLE_REALTIME_INTERVIEW=false`; privacy `DELETE` remains
+  available so owners are not locked out of deletion
 - Billing: no payment, payOS, or credit rule is applied to these routes
 
 The backend accepts only bounded interview options. It does not accept a system

@@ -1,6 +1,7 @@
 # Phase 8 Multilingual Rubric Evaluation Report
 
-**Status:** replacement evidence for the stale PR #98 evaluator work  
+**Status:** production-module replacement evidence merged in PR #104 and
+verified by CI run `29912736873`
 **Evaluation date:** 2026-07-22  
 **Evaluator:** `deterministic_transcript_v2_unicode`  
 **Rubric:** `realtime_practice_v1`
