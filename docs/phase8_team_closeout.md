@@ -19,7 +19,7 @@ gate.
 | #101 | merged backend reconciliation/hardening |
 | #102 | merged Vietnamese WebRTC voice and history recovery |
 | #98 | stale/open replacement target; must not merge or cherry-pick |
-| Replacement closeout PR | pending creation/CI/review/merge |
+| #104 | replacement closeout PR; open as draft, CI/review/merge pending |
 
 The replacement work salvages the intent of PR #98—multilingual evaluation,
 malicious-flow QA, privacy review, browser evidence, and sign-off—but imports
