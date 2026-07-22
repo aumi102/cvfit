@@ -34,7 +34,11 @@ export function useInterviewSession(sessionId, { mediaStream, questionLimit = 5 
     });
     sessionRef.current = session;
 
-    const onStatus = (status) => setSessionState((state) => ({ ...state, status }));
+    const onStatus = (status) => setSessionState((state) => ({
+      ...state,
+      status,
+      error: status === 'connected' ? null : state.error,
+    }));
     const onTranscript = () => setSessionState((state) => ({
       ...state,
       transcript: session.getState().transcript,
@@ -77,6 +81,10 @@ export function useInterviewSession(sessionId, { mediaStream, questionLimit = 5 
     setSessionState((state) => ({ ...state, error: null }));
     return sessionRef.current?.reconnect();
   }, []);
+  const cancelReconnect = useCallback(
+    () => sessionRef.current?.cancelReconnect(),
+    []
+  );
   const retryPendingEvent = useCallback(
     () => sessionRef.current?.retryPendingEvent(),
     []
@@ -88,6 +96,7 @@ export function useInterviewSession(sessionId, { mediaStream, questionLimit = 5 
     connect,
     disconnect,
     reconnect,
+    cancelReconnect,
     retryPendingEvent,
   };
 }

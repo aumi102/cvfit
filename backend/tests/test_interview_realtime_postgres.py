@@ -98,3 +98,25 @@ def test_disposable_postgres_phase8_schema_and_runtime_validator() -> None:
         init_db.check_runtime_schema()
     finally:
         init_db.engine = original_engine
+
+
+@pytest.mark.skipif(
+    not os.environ.get("DATABASE_URL", "").startswith("postgresql"),
+    reason="requires the disposable PostgreSQL migration job",
+)
+def test_disposable_postgres_realtime_children_cascade_on_session_delete() -> None:
+    inspector = inspect(create_engine(os.environ["DATABASE_URL"], future=True))
+
+    for table_name in (
+        "interview_realtime_turns",
+        "interview_realtime_events",
+        "interview_realtime_summaries",
+    ):
+        session_foreign_keys = [
+            foreign_key
+            for foreign_key in inspector.get_foreign_keys(table_name)
+            if foreign_key["constrained_columns"] == ["session_id"]
+            and foreign_key["referred_table"] == "interview_realtime_sessions"
+        ]
+        assert len(session_foreign_keys) == 1
+        assert session_foreign_keys[0].get("options", {}).get("ondelete") == "CASCADE"

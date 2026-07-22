@@ -3,21 +3,33 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import InterviewSummaryPage from './page';
 
-const mocks = vi.hoisted(() => ({ getSummary: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  getSummary: vi.fn(),
+  deleteSession: vi.fn(),
+  replace: vi.fn(),
+}));
 
-vi.mock('next/navigation', () => ({ useParams: () => ({ id: 'session-1' }) }));
+vi.mock('next/navigation', () => ({
+  useParams: () => ({ id: 'session-1' }),
+  useRouter: () => ({ replace: mocks.replace }),
+}));
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }) => <a href={href} {...props}>{children}</a>,
 }));
 vi.mock('@/hooks/useRequireAuth', () => ({ useRequireAuth: () => ({ isAuthChecking: false }) }));
 vi.mock('@/services/interviewRealtimeApi', () => ({
   getRealtimeInterviewSummary: (...args) => mocks.getSummary(...args),
+  deleteRealtimeInterviewSession: (...args) => mocks.deleteSession(...args),
 }));
 vi.mock('@/components/common/PageShell', () => ({ default: ({ children }) => <main>{children}</main> }));
 vi.mock('@/components/common/LoadingSpinner', () => ({ default: ({ label }) => <div>{label}</div> }));
 
 describe('realtime summary states', () => {
-  beforeEach(() => mocks.getSummary.mockReset());
+  beforeEach(() => {
+    mocks.getSummary.mockReset();
+    mocks.deleteSession.mockReset().mockResolvedValue(undefined);
+    mocks.replace.mockReset();
+  });
 
   it('renders a ready Vietnamese summary', async () => {
     mocks.getSummary.mockResolvedValue({
@@ -37,6 +49,12 @@ describe('realtime summary states', () => {
     expect(await screen.findByRole('heading', { name: 'Đánh giá buổi phỏng vấn' })).toBeInTheDocument();
     expect(screen.getByText('Có bằng chứng cụ thể.')).toBeInTheDocument();
     expect(screen.getByText('Không dự đoán kết quả tuyển dụng.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Xóa dữ liệu phiên' }));
+    expect(screen.getByText(/xóa vĩnh viễn transcript/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận xóa' }));
+    await waitFor(() => expect(mocks.deleteSession).toHaveBeenCalledWith('session-1'));
+    expect(mocks.replace).toHaveBeenCalledWith('/interview/sessions');
   });
 
   it('surfaces a failed summary and allows a retry to ready', async () => {

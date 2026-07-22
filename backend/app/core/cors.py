@@ -17,4 +17,5 @@ def add_cors_middleware(app: FastAPI) -> None:
         allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
         allow_methods=csv_setting(settings.CORS_ALLOWED_METHODS),
         allow_headers=csv_setting(settings.CORS_ALLOWED_HEADERS),
+        expose_headers=["Retry-After"],
     )
